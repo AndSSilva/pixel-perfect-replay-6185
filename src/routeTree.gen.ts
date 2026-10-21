@@ -10,33 +10,207 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
+import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configuracoes'
+import { Route as AdminHistoricoRouteImport } from './routes/admin.historico'
+import { Route as AdminPedidosRouteImport } from './routes/admin.pedidos'
+import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
+import { Route as AdminLoginRouteImport } from './routes/admin_.login'
+import { Route as CardapioMesaIdRouteImport } from './routes/cardapio.$mesaId'
+import { Route as AdminContasIndexRouteImport } from './routes/admin.contas.index'
+import { Route as AdminContasContaIdRouteImport } from './routes/admin.contas.$contaId'
+import { Route as AdminMesasIndexRouteImport } from './routes/admin.mesas.index'
+import { Route as AdminMesasMesaIdRouteImport } from './routes/admin.mesas.$mesaId'
+import { Route as AdminImprimirMesaIdRouteImport } from './routes/admin_.imprimir.$mesaId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCategoriasRoute = AdminCategoriasRouteImport.update({
+  id: '/categorias',
+  path: '/categorias',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminHistoricoRoute = AdminHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPedidosRoute = AdminPedidosRouteImport.update({
+  id: '/pedidos',
+  path: '/pedidos',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProdutosRoute = AdminProdutosRouteImport.update({
+  id: '/produtos',
+  path: '/produtos',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin_/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CardapioMesaIdRoute = CardapioMesaIdRouteImport.update({
+  id: '/cardapio/$mesaId',
+  path: '/cardapio/$mesaId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminContasIndexRoute = AdminContasIndexRouteImport.update({
+  id: '/contas/',
+  path: '/contas/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContasContaIdRoute = AdminContasContaIdRouteImport.update({
+  id: '/contas/$contaId',
+  path: '/contas/$contaId',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMesasIndexRoute = AdminMesasIndexRouteImport.update({
+  id: '/mesas/',
+  path: '/mesas/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMesasMesaIdRoute = AdminMesasMesaIdRouteImport.update({
+  id: '/mesas/$mesaId',
+  path: '/mesas/$mesaId',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminImprimirMesaIdRoute = AdminImprimirMesaIdRouteImport.update({
+  id: '/admin_/imprimir/$mesaId',
+  path: '/admin/imprimir/$mesaId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/admin/categorias': typeof AdminCategoriasRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/historico': typeof AdminHistoricoRoute
+  '/admin/pedidos': typeof AdminPedidosRoute
+  '/admin/produtos': typeof AdminProdutosRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/cardapio/$mesaId': typeof CardapioMesaIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/contas/$contaId': typeof AdminContasContaIdRoute
+  '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
+  '/admin/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
+  '/admin/contas/': typeof AdminContasIndexRoute
+  '/admin/mesas/': typeof AdminMesasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/categorias': typeof AdminCategoriasRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/historico': typeof AdminHistoricoRoute
+  '/admin/pedidos': typeof AdminPedidosRoute
+  '/admin/produtos': typeof AdminProdutosRoute
+  '/admin/login': typeof AdminLoginRoute
+  '/cardapio/$mesaId': typeof CardapioMesaIdRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/contas/$contaId': typeof AdminContasContaIdRoute
+  '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
+  '/admin/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
+  '/admin/contas': typeof AdminContasIndexRoute
+  '/admin/mesas': typeof AdminMesasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/admin/categorias': typeof AdminCategoriasRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/historico': typeof AdminHistoricoRoute
+  '/admin/pedidos': typeof AdminPedidosRoute
+  '/admin/produtos': typeof AdminProdutosRoute
+  '/admin_/login': typeof AdminLoginRoute
+  '/cardapio/$mesaId': typeof CardapioMesaIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/contas/$contaId': typeof AdminContasContaIdRoute
+  '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
+  '/admin_/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
+  '/admin/contas/': typeof AdminContasIndexRoute
+  '/admin/mesas/': typeof AdminMesasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/admin/categorias'
+    | '/admin/configuracoes'
+    | '/admin/historico'
+    | '/admin/pedidos'
+    | '/admin/produtos'
+    | '/admin/login'
+    | '/cardapio/$mesaId'
+    | '/admin/'
+    | '/admin/contas/$contaId'
+    | '/admin/mesas/$mesaId'
+    | '/admin/imprimir/$mesaId'
+    | '/admin/contas/'
+    | '/admin/mesas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin/categorias'
+    | '/admin/configuracoes'
+    | '/admin/historico'
+    | '/admin/pedidos'
+    | '/admin/produtos'
+    | '/admin/login'
+    | '/cardapio/$mesaId'
+    | '/admin'
+    | '/admin/contas/$contaId'
+    | '/admin/mesas/$mesaId'
+    | '/admin/imprimir/$mesaId'
+    | '/admin/contas'
+    | '/admin/mesas'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/admin/categorias'
+    | '/admin/configuracoes'
+    | '/admin/historico'
+    | '/admin/pedidos'
+    | '/admin/produtos'
+    | '/admin_/login'
+    | '/cardapio/$mesaId'
+    | '/admin/'
+    | '/admin/contas/$contaId'
+    | '/admin/mesas/$mesaId'
+    | '/admin_/imprimir/$mesaId'
+    | '/admin/contas/'
+    | '/admin/mesas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AdminLoginRoute: typeof AdminLoginRoute
+  CardapioMesaIdRoute: typeof CardapioMesaIdRoute
+  AdminImprimirMesaIdRoute: typeof AdminImprimirMesaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +222,141 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/categorias': {
+      id: '/admin/categorias'
+      path: '/categorias'
+      fullPath: '/admin/categorias'
+      preLoaderRoute: typeof AdminCategoriasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/configuracoes': {
+      id: '/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AdminConfiguracoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/historico': {
+      id: '/admin/historico'
+      path: '/historico'
+      fullPath: '/admin/historico'
+      preLoaderRoute: typeof AdminHistoricoRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pedidos': {
+      id: '/admin/pedidos'
+      path: '/pedidos'
+      fullPath: '/admin/pedidos'
+      preLoaderRoute: typeof AdminPedidosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/produtos': {
+      id: '/admin/produtos'
+      path: '/produtos'
+      fullPath: '/admin/produtos'
+      preLoaderRoute: typeof AdminProdutosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin_/login': {
+      id: '/admin_/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cardapio/$mesaId': {
+      id: '/cardapio/$mesaId'
+      path: '/cardapio/$mesaId'
+      fullPath: '/cardapio/$mesaId'
+      preLoaderRoute: typeof CardapioMesaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/contas/': {
+      id: '/admin/contas/'
+      path: '/contas'
+      fullPath: '/admin/contas/'
+      preLoaderRoute: typeof AdminContasIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/contas/$contaId': {
+      id: '/admin/contas/$contaId'
+      path: '/contas/$contaId'
+      fullPath: '/admin/contas/$contaId'
+      preLoaderRoute: typeof AdminContasContaIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/mesas/': {
+      id: '/admin/mesas/'
+      path: '/mesas'
+      fullPath: '/admin/mesas/'
+      preLoaderRoute: typeof AdminMesasIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/mesas/$mesaId': {
+      id: '/admin/mesas/$mesaId'
+      path: '/mesas/$mesaId'
+      fullPath: '/admin/mesas/$mesaId'
+      preLoaderRoute: typeof AdminMesasMesaIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin_/imprimir/$mesaId': {
+      id: '/admin_/imprimir/$mesaId'
+      path: '/admin/imprimir/$mesaId'
+      fullPath: '/admin/imprimir/$mesaId'
+      preLoaderRoute: typeof AdminImprimirMesaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminCategoriasRoute: typeof AdminCategoriasRoute
+  AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
+  AdminHistoricoRoute: typeof AdminHistoricoRoute
+  AdminPedidosRoute: typeof AdminPedidosRoute
+  AdminProdutosRoute: typeof AdminProdutosRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminContasContaIdRoute: typeof AdminContasContaIdRoute
+  AdminMesasMesaIdRoute: typeof AdminMesasMesaIdRoute
+  AdminContasIndexRoute: typeof AdminContasIndexRoute
+  AdminMesasIndexRoute: typeof AdminMesasIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCategoriasRoute: AdminCategoriasRoute,
+  AdminConfiguracoesRoute: AdminConfiguracoesRoute,
+  AdminHistoricoRoute: AdminHistoricoRoute,
+  AdminPedidosRoute: AdminPedidosRoute,
+  AdminProdutosRoute: AdminProdutosRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminContasContaIdRoute: AdminContasContaIdRoute,
+  AdminMesasMesaIdRoute: AdminMesasMesaIdRoute,
+  AdminContasIndexRoute: AdminContasIndexRoute,
+  AdminMesasIndexRoute: AdminMesasIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AdminLoginRoute: AdminLoginRoute,
+  CardapioMesaIdRoute: CardapioMesaIdRoute,
+  AdminImprimirMesaIdRoute: AdminImprimirMesaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
