@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Campo, Confirmar, PageHeader, Painel } from "@/components/app/common";
+import type { Erros } from "@/components/app/common";
 import { executar, restaurarDemo, useDados } from "@/lib/store";
 import { salvarConfig } from "@/lib/services/regras";
 
@@ -24,10 +25,10 @@ export const Route = createFileRoute("/admin/configuracoes")({
 function Configuracoes() {
   const d = useDados()!;
   const [cfg, setCfg] = useState(d.config);
-  const [erros, setErros] = useState<Record<string, string>>({});
+  const [erros, setErros] = useState<Erros>({});
 
   const salvar = () => {
-    const e: Record<string, string> = {};
+    const e: Erros = {};
     if (!cfg.nomeEstabelecimento.trim()) e.nome = "Informe o nome.";
     if (!/^\d{4,8}$/.test(cfg.pinDemo)) e.pin = "Use de 4 a 8 dígitos.";
     setErros(e);

@@ -5,18 +5,18 @@ export type ID = string;
 export interface Categoria {
   id: ID;
   nome: string;
-  descricao?: string;
+  descricao?: string | undefined;
   ativa: boolean;
 }
 
 export interface Produto {
   id: ID;
   nome: string;
-  descricao?: string;
+  descricao?: string | undefined;
   categoriaId: ID;
   precoCentavos: number;
   disponivel: boolean;
-  imagemOpcional?: string;
+  imagemOpcional?: string | undefined;
   criadoEm: string;
 }
 
@@ -93,10 +93,10 @@ export interface Pagamento {
   valorCentavos: number;
   formaPagamento: FormaPagamento;
   criadoEm: string;
-  observacao?: string;
+  observacao?: string | undefined;
   /** Cash only: amount handed over and change returned (change is not revenue). */
-  recebidoCentavos?: number;
-  trocoCentavos?: number;
+  recebidoCentavos?: number | undefined;
+  trocoCentavos?: number | undefined;
 }
 
 export interface Configuracoes {

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Campo, Confirmar, EmptyState, PageHeader, Selo, iconeCategoria } from "@/components/app/common";
+import type { Erros } from "@/components/app/common";
 import { executar, useDados } from "@/lib/store";
 import { alternarDisponibilidade, excluirProduto, salvarProduto } from "@/lib/services/regras";
 import { centavosParaInput, formatBRL, parseMoeda } from "@/lib/format";
@@ -33,7 +34,7 @@ function Produtos() {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todas");
   const [form, setForm] = useState<Form | null>(null);
-  const [erros, setErros] = useState<Record<string, string>>({});
+  const [erros, setErros] = useState<Erros>({});
 
   const lista = d.produtos
     .filter((p) => p.nome.toLowerCase().includes(busca.trim().toLowerCase()))
@@ -51,7 +52,7 @@ function Produtos() {
 
   const salvar = () => {
     if (!form) return;
-    const e: Record<string, string> = {};
+    const e: Erros = {};
     if (!form.nome.trim()) e.nome = "Informe o nome.";
     if (!form.categoriaId) e.categoria = "Selecione uma categoria.";
     const preco = parseMoeda(form.preco);
