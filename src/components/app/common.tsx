@@ -26,7 +26,7 @@ export function PageHeader({ titulo, descricao, acoes }: { titulo: string; descr
   );
 }
 
-export function Painel({ titulo, acao, children, className }: { titulo?: string | undefined; acao?: ReactNode | undefined; children: ReactNode; className?: string }) {
+export function Painel({ titulo, acao, children, className }: { titulo?: string | undefined; acao?: ReactNode | undefined; children: ReactNode; className?: string | undefined }) {
   return (
     <section className={cn("rounded-xl border bg-card p-4 sm:p-5", className)}>
       {(titulo || acao) && (
