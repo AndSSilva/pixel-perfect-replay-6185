@@ -8,11 +8,11 @@ function valido(x: unknown): x is AppData {
   if (!x || typeof x !== "object") return false;
   const d = x as Record<string, unknown>;
   return (
-    d.versao === 1 &&
+    d["versao"] === 1 &&
     ["categorias", "produtos", "mesas", "sessoes", "clientes", "contas", "pedidos", "pagamentos"].every((k) =>
       Array.isArray(d[k]),
     ) &&
-    typeof d.config === "object"
+    typeof d["config"] === "object"
   );
 }
 

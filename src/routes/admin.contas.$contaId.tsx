@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Campo, Confirmar, EmptyState, PageHeader, Painel, Selo } from "@/components/app/common";
+import type { Erros } from "@/components/app/common";
 import { executar, useDados } from "@/lib/store";
 import { excluirPagamento, fecharConta, pedidosPendentesConta, registrarPagamento, saldoConta, totalConfirmadoConta, totalPagoConta } from "@/lib/services/regras";
 import { centavosParaInput, formatBRL, formatDataHora, parseMoeda } from "@/lib/format";
@@ -29,7 +30,7 @@ function ContaDetalhe() {
   const [forma, setForma] = useState<FormaPagamento>("pix");
   const [recebido, setRecebido] = useState("");
   const [obs, setObs] = useState("");
-  const [erros, setErros] = useState<Record<string, string>>({});
+  const [erros, setErros] = useState<Erros>({});
 
   const conta = d.contas.find((c) => c.id === contaId);
   if (!conta) return <EmptyState icone={ArrowLeft} titulo="Conta não encontrada" acao={<Button asChild variant="secondary"><Link to="/admin/contas">Voltar</Link></Button>} />;
@@ -47,7 +48,7 @@ function ContaDetalhe() {
   const troco = v !== null && rec !== null && rec >= v ? rec - v : null;
 
   const registrar = () => {
-    const e: Record<string, string> = {};
+    const e: Erros = {};
     if (v === null || v <= 0) e.valor = "Informe um valor positivo.";
     else if (v > saldo) e.valor = `O valor não pode passar do saldo (${formatBRL(saldo)}).`;
     if (forma === "dinheiro" && recebido.trim()) {

@@ -14,7 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-export function PageHeader({ titulo, descricao, acoes }: { titulo: string; descricao?: string; acoes?: ReactNode }) {
+export function PageHeader({ titulo, descricao, acoes }: { titulo: string; descricao?: string | undefined; acoes?: ReactNode }) {
   return (
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
@@ -26,7 +26,7 @@ export function PageHeader({ titulo, descricao, acoes }: { titulo: string; descr
   );
 }
 
-export function Painel({ titulo, acao, children, className }: { titulo?: string; acao?: ReactNode; children: ReactNode; className?: string }) {
+export function Painel({ titulo, acao, children, className }: { titulo?: string | undefined; acao?: ReactNode | undefined; children: ReactNode; className?: string }) {
   return (
     <section className={cn("rounded-xl border bg-card p-4 sm:p-5", className)}>
       {(titulo || acao) && (
@@ -52,7 +52,7 @@ export function StatCard({ rotulo, valor, icone: Icone, destaque }: { rotulo: st
   );
 }
 
-export function EmptyState({ icone: Icone, titulo, texto, acao }: { icone: LucideIcon; titulo: string; texto?: string; acao?: ReactNode }) {
+export function EmptyState({ icone: Icone, titulo, texto, acao }: { icone: LucideIcon; titulo: string; texto?: string | undefined; acao?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-10 text-center">
       <div className="mb-3 rounded-full bg-muted p-3">
@@ -99,7 +99,7 @@ export function Carregando() {
   );
 }
 
-export function Campo({ id, rotulo, erro, children, dica }: { id: string; rotulo: string; erro?: string; dica?: string; children: ReactNode }) {
+export function Campo({ id, rotulo, erro, children, dica }: { id: string; rotulo: string; erro?: string | undefined; dica?: string | undefined; children: ReactNode }) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{rotulo}</Label>
@@ -126,10 +126,10 @@ export function Confirmar({
   gatilho: ReactNode;
   titulo: string;
   descricao: string;
-  rotuloAcao?: string;
-  perigo?: boolean;
+  rotuloAcao?: string | undefined;
+  perigo?: boolean | undefined;
   onConfirmar: () => void;
-  children?: ReactNode;
+  children?: ReactNode | undefined;
 }) {
   return (
     <AlertDialog>
@@ -163,3 +163,4 @@ export function iconeCategoria(nome?: string): LucideIcon {
   if (n.includes("destil") || n.includes("vinho")) return Wine;
   return Martini;
 }
+export type Erros = Partial<Record<"nome" | "pin" | "valor" | "recebido" | "categoria" | "preco", string>>;
