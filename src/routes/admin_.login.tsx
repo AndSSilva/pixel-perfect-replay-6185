@@ -65,7 +65,7 @@ function Login() {
           Entrar
         </Button>
         <p className="mt-4 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-          Acesso demonstrativo, sem segurança real. PIN de teste: <strong className="text-foreground">{d.config.pinDemo === "1234" ? "1234" : "definido nas configurações"}</strong>
+          Acesso demonstrativo, sem segurança real. PIN de teste: <strong className="text-foreground">{d.config.pinDemo}</strong>
         </p>
         <Link to="/" className="mt-4 block text-center text-sm text-muted-foreground hover:text-foreground">
           Voltar ao início

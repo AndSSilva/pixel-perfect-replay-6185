@@ -31,7 +31,7 @@ export const Route = createFileRoute("/admin/mesas/$mesaId")({
   component: MesaDetalhe,
 });
 
-export const linkCardapio = (mesaId: string) => `${window.location.origin}/cardapio/${mesaId}`;
+const linkCardapio = (mesaId: string) => `${window.location.origin}/cardapio/${mesaId}`;
 
 function MesaDetalhe() {
   const { mesaId } = Route.useParams();

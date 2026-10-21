@@ -64,7 +64,6 @@ function Configuracoes() {
             perigo
             onConfirmar={() => {
               restaurarDemo();
-              setCfg({ nomeEstabelecimento: "Adega Ponto Gelado", textoCardapio: "", pinDemo: "1234" });
               toast.success("Dados de demonstração restaurados.");
               location.reload();
             }}

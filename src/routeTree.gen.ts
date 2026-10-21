@@ -13,10 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
+import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configuracoes'
+import { Route as AdminHistoricoRouteImport } from './routes/admin.historico'
 import { Route as AdminPedidosRouteImport } from './routes/admin.pedidos'
 import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AdminContasIndexRouteImport } from './routes/admin.contas.index'
+import { Route as AdminContasContaIdRouteImport } from './routes/admin.contas.$contaId'
 import { Route as AdminMesasIndexRouteImport } from './routes/admin.mesas.index'
 import { Route as AdminMesasMesaIdRouteImport } from './routes/admin.mesas.$mesaId'
 import { Route as AdminImprimirMesaIdRouteImport } from './routes/admin_.imprimir.$mesaId'
@@ -41,6 +44,16 @@ const AdminCategoriasRoute = AdminCategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminHistoricoRoute = AdminHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPedidosRoute = AdminPedidosRouteImport.update({
   id: '/pedidos',
   path: '/pedidos',
@@ -59,6 +72,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
 const AdminContasIndexRoute = AdminContasIndexRouteImport.update({
   id: '/contas/',
   path: '/contas/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContasContaIdRoute = AdminContasContaIdRouteImport.update({
+  id: '/contas/$contaId',
+  path: '/contas/$contaId',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMesasIndexRoute = AdminMesasIndexRouteImport.update({
@@ -81,10 +99,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin/categorias': typeof AdminCategoriasRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/historico': typeof AdminHistoricoRoute
   '/admin/pedidos': typeof AdminPedidosRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/contas/$contaId': typeof AdminContasContaIdRoute
   '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
   '/admin/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
   '/admin/contas/': typeof AdminContasIndexRoute
@@ -93,10 +114,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/categorias': typeof AdminCategoriasRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/historico': typeof AdminHistoricoRoute
   '/admin/pedidos': typeof AdminPedidosRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/contas/$contaId': typeof AdminContasContaIdRoute
   '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
   '/admin/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
   '/admin/contas': typeof AdminContasIndexRoute
@@ -107,10 +131,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin/categorias': typeof AdminCategoriasRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/historico': typeof AdminHistoricoRoute
   '/admin/pedidos': typeof AdminPedidosRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin_/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/contas/$contaId': typeof AdminContasContaIdRoute
   '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
   '/admin_/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
   '/admin/contas/': typeof AdminContasIndexRoute
@@ -122,10 +149,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/admin/categorias'
+    | '/admin/configuracoes'
+    | '/admin/historico'
     | '/admin/pedidos'
     | '/admin/produtos'
     | '/admin/login'
     | '/admin/'
+    | '/admin/contas/$contaId'
     | '/admin/mesas/$mesaId'
     | '/admin/imprimir/$mesaId'
     | '/admin/contas/'
@@ -134,10 +164,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin/categorias'
+    | '/admin/configuracoes'
+    | '/admin/historico'
     | '/admin/pedidos'
     | '/admin/produtos'
     | '/admin/login'
     | '/admin'
+    | '/admin/contas/$contaId'
     | '/admin/mesas/$mesaId'
     | '/admin/imprimir/$mesaId'
     | '/admin/contas'
@@ -147,10 +180,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/admin/categorias'
+    | '/admin/configuracoes'
+    | '/admin/historico'
     | '/admin/pedidos'
     | '/admin/produtos'
     | '/admin_/login'
     | '/admin/'
+    | '/admin/contas/$contaId'
     | '/admin/mesas/$mesaId'
     | '/admin_/imprimir/$mesaId'
     | '/admin/contas/'
@@ -194,6 +230,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriasRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/configuracoes': {
+      id: '/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AdminConfiguracoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/historico': {
+      id: '/admin/historico'
+      path: '/historico'
+      fullPath: '/admin/historico'
+      preLoaderRoute: typeof AdminHistoricoRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/pedidos': {
       id: '/admin/pedidos'
       path: '/pedidos'
@@ -222,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContasIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/contas/$contaId': {
+      id: '/admin/contas/$contaId'
+      path: '/contas/$contaId'
+      fullPath: '/admin/contas/$contaId'
+      preLoaderRoute: typeof AdminContasContaIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/mesas/': {
       id: '/admin/mesas/'
       path: '/mesas'
@@ -248,9 +305,12 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminCategoriasRoute: typeof AdminCategoriasRoute
+  AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
+  AdminHistoricoRoute: typeof AdminHistoricoRoute
   AdminPedidosRoute: typeof AdminPedidosRoute
   AdminProdutosRoute: typeof AdminProdutosRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminContasContaIdRoute: typeof AdminContasContaIdRoute
   AdminMesasMesaIdRoute: typeof AdminMesasMesaIdRoute
   AdminContasIndexRoute: typeof AdminContasIndexRoute
   AdminMesasIndexRoute: typeof AdminMesasIndexRoute
@@ -258,9 +318,12 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriasRoute: AdminCategoriasRoute,
+  AdminConfiguracoesRoute: AdminConfiguracoesRoute,
+  AdminHistoricoRoute: AdminHistoricoRoute,
   AdminPedidosRoute: AdminPedidosRoute,
   AdminProdutosRoute: AdminProdutosRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminContasContaIdRoute: AdminContasContaIdRoute,
   AdminMesasMesaIdRoute: AdminMesasMesaIdRoute,
   AdminContasIndexRoute: AdminContasIndexRoute,
   AdminMesasIndexRoute: AdminMesasIndexRoute,

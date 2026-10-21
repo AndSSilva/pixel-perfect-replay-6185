@@ -35,9 +35,7 @@ function Historico() {
   const lista = d.contas
     .filter((c) => c.status === "paga" && c.fechadaEm)
     .filter((c) => {
-      const dia = c.fechadaEm!.slice(0, 10);
       const local = new Date(c.fechadaEm!).toLocaleDateString("sv-SE"); // YYYY-MM-DD local
-      void dia;
       if (de && local < de) return false;
       if (ate && local > ate) return false;
       if (cliente && !c.clienteNome.toLowerCase().includes(cliente.trim().toLowerCase())) return false;
