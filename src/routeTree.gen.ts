@@ -13,9 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
+import { Route as AdminPedidosRouteImport } from './routes/admin.pedidos'
 import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
+import { Route as AdminContasIndexRouteImport } from './routes/admin.contas.index'
 import { Route as AdminMesasIndexRouteImport } from './routes/admin.mesas.index'
+import { Route as AdminMesasMesaIdRouteImport } from './routes/admin.mesas.$mesaId'
+import { Route as AdminImprimirMesaIdRouteImport } from './routes/admin_.imprimir.$mesaId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -37,6 +41,11 @@ const AdminCategoriasRoute = AdminCategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPedidosRoute = AdminPedidosRouteImport.update({
+  id: '/pedidos',
+  path: '/pedidos',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProdutosRoute = AdminProdutosRouteImport.update({
   id: '/produtos',
   path: '/produtos',
@@ -47,27 +56,50 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminContasIndexRoute = AdminContasIndexRouteImport.update({
+  id: '/contas/',
+  path: '/contas/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMesasIndexRoute = AdminMesasIndexRouteImport.update({
   id: '/mesas/',
   path: '/mesas/',
   getParentRoute: () => AdminRoute,
+} as any)
+const AdminMesasMesaIdRoute = AdminMesasMesaIdRouteImport.update({
+  id: '/mesas/$mesaId',
+  path: '/mesas/$mesaId',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminImprimirMesaIdRoute = AdminImprimirMesaIdRouteImport.update({
+  id: '/admin_/imprimir/$mesaId',
+  path: '/admin/imprimir/$mesaId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin/categorias': typeof AdminCategoriasRoute
+  '/admin/pedidos': typeof AdminPedidosRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
+  '/admin/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
+  '/admin/contas/': typeof AdminContasIndexRoute
   '/admin/mesas/': typeof AdminMesasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/categorias': typeof AdminCategoriasRoute
+  '/admin/pedidos': typeof AdminPedidosRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
+  '/admin/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
+  '/admin/contas': typeof AdminContasIndexRoute
   '/admin/mesas': typeof AdminMesasIndexRoute
 }
 export interface FileRoutesById {
@@ -75,9 +107,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin/categorias': typeof AdminCategoriasRoute
+  '/admin/pedidos': typeof AdminPedidosRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin_/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
+  '/admin_/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
+  '/admin/contas/': typeof AdminContasIndexRoute
   '/admin/mesas/': typeof AdminMesasIndexRoute
 }
 export interface FileRouteTypes {
@@ -86,26 +122,38 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/admin/categorias'
+    | '/admin/pedidos'
     | '/admin/produtos'
     | '/admin/login'
     | '/admin/'
+    | '/admin/mesas/$mesaId'
+    | '/admin/imprimir/$mesaId'
+    | '/admin/contas/'
     | '/admin/mesas/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin/categorias'
+    | '/admin/pedidos'
     | '/admin/produtos'
     | '/admin/login'
     | '/admin'
+    | '/admin/mesas/$mesaId'
+    | '/admin/imprimir/$mesaId'
+    | '/admin/contas'
     | '/admin/mesas'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/admin/categorias'
+    | '/admin/pedidos'
     | '/admin/produtos'
     | '/admin_/login'
     | '/admin/'
+    | '/admin/mesas/$mesaId'
+    | '/admin_/imprimir/$mesaId'
+    | '/admin/contas/'
     | '/admin/mesas/'
   fileRoutesById: FileRoutesById
 }
@@ -113,6 +161,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminImprimirMesaIdRoute: typeof AdminImprimirMesaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -145,6 +194,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriasRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/pedidos': {
+      id: '/admin/pedidos'
+      path: '/pedidos'
+      fullPath: '/admin/pedidos'
+      preLoaderRoute: typeof AdminPedidosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/produtos': {
       id: '/admin/produtos'
       path: '/produtos'
@@ -159,6 +215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/contas/': {
+      id: '/admin/contas/'
+      path: '/contas'
+      fullPath: '/admin/contas/'
+      preLoaderRoute: typeof AdminContasIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/mesas/': {
       id: '/admin/mesas/'
       path: '/mesas'
@@ -166,20 +229,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMesasIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/mesas/$mesaId': {
+      id: '/admin/mesas/$mesaId'
+      path: '/mesas/$mesaId'
+      fullPath: '/admin/mesas/$mesaId'
+      preLoaderRoute: typeof AdminMesasMesaIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin_/imprimir/$mesaId': {
+      id: '/admin_/imprimir/$mesaId'
+      path: '/admin/imprimir/$mesaId'
+      fullPath: '/admin/imprimir/$mesaId'
+      preLoaderRoute: typeof AdminImprimirMesaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AdminRouteChildren {
   AdminCategoriasRoute: typeof AdminCategoriasRoute
+  AdminPedidosRoute: typeof AdminPedidosRoute
   AdminProdutosRoute: typeof AdminProdutosRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminMesasMesaIdRoute: typeof AdminMesasMesaIdRoute
+  AdminContasIndexRoute: typeof AdminContasIndexRoute
   AdminMesasIndexRoute: typeof AdminMesasIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriasRoute: AdminCategoriasRoute,
+  AdminPedidosRoute: AdminPedidosRoute,
   AdminProdutosRoute: AdminProdutosRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminMesasMesaIdRoute: AdminMesasMesaIdRoute,
+  AdminContasIndexRoute: AdminContasIndexRoute,
   AdminMesasIndexRoute: AdminMesasIndexRoute,
 }
 
@@ -189,6 +272,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AdminLoginRoute: AdminLoginRoute,
+  AdminImprimirMesaIdRoute: AdminImprimirMesaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
