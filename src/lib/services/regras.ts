@@ -18,7 +18,7 @@ export class RegraError extends Error {}
 
 const agora = () => new Date().toISOString();
 export const novoId = () => crypto.randomUUID();
-const exigir = (cond: unknown, msg: string): asserts cond => {
+function exigir(cond: unknown, msg: string): asserts cond {
   if (!cond) throw new RegraError(msg);
 };
 

@@ -66,13 +66,13 @@ export function criarDadosDemo(): AppData {
   const sessao = (mesaIdx: number, abertaMin: number, encerradaMin: number | null) => {
     const s = {
       id: novoId(),
-      mesaId: mesas[mesaIdx].id,
+      mesaId: mesas[mesaIdx]!.id,
       abertaEm: t(abertaMin),
       encerradaEm: encerradaMin === null ? null : t(encerradaMin),
       status: (encerradaMin === null ? "aberta" : "encerrada") as "aberta" | "encerrada",
     };
     d.sessoes.push(s);
-    if (encerradaMin === null) mesas[mesaIdx].sessaoAtualId = s.id;
+    if (encerradaMin === null) mesas[mesaIdx]!.sessaoAtualId = s.id;
     return s;
   };
   const conta = (s: { id: string; mesaId: string }, nome: string, abertaMin: number, fechadaMin: number | null) => {
@@ -91,7 +91,7 @@ export function criarDadosDemo(): AppData {
       abertaEm: t(abertaMin),
       fechadaEm: fechadaMin === null ? null : t(fechadaMin),
     });
-    return d.contas[d.contas.length - 1];
+    return d.contas[d.contas.length - 1]!;
   };
   const pedido = (
     c: { id: string; sessaoId: string; mesaId: string; clienteId: string },
