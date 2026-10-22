@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Package, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Camera, ImagePlus, Package, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +14,7 @@ import type { Erros } from "@/components/app/common";
 import { executar, useDados } from "@/lib/store";
 import { alternarDisponibilidade, excluirProduto, salvarProduto } from "@/lib/services/regras";
 import { centavosParaInput, formatBRL, parseMoeda } from "@/lib/format";
+import { arquivoParaDataUrl } from "@/lib/imagem";
 import type { Produto } from "@/lib/types";
 
 export const Route = createFileRoute("/admin/produtos")({
@@ -27,7 +29,7 @@ export const Route = createFileRoute("/admin/produtos")({
   component: Produtos,
 });
 
-type Form = { id?: string; nome: string; descricao: string; categoriaId: string; preco: string; disponivel: boolean };
+type Form = { id?: string; nome: string; descricao: string; categoriaId: string; preco: string; disponivel: boolean; imagem?: string | undefined };
 
 function Produtos() {
   const d = useDados()!;
@@ -45,7 +47,7 @@ function Produtos() {
     setErros({});
     setForm(
       p
-        ? { id: p.id, nome: p.nome, descricao: p.descricao ?? "", categoriaId: p.categoriaId, preco: centavosParaInput(p.precoCentavos), disponivel: p.disponivel }
+        ? { id: p.id, nome: p.nome, descricao: p.descricao ?? "", categoriaId: p.categoriaId, preco: centavosParaInput(p.precoCentavos), disponivel: p.disponivel, imagem: p.imagemOpcional }
         : { nome: "", descricao: "", categoriaId: d.categorias[0]?.id ?? "", preco: "", disponivel: true },
     );
   };
@@ -59,7 +61,10 @@ function Produtos() {
     if (preco === null) e.preco = "Informe um preço válido (ex.: 12,50).";
     setErros(e);
     if (Object.keys(e).length) return;
-    const r = executar((x) => salvarProduto(x, { ...form, precoCentavos: preco }), form.id ? "Produto atualizado." : "Produto cadastrado.");
+    const r = executar(
+      (x) => salvarProduto(x, { ...form, precoCentavos: preco, imagemOpcional: form.imagem }),
+      form.id ? "Produto atualizado." : "Produto cadastrado.",
+    );
     if (r.ok) setForm(null);
   };
 
@@ -93,9 +98,13 @@ function Produtos() {
             const Icone = iconeCategoria(cat?.nome);
             return (
               <article key={p.id} className="flex gap-3 rounded-xl border bg-card p-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted">
-                  <Icone className="h-6 w-6 text-muted-foreground" aria-hidden />
-                </div>
+                {p.imagemOpcional ? (
+                  <img src={p.imagemOpcional} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <Icone className="h-6 w-6 text-muted-foreground" aria-hidden />
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="truncate font-medium">{p.nome}</h3>
@@ -137,6 +146,13 @@ function Produtos() {
               <Campo id="desc" rotulo="Descrição">
                 <Textarea id="desc" value={form.descricao} maxLength={140} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
               </Campo>
+              <Campo id="foto" rotulo="Foto do produto" dica="Tire uma foto na hora ou envie um arquivo. A imagem fica salva neste navegador.">
+                <FotoProduto
+                  imagem={form.imagem}
+                  onEscolher={(dataUrl) => setForm({ ...form, imagem: dataUrl })}
+                  onRemover={() => setForm((f) => (f ? { ...f, imagem: undefined } : f))}
+                />
+              </Campo>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Campo id="cat" rotulo="Categoria *" erro={erros.categoria}>
                   <Select value={form.categoriaId} onValueChange={(v) => setForm({ ...form, categoriaId: v })}>
@@ -161,5 +177,59 @@ function Produtos() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function FotoProduto({ imagem, onEscolher, onRemover }: { imagem?: string | undefined; onEscolher: (dataUrl: string) => void; onRemover: () => void }) {
+  const inputArquivo = useRef<HTMLInputElement>(null);
+  const inputCamera = useRef<HTMLInputElement>(null);
+  const [processando, setProcessando] = useState(false);
+
+  const aoSelecionar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const arquivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!arquivo) return;
+    setProcessando(true);
+    try {
+      onEscolher(await arquivoParaDataUrl(arquivo));
+    } catch (erro) {
+      toast.error(erro instanceof Error ? erro.message : "Não foi possível usar esta imagem.");
+    } finally {
+      setProcessando(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3">
+      {imagem ? (
+        <div className="relative">
+          <img src={imagem} alt="Foto do produto" className="h-20 w-20 rounded-lg border object-cover" />
+          <Button
+            type="button"
+            size="icon"
+            variant="destructive"
+            className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
+            aria-label="Remover foto"
+            onClick={onRemover}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      ) : (
+        <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed bg-muted text-muted-foreground">
+          <ImagePlus className="h-6 w-6" aria-hidden />
+        </div>
+      )}
+      <div className="flex flex-col gap-2">
+        <Button type="button" variant="secondary" size="sm" disabled={processando} onClick={() => inputCamera.current?.click()}>
+          <Camera className="h-4 w-4" /> {processando ? "Processando…" : "Tirar foto"}
+        </Button>
+        <Button type="button" variant="outline" size="sm" disabled={processando} onClick={() => inputArquivo.current?.click()}>
+          <ImagePlus className="h-4 w-4" /> Enviar arquivo
+        </Button>
+      </div>
+      <input ref={inputCamera} type="file" accept="image/*" capture="environment" className="hidden" aria-label="Tirar foto do produto" onChange={aoSelecionar} />
+      <input ref={inputArquivo} type="file" accept="image/*" className="hidden" aria-label="Enviar foto do produto" onChange={aoSelecionar} />
+    </div>
   );
 }
