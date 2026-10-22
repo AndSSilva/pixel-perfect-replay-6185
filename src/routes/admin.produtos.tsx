@@ -29,7 +29,7 @@ export const Route = createFileRoute("/admin/produtos")({
   component: Produtos,
 });
 
-type Form = { id?: string; nome: string; descricao: string; categoriaId: string; preco: string; disponivel: boolean; imagem?: string };
+type Form = { id?: string; nome: string; descricao: string; categoriaId: string; preco: string; disponivel: boolean; imagem?: string | undefined };
 
 function Produtos() {
   const d = useDados()!;
