@@ -123,18 +123,30 @@ function Cardapio() {
           <p className="text-xs text-primary">{mesa.nome}</p>
         </div>
         {conta && (
-          <button
-            className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs"
-            onClick={() => {
-              limparContaLocal(mesa.id);
-              setContaId(null);
-              setNome("");
-              setEtapa("identificar");
-            }}
-            aria-label="Trocar de cliente"
-          >
-            <User className="h-3.5 w-3.5" /> {conta.clienteNome} · trocar
-          </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              className={cn(
+                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs",
+                etapa === "comanda" ? "bg-primary text-primary-foreground" : "bg-muted",
+              )}
+              onClick={() => setEtapa((e) => (e === "comanda" ? "menu" : "comanda"))}
+              aria-label="Ver minha comanda"
+            >
+              <ReceiptText className="h-3.5 w-3.5" /> Comanda
+            </button>
+            <button
+              className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs"
+              onClick={() => {
+                limparContaLocal(mesa.id);
+                setContaId(null);
+                setNome("");
+                setEtapa("identificar");
+              }}
+              aria-label="Trocar de cliente"
+            >
+              <User className="h-3.5 w-3.5" /> {conta.clienteNome} · trocar
+            </button>
+          </div>
         )}
       </div>
     </header>
