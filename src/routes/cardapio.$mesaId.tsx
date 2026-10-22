@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, CheckCircle2, Minus, Plus, Search, ShoppingBag, Trash2, TriangleAlert, User } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, Minus, Plus, ReceiptText, Search, ShoppingBag, Trash2, TriangleAlert, User, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Campo, Carregando, iconeCategoria } from "@/components/app/common";
 import { executar, useDados } from "@/lib/store";
-import { contasAbertasComNome, enviarPedido, identificarCliente } from "@/lib/services/regras";
+import { contasAbertasComNome, enviarPedido, identificarCliente, saldoConta, totalConfirmadoConta, totalPagoConta } from "@/lib/services/regras";
 import { lerContaLocal, limparContaLocal, salvarContaLocal } from "@/lib/auth-demo";
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/cardapio/$mesaId")({
   component: Cardapio,
 });
 
-type Etapa = "identificar" | "menu" | "revisao" | "enviado";
+type Etapa = "identificar" | "menu" | "revisao" | "enviado" | "comanda";
 
 function Cardapio() {
   const { mesaId } = Route.useParams();
