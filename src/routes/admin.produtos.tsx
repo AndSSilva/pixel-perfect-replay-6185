@@ -29,7 +29,7 @@ export const Route = createFileRoute("/admin/produtos")({
   component: Produtos,
 });
 
-type Form = { id?: string; nome: string; descricao: string; categoriaId: string; preco: string; disponivel: boolean };
+type Form = { id?: string; nome: string; descricao: string; categoriaId: string; preco: string; disponivel: boolean; imagem?: string };
 
 function Produtos() {
   const d = useDados()!;
@@ -47,7 +47,7 @@ function Produtos() {
     setErros({});
     setForm(
       p
-        ? { id: p.id, nome: p.nome, descricao: p.descricao ?? "", categoriaId: p.categoriaId, preco: centavosParaInput(p.precoCentavos), disponivel: p.disponivel }
+        ? { id: p.id, nome: p.nome, descricao: p.descricao ?? "", categoriaId: p.categoriaId, preco: centavosParaInput(p.precoCentavos), disponivel: p.disponivel, imagem: p.imagemOpcional }
         : { nome: "", descricao: "", categoriaId: d.categorias[0]?.id ?? "", preco: "", disponivel: true },
     );
   };
