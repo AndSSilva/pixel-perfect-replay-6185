@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, CheckCircle2, Minus, Plus, Search, ShoppingBag, Trash2, TriangleAlert, User } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, Minus, Plus, ReceiptText, Search, ShoppingBag, Trash2, TriangleAlert, User, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Campo, Carregando, iconeCategoria } from "@/components/app/common";
 import { executar, useDados } from "@/lib/store";
-import { contasAbertasComNome, enviarPedido, identificarCliente } from "@/lib/services/regras";
+import { contasAbertasComNome, enviarPedido, identificarCliente, saldoConta, totalConfirmadoConta, totalPagoConta } from "@/lib/services/regras";
 import { lerContaLocal, limparContaLocal, salvarContaLocal } from "@/lib/auth-demo";
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/cardapio/$mesaId")({
   component: Cardapio,
 });
 
-type Etapa = "identificar" | "menu" | "revisao" | "enviado";
+type Etapa = "identificar" | "menu" | "revisao" | "enviado" | "comanda";
 
 function Cardapio() {
   const { mesaId } = Route.useParams();
@@ -123,18 +123,30 @@ function Cardapio() {
           <p className="text-xs text-primary">{mesa.nome}</p>
         </div>
         {conta && (
-          <button
-            className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs"
-            onClick={() => {
-              limparContaLocal(mesa.id);
-              setContaId(null);
-              setNome("");
-              setEtapa("identificar");
-            }}
-            aria-label="Trocar de cliente"
-          >
-            <User className="h-3.5 w-3.5" /> {conta.clienteNome} · trocar
-          </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button
+              className={cn(
+                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs",
+                etapa === "comanda" ? "bg-primary text-primary-foreground" : "bg-muted",
+              )}
+              onClick={() => setEtapa((e) => (e === "comanda" ? "menu" : "comanda"))}
+              aria-label="Ver minha comanda"
+            >
+              <ReceiptText className="h-3.5 w-3.5" /> Comanda
+            </button>
+            <button
+              className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs"
+              onClick={() => {
+                limparContaLocal(mesa.id);
+                setContaId(null);
+                setNome("");
+                setEtapa("identificar");
+              }}
+              aria-label="Trocar de cliente"
+            >
+              <User className="h-3.5 w-3.5" /> {conta.clienteNome} · trocar
+            </button>
+          </div>
         )}
       </div>
     </header>
@@ -171,6 +183,99 @@ function Cardapio() {
     );
   }
 
+  if (etapa === "comanda") {
+    const pedidosConta = d.pedidos
+      .filter((p) => p.contaId === conta.id)
+      .sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
+    const entregues = pedidosConta.filter((p) => p.status === "confirmado");
+    const pendentes = pedidosConta.filter((p) => p.status === "pendente");
+    const rejeitados = pedidosConta.filter((p) => p.status === "rejeitado");
+    const totalConfirmado = totalConfirmadoConta(d, conta.id);
+    const totalPago = totalPagoConta(d, conta.id);
+    const saldo = saldoConta(d, conta.id);
+
+    const secao = (
+      titulo: string,
+      lista: typeof pedidosConta,
+      icone: React.ReactNode,
+      classeIcone: string,
+      vazio?: string,
+    ) =>
+      lista.length > 0 || vazio ? (
+        <section className="mt-6">
+          <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <span className={classeIcone}>{icone}</span> {titulo}
+          </h2>
+          {lista.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">{vazio}</p>
+          ) : (
+            <ul className="mt-2 space-y-2">
+              {lista.map((p) => (
+                <li key={p.id} className="rounded-xl border bg-card p-3">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>
+                      Pedido às {new Date(p.criadoEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                    <span className="font-semibold tabular text-foreground">{formatBRL(p.totalCentavos)}</span>
+                  </div>
+                  <ul className="mt-2 space-y-1">
+                    {p.itens.map((i) => (
+                      <li key={i.produtoId} className="flex justify-between text-sm">
+                        <span>
+                          {i.quantidade}× {i.nomeProduto}
+                        </span>
+                        <span className="tabular text-muted-foreground">{formatBRL(i.subtotalCentavos)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {p.status === "rejeitado" && p.motivoRejeicao && (
+                    <p className="mt-2 text-xs text-destructive">Motivo: {p.motivoRejeicao}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null;
+
+    return (
+      <div className="min-h-screen pb-10">
+        {cabecalho}
+        <main className="mx-auto max-w-lg px-4 py-6">
+          <button onClick={() => setEtapa("menu")} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground">
+            <ArrowLeft className="h-4 w-4" /> Voltar ao cardápio
+          </button>
+          <h1 className="text-2xl font-semibold">Minha comanda</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{conta.clienteNome} · {mesa.nome}</p>
+
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-xl border bg-card p-3">
+              <p className="text-xs text-muted-foreground">Consumido</p>
+              <p className="mt-1 font-semibold tabular">{formatBRL(totalConfirmado)}</p>
+            </div>
+            <div className="rounded-xl border bg-card p-3">
+              <p className="text-xs text-muted-foreground">Pago</p>
+              <p className="mt-1 font-semibold tabular">{formatBRL(totalPago)}</p>
+            </div>
+            <div className="rounded-xl border bg-card p-3">
+              <p className="text-xs text-muted-foreground">A pagar</p>
+              <p className={cn("mt-1 font-semibold tabular", saldo > 0 && "text-primary")}>{formatBRL(saldo)}</p>
+            </div>
+          </div>
+
+          {pedidosConta.length === 0 && (
+            <p className="mt-8 text-center text-muted-foreground">Você ainda não fez nenhum pedido.</p>
+          )}
+          {secao("Aguardando entrega", pendentes, <Clock className="h-4 w-4" />, "text-warning")}
+          {secao("Entregues", entregues, <CheckCircle2 className="h-4 w-4" />, "text-primary")}
+          {secao("Não atendidos", rejeitados, <XCircle className="h-4 w-4" />, "text-destructive")}
+
+          <Button className="mt-8 h-12 w-full" onClick={() => setEtapa("menu")}>Fazer um pedido</Button>
+        </main>
+      </div>
+    );
+  }
+
   if (etapa === "enviado") {
     return (
       <div className="min-h-screen">
@@ -179,7 +284,8 @@ function Cardapio() {
           <CheckCircle2 className="h-14 w-14 text-primary" />
           <h1 className="mt-4 text-2xl font-semibold">Pedido enviado!</h1>
           <p className="mt-2 text-muted-foreground">Seu pedido está aguardando a confirmação do atendente. O valor só entra na sua conta depois de confirmado.</p>
-          <Button className="mt-8 h-12 w-full" onClick={() => setEtapa("menu")}>Fazer outro pedido</Button>
+          <Button className="mt-8 h-12 w-full" onClick={() => setEtapa("comanda")}>Acompanhar na minha comanda</Button>
+          <Button variant="secondary" className="mt-3 h-12 w-full" onClick={() => setEtapa("menu")}>Fazer outro pedido</Button>
         </main>
       </div>
     );
