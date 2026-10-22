@@ -146,6 +146,13 @@ function Produtos() {
               <Campo id="desc" rotulo="Descrição">
                 <Textarea id="desc" value={form.descricao} maxLength={140} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
               </Campo>
+              <Campo id="foto" rotulo="Foto do produto" dica="Tire uma foto na hora ou envie um arquivo. A imagem fica salva neste navegador.">
+                <FotoProduto
+                  imagem={form.imagem}
+                  onEscolher={(dataUrl) => setForm({ ...form, imagem: dataUrl })}
+                  onRemover={() => setForm((f) => (f ? { ...f, imagem: undefined } : f))}
+                />
+              </Campo>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Campo id="cat" rotulo="Categoria *" erro={erros.categoria}>
                   <Select value={form.categoriaId} onValueChange={(v) => setForm({ ...form, categoriaId: v })}>
