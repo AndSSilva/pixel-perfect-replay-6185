@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Package, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Camera, ImagePlus, Package, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +14,7 @@ import type { Erros } from "@/components/app/common";
 import { executar, useDados } from "@/lib/store";
 import { alternarDisponibilidade, excluirProduto, salvarProduto } from "@/lib/services/regras";
 import { centavosParaInput, formatBRL, parseMoeda } from "@/lib/format";
+import { arquivoParaDataUrl } from "@/lib/imagem";
 import type { Produto } from "@/lib/types";
 
 export const Route = createFileRoute("/admin/produtos")({
