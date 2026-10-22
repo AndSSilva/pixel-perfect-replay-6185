@@ -357,7 +357,11 @@ function Cardapio() {
               const Icone = iconeCategoria(d.categorias.find((c) => c.id === p.categoriaId)?.nome);
               return (
                 <li key={p.id} className={cn("flex items-center gap-3 rounded-xl border bg-card p-3", q > 0 && "border-primary/50")}>
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted"><Icone className="h-6 w-6 text-primary" aria-hidden /></div>
+                  {p.imagemOpcional ? (
+                    <img src={p.imagemOpcional} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted"><Icone className="h-6 w-6 text-primary" aria-hidden /></div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="font-medium leading-tight">{p.nome}</p>
                     {p.descricao && <p className="truncate text-xs text-muted-foreground">{p.descricao}</p>}
