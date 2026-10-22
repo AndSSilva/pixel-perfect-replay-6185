@@ -284,7 +284,8 @@ function Cardapio() {
           <CheckCircle2 className="h-14 w-14 text-primary" />
           <h1 className="mt-4 text-2xl font-semibold">Pedido enviado!</h1>
           <p className="mt-2 text-muted-foreground">Seu pedido está aguardando a confirmação do atendente. O valor só entra na sua conta depois de confirmado.</p>
-          <Button className="mt-8 h-12 w-full" onClick={() => setEtapa("menu")}>Fazer outro pedido</Button>
+          <Button className="mt-8 h-12 w-full" onClick={() => setEtapa("comanda")}>Acompanhar na minha comanda</Button>
+          <Button variant="secondary" className="mt-3 h-12 w-full" onClick={() => setEtapa("menu")}>Fazer outro pedido</Button>
         </main>
       </div>
     );
