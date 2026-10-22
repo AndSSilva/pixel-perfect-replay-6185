@@ -61,7 +61,10 @@ function Produtos() {
     if (preco === null) e.preco = "Informe um preço válido (ex.: 12,50).";
     setErros(e);
     if (Object.keys(e).length) return;
-    const r = executar((x) => salvarProduto(x, { ...form, precoCentavos: preco }), form.id ? "Produto atualizado." : "Produto cadastrado.");
+    const r = executar(
+      (x) => salvarProduto(x, { ...form, precoCentavos: preco, imagemOpcional: form.imagem }),
+      form.id ? "Produto atualizado." : "Produto cadastrado.",
+    );
     if (r.ok) setForm(null);
   };
 
@@ -95,9 +98,13 @@ function Produtos() {
             const Icone = iconeCategoria(cat?.nome);
             return (
               <article key={p.id} className="flex gap-3 rounded-xl border bg-card p-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted">
-                  <Icone className="h-6 w-6 text-muted-foreground" aria-hidden />
-                </div>
+                {p.imagemOpcional ? (
+                  <img src={p.imagemOpcional} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <Icone className="h-6 w-6 text-muted-foreground" aria-hidden />
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="truncate font-medium">{p.nome}</h3>
