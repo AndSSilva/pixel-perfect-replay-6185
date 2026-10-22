@@ -179,3 +179,57 @@ function Produtos() {
     </>
   );
 }
+
+function FotoProduto({ imagem, onEscolher, onRemover }: { imagem?: string | undefined; onEscolher: (dataUrl: string) => void; onRemover: () => void }) {
+  const inputArquivo = useRef<HTMLInputElement>(null);
+  const inputCamera = useRef<HTMLInputElement>(null);
+  const [processando, setProcessando] = useState(false);
+
+  const aoSelecionar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const arquivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!arquivo) return;
+    setProcessando(true);
+    try {
+      onEscolher(await arquivoParaDataUrl(arquivo));
+    } catch (erro) {
+      toast.error(erro instanceof Error ? erro.message : "Não foi possível usar esta imagem.");
+    } finally {
+      setProcessando(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3">
+      {imagem ? (
+        <div className="relative">
+          <img src={imagem} alt="Foto do produto" className="h-20 w-20 rounded-lg border object-cover" />
+          <Button
+            type="button"
+            size="icon"
+            variant="destructive"
+            className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
+            aria-label="Remover foto"
+            onClick={onRemover}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      ) : (
+        <div className="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed bg-muted text-muted-foreground">
+          <ImagePlus className="h-6 w-6" aria-hidden />
+        </div>
+      )}
+      <div className="flex flex-col gap-2">
+        <Button type="button" variant="secondary" size="sm" disabled={processando} onClick={() => inputCamera.current?.click()}>
+          <Camera className="h-4 w-4" /> {processando ? "Processando…" : "Tirar foto"}
+        </Button>
+        <Button type="button" variant="outline" size="sm" disabled={processando} onClick={() => inputArquivo.current?.click()}>
+          <ImagePlus className="h-4 w-4" /> Enviar arquivo
+        </Button>
+      </div>
+      <input ref={inputCamera} type="file" accept="image/*" capture="environment" className="hidden" aria-label="Tirar foto do produto" onChange={aoSelecionar} />
+      <input ref={inputArquivo} type="file" accept="image/*" className="hidden" aria-label="Enviar foto do produto" onChange={aoSelecionar} />
+    </div>
+  );
+}
