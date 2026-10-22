@@ -110,6 +110,7 @@ export function salvarProduto(
     categoriaId: input.categoriaId,
     precoCentavos: input.precoCentavos,
     disponivel: input.disponivel,
+    imagemOpcional: input.imagemOpcional || undefined,
   };
   if (input.id) {
     const p = d.produtos.find((x) => x.id === input.id);
