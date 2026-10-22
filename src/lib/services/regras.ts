@@ -95,7 +95,7 @@ export function excluirCategoria(d: AppData, id: ID, destinoId?: ID) {
 
 export function salvarProduto(
   d: AppData,
-  input: { id?: ID; nome: string; descricao?: string; categoriaId: ID; precoCentavos: number | null; disponivel: boolean; imagemOpcional?: string },
+  input: { id?: ID; nome: string; descricao?: string; categoriaId: ID; precoCentavos: number | null; disponivel: boolean; imagemOpcional?: string | undefined },
 ): ID {
   const nome = input.nome.trim();
   exigir(nome.length > 0, "Informe o nome do produto.");
