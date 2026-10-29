@@ -14,16 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      perfis_acesso: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          deve_trocar_senha: boolean
+          papel: Database["public"]["Enums"]["papel_app"]
+          user_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          deve_trocar_senha?: boolean
+          papel: Database["public"]["Enums"]["papel_app"]
+          user_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          deve_trocar_senha?: boolean
+          papel?: Database["public"]["Enums"]["papel_app"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      marcar_senha_trocada: { Args: never; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      papel_app: "admin" | "master"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +173,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      papel_app: ["admin", "master"],
+    },
   },
 } as const
