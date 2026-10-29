@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mensagemAuth } from "./mensagens";
-import { esquemaEmail, esquemaLogin, esquemaNovaSenha } from "./validacao";
+import { criarEsquemaNovaSenha, esquemaEmail, esquemaLogin, esquemaNovaSenha } from "./validacao";
 
 describe("validação do login", () => {
   it("normaliza o e-mail e exige senha", () => {
@@ -24,6 +24,25 @@ describe("validação de nova senha", () => {
   it("exige confirmação igual e limite de tamanho", () => {
     expect(ok("senha1234", "senha12345")).toBe(false);
     expect(ok("a1".repeat(40))).toBe(false);
+  });
+});
+
+describe("nova senha com senha atual (primeiro acesso)", () => {
+  const esq = criarEsquemaNovaSenha(true);
+  it("exige a senha atual quando pedida", () => {
+    expect(esq.safeParse({ senha: "senha1234", confirmacao: "senha1234" }).success).toBe(false);
+    expect(
+      esq.safeParse({ senhaAtual: "", senha: "senha1234", confirmacao: "senha1234" }).success,
+    ).toBe(false);
+    expect(
+      esq.safeParse({ senhaAtual: "provisoria", senha: "senha1234", confirmacao: "senha1234" })
+        .success,
+    ).toBe(true);
+  });
+  it("não exige quando não pedida (recuperação por e-mail)", () => {
+    expect(
+      esquemaNovaSenha.safeParse({ senha: "senha1234", confirmacao: "senha1234" }).success,
+    ).toBe(true);
   });
 });
 

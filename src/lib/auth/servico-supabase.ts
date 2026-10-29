@@ -19,6 +19,8 @@ export function codigoDoErro(
     return "muitas_tentativas";
   if (codigo === "weak_password") return "senha_fraca";
   if (codigo === "same_password") return "senha_repetida";
+  if (codigo === "current_password_required") return "senha_atual_exigida";
+  if (codigo === "current_password_mismatch") return "senha_atual_incorreta";
   if (
     codigo === "otp_expired" ||
     codigo === "flow_state_not_found" ||
@@ -152,11 +154,16 @@ export function criarServicoSupabase(): ServicoAuth {
       return !error && !!data.session && recuperacaoDetectada;
     },
 
-    async definirNovaSenha(novaSenha): Promise<ResultadoAuth> {
+    async definirNovaSenha(novaSenha, senhaAtual): Promise<ResultadoAuth> {
       ouvirRecuperacao();
-      const { error } = await supabase.auth.updateUser({ password: novaSenha });
+      const { error } = await supabase.auth.updateUser({
+        password: novaSenha,
+        ...(senhaAtual ? { current_password: senhaAtual } : {}),
+      });
       if (error) {
-        const codigo = codigoDoErro(error);
+        let codigo = codigoDoErro(error);
+        // Com a senha atual informada, "credenciais inválidas" significa que ela está errada.
+        if (senhaAtual && codigo === "credenciais_invalidas") codigo = "senha_atual_incorreta";
         // Repetição depois de uma falha só no marcador: a senha já é esta, então basta concluir.
         const jaEstaSenha = codigo === "senha_repetida" && senhaTrocadaPendenteMarcador;
         if (!jaEstaSenha) {

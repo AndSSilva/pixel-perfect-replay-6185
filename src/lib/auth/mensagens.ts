@@ -9,6 +9,9 @@ export const MENSAGENS_AUTH: Record<CodigoErroAuth, string> = {
   senha_repetida: "A nova senha deve ser diferente da senha atual.",
   falha_marcador:
     "Sua senha foi alterada, mas não foi possível concluir o primeiro acesso. Clique em salvar novamente (você pode repetir a mesma senha).",
+  senha_atual_incorreta: "A senha atual (provisória) está incorreta.",
+  senha_atual_exigida:
+    "Para trocar a senha é preciso informar a senha atual. Use o primeiro acesso ou peça ajuda ao administrador da plataforma.",
   sem_permissao: "Seu usuário não tem acesso ao painel administrativo.",
   sem_sessao: "Sua sessão expirou. Entre novamente.",
   rede: "Não foi possível conectar. Verifique sua internet e tente novamente.",

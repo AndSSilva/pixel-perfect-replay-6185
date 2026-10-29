@@ -57,6 +57,8 @@ describe("codigoDoErro", () => {
     expect(codigoDoErro(erroAuth("over_email_send_rate_limit", 429))).toBe("muitas_tentativas");
     expect(codigoDoErro(erroAuth("weak_password"))).toBe("senha_fraca");
     expect(codigoDoErro(erroAuth("same_password"))).toBe("senha_repetida");
+    expect(codigoDoErro(erroAuth("current_password_required"))).toBe("senha_atual_exigida");
+    expect(codigoDoErro(erroAuth("current_password_mismatch"))).toBe("senha_atual_incorreta");
     expect(codigoDoErro(erroAuth("otp_expired"))).toBe("link_invalido");
     expect(
       codigoDoErro({ name: "AuthRetryableFetchError", message: "Failed to fetch", status: 0 }),
@@ -140,6 +142,36 @@ describe("definirNovaSenha", () => {
     expect((await svc.definirNovaSenha("senha1234")).ok).toBe(true);
     expect(m.updateUser).toHaveBeenCalledWith({ password: "senha1234" });
     expect(m.rpc).toHaveBeenCalledWith("marcar_senha_trocada");
+  });
+  it("primeiro acesso envia a senha atual ao backend", async () => {
+    m.updateUser.mockResolvedValue({ error: null });
+    expect((await svc.definirNovaSenha("senha1234", "provisoria")).ok).toBe(true);
+    expect(m.updateUser).toHaveBeenCalledWith({
+      password: "senha1234",
+      current_password: "provisoria",
+    });
+  });
+  it("recuperação por e-mail não envia senha atual", async () => {
+    m.updateUser.mockResolvedValue({ error: null });
+    await svc.definirNovaSenha("senha1234");
+    expect(m.updateUser).toHaveBeenCalledWith({ password: "senha1234" });
+  });
+  it("senha atual errada → erro específico e o marcador não é desligado", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    m.updateUser.mockResolvedValue({ error: erroAuth("invalid_credentials") });
+    expect(await svc.definirNovaSenha("senha1234", "errada")).toEqual({
+      ok: false,
+      codigo: "senha_atual_incorreta",
+    });
+    expect(m.rpc).not.toHaveBeenCalled();
+  });
+  it("backend exige a senha atual e ela não foi enviada → erro claro", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    m.updateUser.mockResolvedValue({ error: erroAuth("current_password_required") });
+    expect(await svc.definirNovaSenha("senha1234")).toEqual({
+      ok: false,
+      codigo: "senha_atual_exigida",
+    });
   });
   it("falha ao desligar o marcador → erro específico (o usuário continuará no primeiro acesso)", async () => {
     m.updateUser.mockResolvedValue({ error: null });

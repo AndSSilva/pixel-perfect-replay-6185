@@ -9,6 +9,8 @@ export type CodigoErroAuth =
   | "senha_repetida"
   | "sem_permissao"
   | "falha_marcador"
+  | "senha_atual_incorreta"
+  | "senha_atual_exigida"
   | "sem_sessao"
   | "rede"
   | "desconhecido";
@@ -35,7 +37,9 @@ export interface ServicoAuth {
   linkRecuperacaoValido(): Promise<boolean>;
   /**
    * Define a nova senha da sessão atual (recuperação ou primeiro acesso).
+   * `senhaAtual` é exigida pelo backend no primeiro acesso (a senha provisória); na recuperação
+   * por e-mail não existe.
    * No primeiro acesso, a implementação também desliga o marcador `deveTrocarSenha`.
    */
-  definirNovaSenha(novaSenha: string): Promise<ResultadoAuth>;
+  definirNovaSenha(novaSenha: string, senhaAtual?: string): Promise<ResultadoAuth>;
 }

@@ -7,16 +7,21 @@ import { Campo } from "@/components/app/common";
 import { CampoSenha } from "@/components/auth/CampoSenha";
 import { mensagemAuth } from "@/lib/auth/mensagens";
 import type { ResultadoAuth } from "@/lib/auth/tipos";
-import { esquemaNovaSenha, REQUISITOS_SENHA, type DadosNovaSenha } from "@/lib/auth/validacao";
+import { criarEsquemaNovaSenha, REQUISITOS_SENHA, type DadosNovaSenha } from "@/lib/auth/validacao";
 import { cn } from "@/lib/utils";
 
-/** Formulário de nova senha (recuperação e primeiro acesso). */
+/**
+ * Formulário de nova senha (recuperação e primeiro acesso).
+ * `pedirSenhaAtual` acrescenta o campo da senha atual (provisória), exigido no primeiro acesso.
+ */
 export function FormNovaSenha({
   rotuloBotao,
   onEnviar,
+  pedirSenhaAtual = false,
 }: {
   rotuloBotao: string;
-  onEnviar: (senha: string) => Promise<ResultadoAuth>;
+  onEnviar: (senha: string, senhaAtual?: string) => Promise<ResultadoAuth>;
+  pedirSenhaAtual?: boolean;
 }) {
   const [erroGeral, setErroGeral] = useState<string>();
   const {
@@ -25,24 +30,37 @@ export function FormNovaSenha({
     control,
     formState: { errors, isSubmitting },
   } = useForm<DadosNovaSenha>({
-    resolver: zodResolver(esquemaNovaSenha),
-    defaultValues: { senha: "", confirmacao: "" },
+    resolver: zodResolver(criarEsquemaNovaSenha(pedirSenhaAtual)),
+    defaultValues: { senhaAtual: "", senha: "", confirmacao: "" },
   });
   const senha = useWatch({ control, name: "senha" }) ?? "";
 
-  const enviar = handleSubmit(async ({ senha }) => {
+  const enviar = handleSubmit(async ({ senha, senhaAtual }) => {
     setErroGeral(undefined);
-    const r = await onEnviar(senha).catch((): ResultadoAuth => ({ ok: false, codigo: "rede" }));
+    const r = await onEnviar(senha, pedirSenhaAtual ? senhaAtual : undefined).catch(
+      (): ResultadoAuth => ({ ok: false, codigo: "rede" }),
+    );
     if (!r.ok) setErroGeral(mensagemAuth(r.codigo));
   });
 
   return (
     <form onSubmit={enviar} noValidate className="space-y-4">
+      {pedirSenhaAtual && (
+        <Campo id="senhaAtual" rotulo="Senha atual (provisória)" erro={errors.senhaAtual?.message}>
+          <CampoSenha
+            id="senhaAtual"
+            autoComplete="current-password"
+            autoFocus
+            aria-invalid={!!errors.senhaAtual}
+            {...register("senhaAtual")}
+          />
+        </Campo>
+      )}
       <Campo id="senha" rotulo="Nova senha" erro={errors.senha?.message}>
         <CampoSenha
           id="senha"
           autoComplete="new-password"
-          autoFocus
+          autoFocus={!pedirSenhaAtual}
           aria-invalid={!!errors.senha}
           aria-describedby="requisitos"
           {...register("senha")}

@@ -28,8 +28,8 @@ function PrimeiroAcesso() {
     else if (!sessao.deveTrocarSenha) nav({ to: "/admin", replace: true });
   }, [carregando, sessao, nav]);
 
-  const enviar = async (senha: string): Promise<ResultadoAuth> => {
-    const r = await authService.definirNovaSenha(senha);
+  const enviar = async (senha: string, senhaAtual?: string): Promise<ResultadoAuth> => {
+    const r = await authService.definirNovaSenha(senha, senhaAtual);
     if (r.ok) nav({ to: "/admin", replace: true });
     return r;
   };
@@ -49,7 +49,7 @@ function PrimeiroAcesso() {
       titulo="Crie sua senha"
       descricao="Você entrou com uma senha provisória. Crie uma senha pessoal para continuar."
     >
-      <FormNovaSenha rotuloBotao="Salvar e continuar" onEnviar={enviar} />
+      <FormNovaSenha rotuloBotao="Salvar e continuar" onEnviar={enviar} pedirSenhaAtual />
     </AuthShell>
   );
 }
