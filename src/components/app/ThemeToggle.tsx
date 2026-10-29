@@ -1,44 +1,29 @@
-import { Clock, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTema } from "@/lib/use-tema";
-import type { PreferenciaTema } from "@/lib/tema";
 
-const OPCOES: { valor: PreferenciaTema; rotulo: string; Icone: typeof Sun }[] = [
-  { valor: "claro", rotulo: "Tema claro", Icone: Sun },
-  { valor: "automatico", rotulo: "Tema automático pelo horário", Icone: Clock },
-  { valor: "escuro", rotulo: "Tema escuro", Icone: Moon },
-];
-
-/** Seletor de tema: claro, automático (padrão, pelo horário) ou escuro. */
+/**
+ * Botão único que oferece o tema oposto ao atual: de dia mostra "Modo noite", de noite "Modo dia".
+ * O padrão é automático pelo horário; a troca vale até a próxima virada (06:00/18:00).
+ */
 export function ThemeToggle({ className }: { className?: string }) {
-  const { preferencia, escolher } = useTema();
+  const { tema, alternar } = useTema();
+  const paraNoite = tema === "claro";
+  const rotulo = paraNoite ? "Mudar para o modo noite" : "Mudar para o modo dia";
+  const Icone = paraNoite ? Moon : Sun;
   return (
-    <div
-      role="group"
-      aria-label="Tema da interface"
-      className={cn("inline-flex rounded-full border bg-card p-0.5 shadow-sm", className)}
+    <button
+      type="button"
+      onClick={alternar}
+      title={rotulo}
+      aria-label={rotulo}
+      className={cn(
+        "inline-flex h-9 items-center gap-2 rounded-full border bg-card px-3 text-sm font-medium text-muted-foreground shadow-sm transition-colors hover:text-foreground",
+        className,
+      )}
     >
-      {OPCOES.map(({ valor, rotulo, Icone }) => {
-        const ativo = preferencia === valor;
-        return (
-          <button
-            key={valor}
-            type="button"
-            title={rotulo}
-            aria-label={rotulo}
-            aria-pressed={ativo}
-            onClick={() => escolher(valor)}
-            className={cn(
-              "inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors",
-              ativo
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <Icone className="h-4 w-4" aria-hidden />
-          </button>
-        );
-      })}
-    </div>
+      <Icone className="h-4 w-4" aria-hidden />
+      <span className="hidden sm:inline">{paraNoite ? "Modo noite" : "Modo dia"}</span>
+    </button>
   );
 }

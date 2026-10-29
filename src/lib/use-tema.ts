@@ -1,45 +1,32 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  aplicarTema,
-  lerPreferencia,
-  resolverTema,
-  salvarPreferencia,
-  type PreferenciaTema,
-  type Tema,
-} from "./tema";
+import { alternarTema, aplicarTema, temaAtual, type Tema } from "./tema";
 
 /**
- * Estado do tema no cliente. Na hidratação assume "automatico"/"claro" (igual ao servidor) e
- * sincroniza no efeito; o script inicial já pintou o tema certo, então não há flash.
+ * Tema no cliente. Na hidratação começa em "claro" (igual ao servidor) e sincroniza no efeito;
+ * o script inicial já pintou o tema certo, então não há flash.
  */
 export function useTema() {
-  const [preferencia, setPreferencia] = useState<PreferenciaTema>("automatico");
   const [tema, setTema] = useState<Tema>("claro");
 
   useEffect(() => {
-    const p = lerPreferencia();
-    setPreferencia(p);
-    setTema(resolverTema(p));
+    setTema(temaAtual());
   }, []);
 
-  // No modo automático, reavalia a cada minuto (troca às 06:00 e às 18:00).
+  // Reavalia a cada minuto: troca sozinho às 06:00 e 18:00 e quando uma troca manual expira.
   useEffect(() => {
-    if (preferencia !== "automatico") return;
     const id = setInterval(() => {
-      const t = resolverTema("automatico");
+      const t = temaAtual();
       setTema(t);
       aplicarTema(t);
     }, 60_000);
     return () => clearInterval(id);
-  }, [preferencia]);
-
-  const escolher = useCallback((p: PreferenciaTema) => {
-    salvarPreferencia(p);
-    const t = resolverTema(p);
-    setPreferencia(p);
-    setTema(t);
-    aplicarTema(t);
   }, []);
 
-  return { tema, preferencia, escolher };
+  const alternar = useCallback(() => {
+    const novo = alternarTema();
+    setTema(novo);
+    aplicarTema(novo);
+  }, []);
+
+  return { tema, alternar };
 }
