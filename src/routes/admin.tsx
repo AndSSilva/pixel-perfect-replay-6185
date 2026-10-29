@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   History,
@@ -16,7 +16,8 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { Button } from "@/components/ui/button";
 import { Carregando } from "@/components/app/common";
 import { useDados } from "@/lib/store";
-import { estaLogadoDemo, sairDemo } from "@/lib/auth-demo";
+import { authService } from "@/lib/auth/servico";
+import { useGuardaAdmin } from "@/lib/auth/use-sessao";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({
@@ -51,7 +52,7 @@ function Navegacao({ pendentes, onNavegar }: { pendentes: number; onNavegar?: ()
               ativo ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
             )}
           >
-            <i.icone className={cn("h-4 w-4", ativo && "text-primary")} />
+            <i.icone className={cn("h-4 w-4", ativo && "text-link")} />
             <span className="flex-1">{i.rotulo}</span>
             {i.to === "/admin/pedidos" && pendentes > 0 && (
               <span className="rounded-full bg-warning px-2 text-xs font-semibold text-warning-foreground">{pendentes}</span>
@@ -60,8 +61,8 @@ function Navegacao({ pendentes, onNavegar }: { pendentes: number; onNavegar?: ()
         );
       })}
       <button
-        onClick={() => {
-          sairDemo();
+        onClick={async () => {
+          await authService.sair();
           nav({ to: "/admin/login" });
         }}
         className="mt-auto flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
@@ -75,13 +76,8 @@ function Navegacao({ pendentes, onNavegar }: { pendentes: number; onNavegar?: ()
 function AdminLayout() {
   const d = useDados();
   const nav = useNavigate();
-  const [liberado, setLiberado] = useState(false);
+  const { liberado } = useGuardaAdmin();
   const [menuAberto, setMenuAberto] = useState(false);
-
-  useEffect(() => {
-    if (estaLogadoDemo()) setLiberado(true);
-    else nav({ to: "/admin/login", replace: true });
-  }, [nav]);
 
   if (!d || !liberado) return <Carregando />;
   const pendentes = d.pedidos.filter((p) => p.status === "pendente").length;

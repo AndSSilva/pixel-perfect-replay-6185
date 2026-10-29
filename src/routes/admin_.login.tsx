@@ -1,76 +1,124 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Lock } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckCircle2, Info, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Campo, Carregando } from "@/components/app/common";
-import { useDados } from "@/lib/store";
-import { entrarDemo } from "@/lib/auth-demo";
+import { Campo } from "@/components/app/common";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { CampoSenha } from "@/components/auth/CampoSenha";
+import { authService } from "@/lib/auth/servico";
+import { mensagemAuth } from "@/lib/auth/mensagens";
+import { useSessao } from "@/lib/auth/use-sessao";
+import { esquemaLogin, type DadosLogin } from "@/lib/auth/validacao";
 
 export const Route = createFileRoute("/admin_/login")({
+  validateSearch: (s: Record<string, unknown>): { aviso?: "senha-redefinida" } =>
+    s["aviso"] === "senha-redefinida" ? { aviso: "senha-redefinida" } : {},
   head: () => ({
     meta: [
-      { title: "Acesso ao painel — Gestão de Bebidas" },
-      { name: "description", content: "Entre no painel administrativo com o PIN de demonstração." },
-      { property: "og:title", content: "Acesso ao painel — Gestão de Bebidas" },
-      { property: "og:description", content: "Entre no painel administrativo com o PIN de demonstração." },
+      { title: "Entrar — Mesa Digital" },
+      { name: "description", content: "Acesse o painel administrativo da Mesa Digital." },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: Login,
 });
 
 function Login() {
-  const d = useDados();
+  const { aviso } = Route.useSearch();
   const nav = useNavigate();
-  const [pin, setPin] = useState("");
-  const [erro, setErro] = useState<string>();
-  if (!d) return <Carregando />;
+  const { carregando, sessao } = useSessao();
+  const [erroGeral, setErroGeral] = useState<string>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<DadosLogin>({
+    resolver: zodResolver(esquemaLogin),
+    defaultValues: { email: "", senha: "" },
+  });
 
-  const enviar = (e: FormEvent) => {
-    e.preventDefault();
-    // Demo-only check against a locally stored PIN. Not real authentication.
-    if (pin !== d.config.pinDemo) return setErro("PIN incorreto.");
-    entrarDemo();
-    nav({ to: "/admin" });
-  };
+  // Quem já está autenticado não precisa ver o login.
+  useEffect(() => {
+    if (carregando || !sessao) return;
+    nav({ to: sessao.deveTrocarSenha ? "/admin/primeiro-acesso" : "/admin", replace: true });
+  }, [carregando, sessao, nav]);
+
+  const entrar = handleSubmit(async ({ email, senha }) => {
+    setErroGeral(undefined);
+    const r = await authService.entrar(email, senha).catch(() => null);
+    if (!r) return setErroGeral(mensagemAuth("rede"));
+    if (!r.ok) return setErroGeral(mensagemAuth(r.codigo));
+    nav({ to: r.valor.deveTrocarSenha ? "/admin/primeiro-acesso" : "/admin", replace: true });
+  });
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
-      <form onSubmit={enviar} className="w-full max-w-sm rounded-2xl border bg-card p-6 shadow-xl">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="rounded-lg bg-primary/15 p-2.5">
-            <Lock className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold">Painel administrativo</h1>
-            <p className="text-sm text-muted-foreground">{d.config.nomeEstabelecimento}</p>
-          </div>
-        </div>
-        <Campo id="pin" rotulo="PIN" erro={erro}>
+    <AuthShell titulo="Acesse o painel" descricao="Entre com o e-mail e a senha do administrador.">
+      {aviso === "senha-redefinida" && (
+        <p
+          role="status"
+          className="mb-4 flex items-start gap-2 rounded-md border border-success/40 bg-success/10 px-3 py-2 text-sm text-success"
+        >
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden /> Senha alterada. Entre com
+          a nova senha.
+        </p>
+      )}
+      {!authService.configurado && (
+        <p
+          role="status"
+          className="mb-4 flex items-start gap-2 rounded-md border border-info/40 bg-info/10 px-3 py-2 text-sm text-info"
+        >
+          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden /> A autenticação ainda não foi
+          configurada neste ambiente.
+        </p>
+      )}
+      <form onSubmit={entrar} noValidate className="space-y-4">
+        <Campo id="email" rotulo="E-mail" erro={errors.email?.message}>
           <Input
-            id="pin"
-            inputMode="numeric"
-            type="password"
+            id="email"
+            type="email"
+            inputMode="email"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
             autoFocus
-            value={pin}
-            onChange={(e) => {
-              setPin(e.target.value.replace(/\D/g, ""));
-              setErro(undefined);
-            }}
-            maxLength={8}
-            aria-invalid={!!erro}
+            className="h-11"
+            aria-invalid={!!errors.email}
+            {...register("email")}
           />
         </Campo>
-        <Button type="submit" className="mt-4 w-full" disabled={!pin}>
+        <Campo id="senha" rotulo="Senha" erro={errors.senha?.message}>
+          <CampoSenha
+            id="senha"
+            autoComplete="current-password"
+            aria-invalid={!!errors.senha}
+            {...register("senha")}
+          />
+        </Campo>
+        <div className="flex justify-end">
+          <Link to="/admin/esqueci-senha" className="text-sm font-medium text-link hover:underline">
+            Esqueci minha senha
+          </Link>
+        </div>
+        {erroGeral && (
+          <p
+            role="alert"
+            className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            {erroGeral}
+          </p>
+        )}
+        <Button
+          type="submit"
+          className="h-11 w-full text-base"
+          disabled={isSubmitting || !authService.configurado}
+        >
+          {isSubmitting && <Loader2 className="animate-spin" aria-hidden />}
           Entrar
         </Button>
-        <p className="mt-4 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-          Acesso demonstrativo, sem segurança real. PIN de teste: <strong className="text-foreground">{d.config.pinDemo}</strong>
-        </p>
-        <Link to="/" className="mt-4 block text-center text-sm text-muted-foreground hover:text-foreground">
-          Voltar ao início
-        </Link>
       </form>
-    </main>
+    </AuthShell>
   );
 }

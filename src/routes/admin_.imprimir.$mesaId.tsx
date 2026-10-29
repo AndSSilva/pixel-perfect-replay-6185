@@ -1,18 +1,17 @@
-import { useEffect, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { QRCodeSVG } from "qrcode.react";
 import { ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Carregando } from "@/components/app/common";
 import { useDados } from "@/lib/store";
-import { estaLogadoDemo } from "@/lib/auth-demo";
+import { useGuardaAdmin } from "@/lib/auth/use-sessao";
 
 export const Route = createFileRoute("/admin_/imprimir/$mesaId")({
   head: () => ({
     meta: [
-      { title: "Imprimir QR Code — Gestão de Bebidas" },
+      { title: "Imprimir QR Code — Mesa Digital" },
       { name: "description", content: "QR Code da mesa pronto para impressão." },
-      { property: "og:title", content: "Imprimir QR Code — Gestão de Bebidas" },
+      { property: "og:title", content: "Imprimir QR Code — Mesa Digital" },
       { property: "og:description", content: "QR Code da mesa pronto para impressão." },
     ],
   }),
@@ -22,13 +21,8 @@ export const Route = createFileRoute("/admin_/imprimir/$mesaId")({
 function Imprimir() {
   const { mesaId } = Route.useParams();
   const d = useDados();
-  const nav = useNavigate();
-  const [ok, setOk] = useState(false);
-  useEffect(() => {
-    if (estaLogadoDemo()) setOk(true);
-    else nav({ to: "/admin/login", replace: true });
-  }, [nav]);
-  if (!d || !ok) return <Carregando />;
+  const { liberado } = useGuardaAdmin();
+  if (!d || !liberado) return <Carregando />;
   const mesa = d.mesas.find((m) => m.id === mesaId);
   if (!mesa) return <p className="p-8 text-center">Mesa não encontrada.</p>;
   const link = `${window.location.origin}/cardapio/${mesa.id}`;

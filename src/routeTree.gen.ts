@@ -17,7 +17,10 @@ import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configura
 import { Route as AdminHistoricoRouteImport } from './routes/admin.historico'
 import { Route as AdminPedidosRouteImport } from './routes/admin.pedidos'
 import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
+import { Route as AdminEsqueciSenhaRouteImport } from './routes/admin_.esqueci-senha'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
+import { Route as AdminPrimeiroAcessoRouteImport } from './routes/admin_.primeiro-acesso'
+import { Route as AdminRedefinirSenhaRouteImport } from './routes/admin_.redefinir-senha'
 import { Route as CardapioMesaIdRouteImport } from './routes/cardapio.$mesaId'
 import { Route as AdminContasIndexRouteImport } from './routes/admin.contas.index'
 import { Route as AdminContasContaIdRouteImport } from './routes/admin.contas.$contaId'
@@ -65,9 +68,24 @@ const AdminProdutosRoute = AdminProdutosRouteImport.update({
   path: '/produtos',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEsqueciSenhaRoute = AdminEsqueciSenhaRouteImport.update({
+  id: '/admin_/esqueci-senha',
+  path: '/admin/esqueci-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin_/login',
   path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPrimeiroAcessoRoute = AdminPrimeiroAcessoRouteImport.update({
+  id: '/admin_/primeiro-acesso',
+  path: '/admin/primeiro-acesso',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRedefinirSenhaRoute = AdminRedefinirSenhaRouteImport.update({
+  id: '/admin_/redefinir-senha',
+  path: '/admin/redefinir-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CardapioMesaIdRoute = CardapioMesaIdRouteImport.update({
@@ -109,7 +127,10 @@ export interface FileRoutesByFullPath {
   '/admin/historico': typeof AdminHistoricoRoute
   '/admin/pedidos': typeof AdminPedidosRoute
   '/admin/produtos': typeof AdminProdutosRoute
+  '/admin/esqueci-senha': typeof AdminEsqueciSenhaRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
+  '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
@@ -125,7 +146,10 @@ export interface FileRoutesByTo {
   '/admin/historico': typeof AdminHistoricoRoute
   '/admin/pedidos': typeof AdminPedidosRoute
   '/admin/produtos': typeof AdminProdutosRoute
+  '/admin/esqueci-senha': typeof AdminEsqueciSenhaRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
+  '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
   '/admin': typeof AdminIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
@@ -143,7 +167,10 @@ export interface FileRoutesById {
   '/admin/historico': typeof AdminHistoricoRoute
   '/admin/pedidos': typeof AdminPedidosRoute
   '/admin/produtos': typeof AdminProdutosRoute
+  '/admin_/esqueci-senha': typeof AdminEsqueciSenhaRoute
   '/admin_/login': typeof AdminLoginRoute
+  '/admin_/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
+  '/admin_/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
@@ -162,7 +189,10 @@ export interface FileRouteTypes {
     | '/admin/historico'
     | '/admin/pedidos'
     | '/admin/produtos'
+    | '/admin/esqueci-senha'
     | '/admin/login'
+    | '/admin/primeiro-acesso'
+    | '/admin/redefinir-senha'
     | '/cardapio/$mesaId'
     | '/admin/'
     | '/admin/contas/$contaId'
@@ -178,7 +208,10 @@ export interface FileRouteTypes {
     | '/admin/historico'
     | '/admin/pedidos'
     | '/admin/produtos'
+    | '/admin/esqueci-senha'
     | '/admin/login'
+    | '/admin/primeiro-acesso'
+    | '/admin/redefinir-senha'
     | '/cardapio/$mesaId'
     | '/admin'
     | '/admin/contas/$contaId'
@@ -195,7 +228,10 @@ export interface FileRouteTypes {
     | '/admin/historico'
     | '/admin/pedidos'
     | '/admin/produtos'
+    | '/admin_/esqueci-senha'
     | '/admin_/login'
+    | '/admin_/primeiro-acesso'
+    | '/admin_/redefinir-senha'
     | '/cardapio/$mesaId'
     | '/admin/'
     | '/admin/contas/$contaId'
@@ -208,7 +244,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  AdminEsqueciSenhaRoute: typeof AdminEsqueciSenhaRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminPrimeiroAcessoRoute: typeof AdminPrimeiroAcessoRoute
+  AdminRedefinirSenhaRoute: typeof AdminRedefinirSenhaRoute
   CardapioMesaIdRoute: typeof CardapioMesaIdRoute
   AdminImprimirMesaIdRoute: typeof AdminImprimirMesaIdRoute
 }
@@ -271,11 +310,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProdutosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin_/esqueci-senha': {
+      id: '/admin_/esqueci-senha'
+      path: '/admin/esqueci-senha'
+      fullPath: '/admin/esqueci-senha'
+      preLoaderRoute: typeof AdminEsqueciSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin_/login': {
       id: '/admin_/login'
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin_/primeiro-acesso': {
+      id: '/admin_/primeiro-acesso'
+      path: '/admin/primeiro-acesso'
+      fullPath: '/admin/primeiro-acesso'
+      preLoaderRoute: typeof AdminPrimeiroAcessoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin_/redefinir-senha': {
+      id: '/admin_/redefinir-senha'
+      path: '/admin/redefinir-senha'
+      fullPath: '/admin/redefinir-senha'
+      preLoaderRoute: typeof AdminRedefinirSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cardapio/$mesaId': {
@@ -354,7 +414,10 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  AdminEsqueciSenhaRoute: AdminEsqueciSenhaRoute,
   AdminLoginRoute: AdminLoginRoute,
+  AdminPrimeiroAcessoRoute: AdminPrimeiroAcessoRoute,
+  AdminRedefinirSenhaRoute: AdminRedefinirSenhaRoute,
   CardapioMesaIdRoute: CardapioMesaIdRoute,
   AdminImprimirMesaIdRoute: AdminImprimirMesaIdRoute,
 }
