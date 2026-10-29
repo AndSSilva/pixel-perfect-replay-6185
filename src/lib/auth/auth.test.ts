@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { authService } from "./servico";
 import { mensagemAuth } from "./mensagens";
 import { esquemaEmail, esquemaLogin, esquemaNovaSenha } from "./validacao";
 
@@ -28,16 +27,20 @@ describe("validação de nova senha", () => {
   });
 });
 
-describe("serviço de autenticação sem backend", () => {
-  it("nunca finge sucesso: tudo falha como não configurado", async () => {
-    expect(authService.configurado).toBe(false);
-    expect(await authService.obterSessao()).toBeNull();
-    const r = await authService.entrar("a@b.co", "senha1234");
-    expect(r).toEqual({ ok: false, codigo: "nao_configurado" });
-    expect(await authService.linkRecuperacaoValido()).toBe(false);
-    expect((await authService.definirNovaSenha("senha1234")).ok).toBe(false);
-  });
-  it("mensagens de erro de login são genéricas", () => {
+describe("mensagens de erro", () => {
+  it("as de login são genéricas e todas têm texto", () => {
     expect(mensagemAuth("credenciais_invalidas")).toBe("E-mail ou senha incorretos.");
+    for (const c of [
+      "muitas_tentativas",
+      "link_invalido",
+      "senha_fraca",
+      "senha_repetida",
+      "sem_permissao",
+      "sem_sessao",
+      "rede",
+      "desconhecido",
+    ] as const) {
+      expect(mensagemAuth(c).length).toBeGreaterThan(5);
+    }
   });
 });

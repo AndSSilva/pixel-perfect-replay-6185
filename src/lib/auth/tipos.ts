@@ -1,12 +1,13 @@
 // Contrato de autenticação do painel. A UI depende só disto; a implementação concreta
-// (Lovable Cloud / Supabase Auth) entra na etapa 1B em ./servico.ts, sem mexer nas telas.
+// (Lovable Cloud / Supabase Auth) está em ./servico-supabase.ts e é ligada em ./servico.ts.
 
 export type CodigoErroAuth =
-  | "nao_configurado"
   | "credenciais_invalidas"
   | "muitas_tentativas"
   | "link_invalido"
   | "senha_fraca"
+  | "senha_repetida"
+  | "sem_permissao"
   | "sem_sessao"
   | "rede"
   | "desconhecido";
@@ -22,8 +23,6 @@ export interface SessaoAdmin {
 }
 
 export interface ServicoAuth {
-  /** Falso quando ainda não há backend de autenticação ligado a este ambiente. */
-  readonly configurado: boolean;
   obterSessao(): Promise<SessaoAdmin | null>;
   /** Avisa mudanças de sessão (login, logout, expiração). Retorna a função de cancelar. */
   aoMudarSessao(cb: (sessao: SessaoAdmin | null) => void): () => void;

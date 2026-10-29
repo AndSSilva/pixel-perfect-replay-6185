@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Info, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Campo } from "@/components/app/common";
@@ -65,15 +65,6 @@ function Login() {
           a nova senha.
         </p>
       )}
-      {!authService.configurado && (
-        <p
-          role="status"
-          className="mb-4 flex items-start gap-2 rounded-md border border-info/40 bg-info/10 px-3 py-2 text-sm text-info"
-        >
-          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden /> A autenticação ainda não foi
-          configurada neste ambiente.
-        </p>
-      )}
       <form onSubmit={entrar} noValidate className="space-y-4">
         <Campo id="email" rotulo="E-mail" erro={errors.email?.message}>
           <Input
@@ -110,11 +101,7 @@ function Login() {
             {erroGeral}
           </p>
         )}
-        <Button
-          type="submit"
-          className="h-11 w-full text-base"
-          disabled={isSubmitting || !authService.configurado}
-        >
+        <Button type="submit" className="h-11 w-full text-base" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="animate-spin" aria-hidden />}
           Entrar
         </Button>

@@ -37,8 +37,8 @@ function EsqueciSenha() {
       .solicitarRecuperacao(email, `${window.location.origin}/admin/redefinir-senha`)
       .catch(() => null);
     if (!r) return setErroGeral(mensagemAuth("rede"));
-    // Resposta neutra: não revela se o e-mail tem conta. Só falhas gerais aparecem como erro.
-    if (!r.ok && r.codigo !== "credenciais_invalidas") return setErroGeral(mensagemAuth(r.codigo));
+    // Resposta neutra: não revela se o e-mail tem conta. Só falhas gerais (rede, limite) aparecem como erro.
+    if (!r.ok) return setErroGeral(mensagemAuth(r.codigo));
     setEnviado(true);
   });
 
@@ -94,19 +94,10 @@ function EsqueciSenha() {
             {erroGeral}
           </p>
         )}
-        <Button
-          type="submit"
-          className="h-11 w-full text-base"
-          disabled={isSubmitting || !authService.configurado}
-        >
+        <Button type="submit" className="h-11 w-full text-base" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="animate-spin" aria-hidden />}
           Enviar link
         </Button>
-        {!authService.configurado && (
-          <p className="text-center text-xs text-muted-foreground">
-            {mensagemAuth("nao_configurado")}
-          </p>
-        )}
       </form>
     </AuthShell>
   );
