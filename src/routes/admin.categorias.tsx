@@ -15,9 +15,9 @@ import type { Categoria } from "@/lib/types";
 export const Route = createFileRoute("/admin/categorias")({
   head: () => ({
     meta: [
-      { title: "Categorias — Gestão de Bebidas" },
+      { title: "Categorias — Mesa Digital" },
       { name: "description", content: "Organize as categorias do cardápio." },
-      { property: "og:title", content: "Categorias — Gestão de Bebidas" },
+      { property: "og:title", content: "Categorias — Mesa Digital" },
       { property: "og:description", content: "Organize as categorias do cardápio." },
     ],
   }),
@@ -54,7 +54,7 @@ function Categorias() {
             const Icone = iconeCategoria(c.nome);
             return (
               <article key={c.id} className="flex items-start gap-3 rounded-xl border bg-card p-4">
-                <div className="rounded-lg bg-muted p-2.5"><Icone className="h-5 w-5 text-primary" /></div>
+                <div className="rounded-lg bg-muted p-2.5"><Icone className="h-5 w-5 text-link" /></div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium">{c.nome}</h3>

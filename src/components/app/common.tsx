@@ -45,7 +45,7 @@ export function StatCard({ rotulo, valor, icone: Icone, destaque }: { rotulo: st
     <div className={cn("rounded-xl border bg-card p-4", destaque && "border-primary/40")}>
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{rotulo}</span>
-        <Icone className={cn("h-4 w-4", destaque ? "text-primary" : "text-muted-foreground")} aria-hidden />
+        <Icone className={cn("h-4 w-4", destaque ? "text-link" : "text-muted-foreground")} aria-hidden />
       </div>
       <div className="mt-3 font-display text-2xl font-semibold tabular">{valor}</div>
     </div>
@@ -72,7 +72,7 @@ const tons: Record<Tom, string> = {
   perigo: "bg-destructive/15 text-destructive border-destructive/30",
   info: "bg-info/15 text-info border-info/30",
   neutro: "bg-muted text-muted-foreground border-border",
-  destaque: "bg-primary/15 text-primary border-primary/30",
+  destaque: "bg-primary/15 text-link border-primary/30",
 };
 
 export function Selo({ tom, children }: { tom: Tom; children: ReactNode }) {

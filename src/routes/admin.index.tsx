@@ -9,9 +9,9 @@ import { formatBRL, formatDataHora, formatHora, mesmoDia } from "@/lib/format";
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Gestão de Bebidas" },
+      { title: "Dashboard — Mesa Digital" },
       { name: "description", content: "Visão geral de mesas, pedidos e vendas do dia." },
-      { property: "og:title", content: "Dashboard — Gestão de Bebidas" },
+      { property: "og:title", content: "Dashboard — Mesa Digital" },
       { property: "og:description", content: "Visão geral de mesas, pedidos e vendas do dia." },
     ],
   }),

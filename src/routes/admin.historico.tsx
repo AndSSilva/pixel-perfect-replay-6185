@@ -14,9 +14,9 @@ import { CircleDollarSign, ReceiptText } from "lucide-react";
 export const Route = createFileRoute("/admin/historico")({
   head: () => ({
     meta: [
-      { title: "Histórico de vendas — Gestão de Bebidas" },
+      { title: "Histórico de vendas — Mesa Digital" },
       { name: "description", content: "Contas fechadas, itens consumidos e pagamentos." },
-      { property: "og:title", content: "Histórico de vendas — Gestão de Bebidas" },
+      { property: "og:title", content: "Histórico de vendas — Mesa Digital" },
       { property: "og:description", content: "Contas fechadas, itens consumidos e pagamentos." },
     ],
   }),

@@ -10,9 +10,9 @@ import { useDados } from "@/lib/store";
 export const Route = createFileRoute("/admin/pedidos")({
   head: () => ({
     meta: [
-      { title: "Pedidos — Gestão de Bebidas" },
+      { title: "Pedidos — Mesa Digital" },
       { name: "description", content: "Fila de pedidos para confirmação manual." },
-      { property: "og:title", content: "Pedidos — Gestão de Bebidas" },
+      { property: "og:title", content: "Pedidos — Mesa Digital" },
       { property: "og:description", content: "Fila de pedidos para confirmação manual." },
     ],
   }),

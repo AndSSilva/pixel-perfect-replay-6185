@@ -5,13 +5,16 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system — dark graphite + lime accent. The app is dark-only by design.
- * All colors use oklch. Register new tokens in @theme inline.
+ * Design system — identidade INOV4 HUB (Manual v1.0).
+ * Cores da marca: Azul Tecnologia #2563EB, Roxo Conector #7C3AED, Vermelho Resultado #EF4444,
+ * Grafite Executivo #0F172A, Branco #FFFFFF. Os neutros intermediários (slate) são derivados.
+ * Tema claro em :root; escuro em .dark (aplicado em <html>, ver src/lib/tema.ts).
+ * Registre novos tokens em @theme inline.
  */
 
 @theme inline {
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -40,6 +43,8 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
+  --color-link: var(--link);
+  --color-conector: var(--conector);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -61,43 +66,89 @@
 
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.17 0.006 260);
-  --foreground: oklch(0.97 0.004 260);
-  --card: oklch(0.215 0.007 260);
-  --card-foreground: oklch(0.97 0.004 260);
-  --elevated: oklch(0.255 0.008 260);
-  --popover: oklch(0.235 0.008 260);
-  --popover-foreground: oklch(0.97 0.004 260);
-  --primary: oklch(0.86 0.2 128);
-  --primary-foreground: oklch(0.2 0.04 130);
-  --secondary: oklch(0.27 0.008 260);
-  --secondary-foreground: oklch(0.95 0.004 260);
-  --muted: oklch(0.26 0.007 260);
-  --muted-foreground: oklch(0.68 0.012 260);
-  --accent: oklch(0.29 0.01 260);
-  --accent-foreground: oklch(0.97 0.004 260);
-  --destructive: oklch(0.66 0.2 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --success: oklch(0.78 0.16 155);
-  --warning: oklch(0.8 0.15 75);
-  --warning-foreground: oklch(0.22 0.05 75);
-  --info: oklch(0.74 0.12 235);
-  --border: oklch(0.3 0.008 260);
-  --input: oklch(0.32 0.008 260);
-  --ring: oklch(0.86 0.2 128);
-  --chart-1: oklch(0.86 0.2 128);
-  --chart-2: oklch(0.78 0.16 155);
-  --chart-3: oklch(0.74 0.12 235);
-  --chart-4: oklch(0.8 0.15 75);
-  --chart-5: oklch(0.66 0.2 25);
-  --sidebar: oklch(0.145 0.006 260);
-  --sidebar-foreground: oklch(0.9 0.006 260);
-  --sidebar-primary: oklch(0.86 0.2 128);
-  --sidebar-primary-foreground: oklch(0.2 0.04 130);
-  --sidebar-accent: oklch(0.23 0.008 260);
-  --sidebar-accent-foreground: oklch(0.97 0.004 260);
-  --sidebar-border: oklch(0.26 0.008 260);
-  --sidebar-ring: oklch(0.86 0.2 128);
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --elevated: #f1f5f9;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #475569;
+  --accent: #eaf0ff;
+  --accent-foreground: #0f172a;
+  /* #DC2626 (e não #EF4444) no claro: garante contraste AA com texto branco. */
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #15803d;
+  --warning: #f59e0b;
+  --warning-foreground: #0f172a;
+  --info: #0369a1;
+  --link: #2563eb;
+  --conector: #7c3aed;
+  --border: #e2e8f0;
+  --input: #cbd5e1;
+  --ring: #2563eb;
+  --chart-1: #2563eb;
+  --chart-2: #7c3aed;
+  --chart-3: #ef4444;
+  --chart-4: #15803d;
+  --chart-5: #f59e0b;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eaf0ff;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #2563eb;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --elevated: #273449;
+  --popover: #1e293b;
+  --popover-foreground: #f8fafc;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #273449;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #273449;
+  --accent-foreground: #f8fafc;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --warning-foreground: #0f172a;
+  --info: #38bdf8;
+  /* Azul mais claro só para texto/links sobre fundo escuro (o #2563EB puro tem contraste baixo). */
+  --link: #60a5fa;
+  --conector: #a78bfa;
+  --border: #334155;
+  --input: #334155;
+  --ring: #60a5fa;
+  --chart-1: #60a5fa;
+  --chart-2: #a78bfa;
+  --chart-3: #f87171;
+  --chart-4: #4ade80;
+  --chart-5: #fbbf24;
+  --sidebar: #0b1222;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #60a5fa;
 }
 
 @layer base {
@@ -105,6 +156,9 @@
     border-color: var(--color-border);
   }
   html {
+    color-scheme: light;
+  }
+  html.dark {
     color-scheme: dark;
   }
   body {
@@ -118,7 +172,7 @@
   h3,
   h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
   }
   :focus-visible {
     outline: 2px solid var(--color-ring);

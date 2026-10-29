@@ -20,9 +20,9 @@ import type { Produto } from "@/lib/types";
 export const Route = createFileRoute("/admin/produtos")({
   head: () => ({
     meta: [
-      { title: "Produtos — Gestão de Bebidas" },
+      { title: "Produtos — Mesa Digital" },
       { name: "description", content: "Cadastro e disponibilidade das bebidas do catálogo." },
-      { property: "og:title", content: "Produtos — Gestão de Bebidas" },
+      { property: "og:title", content: "Produtos — Mesa Digital" },
       { property: "og:description", content: "Cadastro e disponibilidade das bebidas do catálogo." },
     ],
   }),

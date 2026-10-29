@@ -15,9 +15,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin/mesas/")({
   head: () => ({
     meta: [
-      { title: "Mesas — Gestão de Bebidas" },
+      { title: "Mesas — Mesa Digital" },
       { name: "description", content: "Ocupação das mesas, QR Codes e atendimento." },
-      { property: "og:title", content: "Mesas — Gestão de Bebidas" },
+      { property: "og:title", content: "Mesas — Mesa Digital" },
       { property: "og:description", content: "Ocupação das mesas, QR Codes e atendimento." },
     ],
   }),
@@ -57,7 +57,7 @@ function Mesas() {
             return (
               <article key={m.id} className={cn("rounded-xl border bg-card p-4 transition-colors", borda[st])}>
                 <div className="flex items-start justify-between gap-2">
-                  <Link to="/admin/mesas/$mesaId" params={{ mesaId: m.id }} className="font-display text-xl font-semibold hover:text-primary">
+                  <Link to="/admin/mesas/$mesaId" params={{ mesaId: m.id }} className="font-display text-xl font-semibold hover:text-link">
                     {m.nome}
                   </Link>
                   <Selo tom={tom}>{rot}</Selo>

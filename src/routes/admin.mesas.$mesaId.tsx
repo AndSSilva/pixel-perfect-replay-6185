@@ -22,9 +22,9 @@ import { formatBRL, formatDataHora } from "@/lib/format";
 export const Route = createFileRoute("/admin/mesas/$mesaId")({
   head: () => ({
     meta: [
-      { title: "Detalhes da mesa — Gestão de Bebidas" },
+      { title: "Detalhes da mesa — Mesa Digital" },
       { name: "description", content: "Contas individuais, pedidos e QR Code da mesa." },
-      { property: "og:title", content: "Detalhes da mesa — Gestão de Bebidas" },
+      { property: "og:title", content: "Detalhes da mesa — Mesa Digital" },
       { property: "og:description", content: "Contas individuais, pedidos e QR Code da mesa." },
     ],
   }),

@@ -10,9 +10,9 @@ import { formatBRL, formatHora } from "@/lib/format";
 export const Route = createFileRoute("/admin/contas/")({
   head: () => ({
     meta: [
-      { title: "Contas e pagamentos — Gestão de Bebidas" },
+      { title: "Contas e pagamentos — Mesa Digital" },
       { name: "description", content: "Contas individuais abertas e registro de pagamentos." },
-      { property: "og:title", content: "Contas e pagamentos — Gestão de Bebidas" },
+      { property: "og:title", content: "Contas e pagamentos — Mesa Digital" },
       { property: "og:description", content: "Contas individuais abertas e registro de pagamentos." },
     ],
   }),
@@ -59,7 +59,7 @@ function Contas() {
                 <dl className="mt-4 grid grid-cols-3 gap-2 text-xs">
                   <div><dt className="text-muted-foreground">Consumo</dt><dd className="tabular">{formatBRL(totalConfirmadoConta(d, c.id))}</dd></div>
                   <div><dt className="text-muted-foreground">Pago</dt><dd className="tabular">{formatBRL(totalPagoConta(d, c.id))}</dd></div>
-                  <div><dt className="text-muted-foreground">Saldo</dt><dd className="tabular font-semibold text-primary">{formatBRL(saldo)}</dd></div>
+                  <div><dt className="text-muted-foreground">Saldo</dt><dd className="tabular font-semibold text-link">{formatBRL(saldo)}</dd></div>
                 </dl>
                 {pend > 0 && <p className="mt-2 text-xs text-warning">{pend} pedido(s) aguardando confirmação</p>}
               </Link>

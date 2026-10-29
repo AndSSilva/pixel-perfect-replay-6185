@@ -31,7 +31,7 @@ export function PedidoCard({ d, pedido, mostrarMesa = true }: { d: AppData; pedi
               <>
                 {" · "}
                 {mesa ? (
-                  <Link to="/admin/mesas/$mesaId" params={{ mesaId: mesa.id }} className="text-primary hover:underline">
+                  <Link to="/admin/mesas/$mesaId" params={{ mesaId: mesa.id }} className="text-link hover:underline">
                     {mesa.nome}
                   </Link>
                 ) : (

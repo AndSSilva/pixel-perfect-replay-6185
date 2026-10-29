@@ -14,9 +14,9 @@ import { FORMAS_PAGAMENTO, rotuloForma, type FormaPagamento } from "@/lib/types"
 export const Route = createFileRoute("/admin/contas/$contaId")({
   head: () => ({
     meta: [
-      { title: "Conta individual — Gestão de Bebidas" },
+      { title: "Conta individual — Mesa Digital" },
       { name: "description", content: "Conferência de itens, pagamentos e fechamento da conta." },
-      { property: "og:title", content: "Conta individual — Gestão de Bebidas" },
+      { property: "og:title", content: "Conta individual — Mesa Digital" },
       { property: "og:description", content: "Conferência de itens, pagamentos e fechamento da conta." },
     ],
   }),
@@ -80,7 +80,7 @@ function ContaDetalhe() {
           {pendentes.length > 0 && (
             <div className="rounded-xl border border-warning/40 bg-warning/5 p-4 text-sm">
               <p className="font-medium text-warning">{pendentes.length} pedido(s) pendente(s) de confirmação</p>
-              <p className="mt-1 text-muted-foreground">Não estão incluídos no consumo abaixo. Confirme ou rejeite na <Link to="/admin/pedidos" className="text-primary underline">fila de pedidos</Link>.</p>
+              <p className="mt-1 text-muted-foreground">Não estão incluídos no consumo abaixo. Confirme ou rejeite na <Link to="/admin/pedidos" className="text-link underline">fila de pedidos</Link>.</p>
             </div>
           )}
           <Painel titulo="Itens confirmados">
@@ -110,7 +110,7 @@ function ContaDetalhe() {
             <dl className="mt-4 space-y-1 border-t pt-4 text-sm">
               <div className="flex justify-between"><dt className="text-muted-foreground">Total confirmado</dt><dd className="tabular">{formatBRL(total)}</dd></div>
               <div className="flex justify-between"><dt className="text-muted-foreground">Pagamentos</dt><dd className="tabular">− {formatBRL(pago)}</dd></div>
-              <div className="flex justify-between text-base font-semibold"><dt>Saldo restante</dt><dd className="tabular text-primary">{formatBRL(saldo)}</dd></div>
+              <div className="flex justify-between text-base font-semibold"><dt>Saldo restante</dt><dd className="tabular text-link">{formatBRL(saldo)}</dd></div>
             </dl>
           </Painel>
 
