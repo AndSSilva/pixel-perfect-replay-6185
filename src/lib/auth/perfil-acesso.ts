@@ -19,5 +19,5 @@ export async function buscarPerfilAcesso(userId: string): Promise<PerfilAcesso |
 /** Desliga o marcador "deve trocar a senha" do usuário autenticado (a RLS impede escrita direta). */
 export async function marcarSenhaTrocada(): Promise<void> {
   const { error } = await supabase.rpc("marcar_senha_trocada");
-  if (error) throw new Error(error.message);
+  if (error) throw error;
 }

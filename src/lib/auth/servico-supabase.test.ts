@@ -141,10 +141,30 @@ describe("definirNovaSenha", () => {
     expect(m.updateUser).toHaveBeenCalledWith({ password: "senha1234" });
     expect(m.rpc).toHaveBeenCalledWith("marcar_senha_trocada");
   });
-  it("falha ao desligar o marcador → devolve erro (o usuário continuará no primeiro acesso)", async () => {
+  it("falha ao desligar o marcador → erro específico (o usuário continuará no primeiro acesso)", async () => {
     m.updateUser.mockResolvedValue({ error: null });
     m.rpc.mockResolvedValue({ error: { message: "boom" } });
-    expect(await svc.definirNovaSenha("senha1234")).toEqual({ ok: false, codigo: "desconhecido" });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(await svc.definirNovaSenha("senha1234")).toEqual({
+      ok: false,
+      codigo: "falha_marcador",
+    });
+  });
+  it("ao repetir depois de falha só no marcador, a mesma senha conclui o primeiro acesso", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    m.updateUser.mockResolvedValue({ error: null });
+    m.rpc.mockResolvedValueOnce({ error: { message: "boom" } });
+    expect((await svc.definirNovaSenha("senha1234")).ok).toBe(false);
+    m.updateUser.mockResolvedValue({ error: erroAuth("same_password") });
+    m.rpc.mockResolvedValue({ error: null });
+    expect((await svc.definirNovaSenha("senha1234")).ok).toBe(true);
+  });
+  it("sessão ausente vira erro de sessão expirada", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    m.updateUser.mockResolvedValue({
+      error: { name: "AuthSessionMissingError", message: "Auth session missing!", status: 400 },
+    });
+    expect(await svc.definirNovaSenha("senha1234")).toEqual({ ok: false, codigo: "sem_sessao" });
   });
 });
 

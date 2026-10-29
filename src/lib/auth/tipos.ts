@@ -8,6 +8,7 @@ export type CodigoErroAuth =
   | "senha_fraca"
   | "senha_repetida"
   | "sem_permissao"
+  | "falha_marcador"
   | "sem_sessao"
   | "rede"
   | "desconhecido";

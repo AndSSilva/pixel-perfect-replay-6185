@@ -25,7 +25,12 @@ export function codigoDoErro(
     codigo === "flow_state_expired"
   )
     return "link_invalido";
-  if (codigo === "session_not_found" || codigo === "refresh_token_not_found") return "sem_sessao";
+  if (
+    codigo === "session_not_found" ||
+    codigo === "refresh_token_not_found" ||
+    erro.name === "AuthSessionMissingError"
+  )
+    return "sem_sessao";
   if (
     erro.name === "AuthRetryableFetchError" ||
     status === 0 ||
@@ -60,6 +65,20 @@ async function sessaoAdminDe(sessao: Session | null): Promise<SessaoAdmin | null
     deveTrocarSenha: perfil.deve_trocar_senha,
   };
 }
+
+/** Registra no console (nunca senhas) a causa real de uma falha, para diagnóstico. */
+function registrarFalha(etapa: string, erro: unknown) {
+  const e = erro as { name?: string; code?: string; status?: number; message?: string } | null;
+  console.error("[auth]", etapa, {
+    nome: e?.name,
+    codigo: e?.code,
+    status: e?.status,
+    mensagem: e?.message,
+  });
+}
+
+// Marca que a senha já foi trocada, mas o desligamento do marcador falhou (permite concluir ao repetir).
+let senhaTrocadaPendenteMarcador = false;
 
 const falha = (codigo: CodigoErroAuth): { ok: false; codigo: CodigoErroAuth } => ({
   ok: false,
@@ -112,6 +131,7 @@ export function criarServicoSupabase(): ServicoAuth {
 
     async sair() {
       recuperacaoDetectada = false;
+      senhaTrocadaPendenteMarcador = false;
       await supabase.auth.signOut();
     },
 
@@ -135,13 +155,24 @@ export function criarServicoSupabase(): ServicoAuth {
     async definirNovaSenha(novaSenha): Promise<ResultadoAuth> {
       ouvirRecuperacao();
       const { error } = await supabase.auth.updateUser({ password: novaSenha });
-      if (error) return falha(codigoDoErro(error));
+      if (error) {
+        const codigo = codigoDoErro(error);
+        // Repetição depois de uma falha só no marcador: a senha já é esta, então basta concluir.
+        const jaEstaSenha = codigo === "senha_repetida" && senhaTrocadaPendenteMarcador;
+        if (!jaEstaSenha) {
+          registrarFalha("updateUser", error);
+          return falha(codigo);
+        }
+      }
       try {
         // Desliga o marcador do primeiro acesso (sem efeito se não havia marcador pendente).
         await marcarSenhaTrocada();
-      } catch {
-        return falha("desconhecido");
+      } catch (e) {
+        registrarFalha("marcar_senha_trocada", e);
+        senhaTrocadaPendenteMarcador = true;
+        return falha("falha_marcador");
       }
+      senhaTrocadaPendenteMarcador = false;
       recuperacaoDetectada = false;
       return { ok: true, valor: undefined };
     },
