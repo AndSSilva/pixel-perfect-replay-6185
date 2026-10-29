@@ -102,8 +102,6 @@ export interface Pagamento {
 export interface Configuracoes {
   nomeEstabelecimento: string;
   textoCardapio: string;
-  /** Demo-only PIN. Not real security. */
-  pinDemo: string;
 }
 
 export interface AppData {

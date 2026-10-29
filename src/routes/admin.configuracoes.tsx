@@ -13,9 +13,9 @@ import { salvarConfig } from "@/lib/services/regras";
 export const Route = createFileRoute("/admin/configuracoes")({
   head: () => ({
     meta: [
-      { title: "Configurações — Gestão de Bebidas" },
+      { title: "Configurações — Mesa Digital" },
       { name: "description", content: "Nome do estabelecimento, texto do cardápio e dados de demonstração." },
-      { property: "og:title", content: "Configurações — Gestão de Bebidas" },
+      { property: "og:title", content: "Configurações — Mesa Digital" },
       { property: "og:description", content: "Nome do estabelecimento, texto do cardápio e dados de demonstração." },
     ],
   }),
@@ -30,7 +30,6 @@ function Configuracoes() {
   const salvar = () => {
     const e: Erros = {};
     if (!cfg.nomeEstabelecimento.trim()) e.nome = "Informe o nome.";
-    if (!/^\d{4,8}$/.test(cfg.pinDemo)) e.pin = "Use de 4 a 8 dígitos.";
     setErros(e);
     if (!Object.keys(e).length) executar((x) => salvarConfig(x, cfg), "Configurações salvas.");
   };
@@ -46,9 +45,6 @@ function Configuracoes() {
             </Campo>
             <Campo id="texto" rotulo="Texto auxiliar do cardápio">
               <Textarea id="texto" value={cfg.textoCardapio} maxLength={200} onChange={(e) => setCfg({ ...cfg, textoCardapio: e.target.value })} />
-            </Campo>
-            <Campo id="pinCfg" rotulo="PIN demonstrativo do painel" erro={erros.pin} dica="Apenas para demonstração; não oferece segurança real.">
-              <Input id="pinCfg" inputMode="numeric" value={cfg.pinDemo} maxLength={8} onChange={(e) => setCfg({ ...cfg, pinDemo: e.target.value.replace(/\D/g, "") })} />
             </Campo>
             <Button type="submit">Salvar alterações</Button>
           </form>

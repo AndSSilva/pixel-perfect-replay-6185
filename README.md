@@ -1,26 +1,23 @@
-# Pixel Perfect Replay
+# Mesa Digital
 
-Implement exactly the screenshot and nothing else
+SaaS de gestão de mesas, pedidos e contas para estabelecimentos. Painel administrativo com a identidade
+INOV4 HUB; páginas do cliente final com a identidade do estabelecimento.
 
-This project was built with [Lovable](https://lovable.dev).
+> Status: em reconstrução por etapas a partir do MVP. Etapa 1: acesso do administrador (login, recuperação
+> e primeiro acesso). O restante do painel ainda usa dados locais do navegador e fica bloqueado pelo login.
 
-**Live app**: https://pixel-perfect-replay-6185.lovable.app
+## Stack
+TanStack Start (SSR) · React 19 · TypeScript estrito · Tailwind 4 · shadcn/ui · Vitest.
+Hospedagem e backend: Lovable (projeto conectado ao GitHub; sincroniza a branch `main`).
 
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/1e0d0366-c7f4-44be-83eb-7410b33e83e0).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## Desenvolvimento
+O lockfile é do Bun (`bun.lock`). Use Bun:
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+bun install
+bun run dev      # servidor local
+bun run test     # testes
+bun run build    # build de produção
 ```
+
+Detalhes de arquitetura e decisões: `AGENTS.md`.

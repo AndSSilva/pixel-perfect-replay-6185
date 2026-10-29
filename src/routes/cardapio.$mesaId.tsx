@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Campo, Carregando, iconeCategoria } from "@/components/app/common";
 import { executar, useDados } from "@/lib/store";
 import { contasAbertasComNome, enviarPedido, identificarCliente, saldoConta, totalConfirmadoConta, totalPagoConta } from "@/lib/services/regras";
-import { lerContaLocal, limparContaLocal, salvarContaLocal } from "@/lib/auth-demo";
+import { lerContaLocal, limparContaLocal, salvarContaLocal } from "@/lib/conta-local";
 import { formatBRL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -120,7 +120,7 @@ function Cardapio() {
       <div className="mx-auto flex max-w-lg items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate font-display font-semibold">{d.config.nomeEstabelecimento}</p>
-          <p className="text-xs text-primary">{mesa.nome}</p>
+          <p className="text-xs text-link">{mesa.nome}</p>
         </div>
         {conta && (
           <div className="flex shrink-0 items-center gap-1.5">
@@ -259,7 +259,7 @@ function Cardapio() {
             </div>
             <div className="rounded-xl border bg-card p-3">
               <p className="text-xs text-muted-foreground">A pagar</p>
-              <p className={cn("mt-1 font-semibold tabular", saldo > 0 && "text-primary")}>{formatBRL(saldo)}</p>
+              <p className={cn("mt-1 font-semibold tabular", saldo > 0 && "text-link")}>{formatBRL(saldo)}</p>
             </div>
           </div>
 
@@ -267,7 +267,7 @@ function Cardapio() {
             <p className="mt-8 text-center text-muted-foreground">Você ainda não fez nenhum pedido.</p>
           )}
           {secao("Aguardando entrega", pendentes, <Clock className="h-4 w-4" />, "text-warning")}
-          {secao("Entregues", entregues, <CheckCircle2 className="h-4 w-4" />, "text-primary")}
+          {secao("Entregues", entregues, <CheckCircle2 className="h-4 w-4" />, "text-link")}
           {secao("Não atendidos", rejeitados, <XCircle className="h-4 w-4" />, "text-destructive")}
 
           <Button className="mt-8 h-12 w-full" onClick={() => setEtapa("menu")}>Fazer um pedido</Button>
@@ -281,7 +281,7 @@ function Cardapio() {
       <div className="min-h-screen">
         {cabecalho}
         <main className="mx-auto flex max-w-lg flex-col items-center px-6 py-16 text-center">
-          <CheckCircle2 className="h-14 w-14 text-primary" />
+          <CheckCircle2 className="h-14 w-14 text-link" />
           <h1 className="mt-4 text-2xl font-semibold">Pedido enviado!</h1>
           <p className="mt-2 text-muted-foreground">Seu pedido está aguardando a confirmação do atendente. O valor só entra na sua conta depois de confirmado.</p>
           <Button className="mt-8 h-12 w-full" onClick={() => setEtapa("comanda")}>Acompanhar na minha comanda</Button>
@@ -360,7 +360,7 @@ function Cardapio() {
                   {p.imagemOpcional ? (
                     <img src={p.imagemOpcional} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
                   ) : (
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted"><Icone className="h-6 w-6 text-primary" aria-hidden /></div>
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-muted"><Icone className="h-6 w-6 text-link" aria-hidden /></div>
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="font-medium leading-tight">{p.nome}</p>

@@ -365,10 +365,8 @@ export function liberarMesa(d: AppData, mesaId: ID) {
 
 export function salvarConfig(d: AppData, cfg: Configuracoes) {
   exigir(cfg.nomeEstabelecimento.trim().length > 0, "Informe o nome do estabelecimento.");
-  exigir(/^\d{4,8}$/.test(cfg.pinDemo), "O PIN deve ter de 4 a 8 dígitos.");
   d.config = {
     nomeEstabelecimento: cfg.nomeEstabelecimento.trim(),
     textoCardapio: cfg.textoCardapio.trim(),
-    pinDemo: cfg.pinDemo,
   };
 }

@@ -58,7 +58,6 @@ export function criarDadosDemo(): AppData {
     config: {
       nomeEstabelecimento: "Adega Ponto Gelado",
       textoCardapio: "Bebidas trincando de geladas. Peça pelo celular e aguarde a confirmação.",
-      pinDemo: "1234",
     },
   };
 

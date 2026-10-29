@@ -14,5 +14,7 @@
 - Business rules are mutating functions in `src/lib/services/regras.ts` that throw `RegraError`; UI calls them via `executar()` in `src/lib/store.ts`, which clones state and commits only on success.
 - Money is integer centavos everywhere; totals are always derived from orders/payments, never stored.
 - Order items and bills snapshot product/table/customer names and prices for history.
-- Admin access is a demo-only PIN flag in sessionStorage, checked client-side in `src/routes/admin.tsx`; pages outside that layout (`admin_.*`) check it themselves.
+- Admin access goes through `authService` (`src/lib/auth/servico.ts`, contract in `tipos.ts`). Until the backend (Lovable Cloud / Supabase Auth) is wired in step 1B it is "not configured" and the whole `/admin/*` panel stays blocked behind `/admin/login`. Pages guard themselves with `useGuardaAdmin()`; this is a UI barrier, real data protection must come from database access rules (RLS).
+- Brand: INOV4 HUB identity for admin/master (tokens in `src/styles.css`, logos in `public/brand/`, `BrandLogo`). Theme is light 06:00-17:59 / dark 18:00-05:59 by device clock, with manual override stored in localStorage (`src/lib/tema.ts`); the `dark` class lives on `<html>`.
+- First access: admins start with a provisional password and must set their own at `/admin/primeiro-acesso` (flag `deveTrocarSenha` in the session).
 - Store data is null until hydration (`useDados()`); admin pages render only after the layout has data.
