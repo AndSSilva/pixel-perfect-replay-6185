@@ -13,6 +13,9 @@ export type CodigoErroCatalogo =
   | "sem_permissao"
   | "nao_encontrado"
   | "foto_falhou"
+  | "estoque_insuficiente"
+  | "estoque_invalido"
+  | "estoque_nao_registrado"
   | "desconhecido";
 
 export const MENSAGENS_CATALOGO: Record<CodigoErroCatalogo, string> = {
@@ -25,6 +28,10 @@ export const MENSAGENS_CATALOGO: Record<CodigoErroCatalogo, string> = {
   sem_permissao: "Você não tem permissão para esta ação (a empresa pode estar desativada).",
   nao_encontrado: "Registro não encontrado. Atualize a página.",
   foto_falhou: "Não foi possível enviar a foto. Tente novamente com outra imagem.",
+  estoque_insuficiente: "A baixa é maior que o estoque atual.",
+  estoque_invalido: "Ajuste de estoque inválido. Confira o tipo, a quantidade e a observação.",
+  estoque_nao_registrado:
+    "O produto foi salvo, mas o estoque inicial não pôde ser registrado. Use “Estoque” no cartão do produto.",
   desconhecido: "Não foi possível concluir a operação. Tente novamente.",
 };
 
@@ -41,6 +48,21 @@ export function codigoDoErroBanco(e: {
   message?: string | undefined;
 }): CodigoErroCatalogo {
   const msg = e.message ?? "";
+  // Mensagens da função ajustar_estoque.
+  if (msg === "estoque_insuficiente") return "estoque_insuficiente";
+  if (
+    [
+      "tipo_invalido",
+      "quantidade_invalida",
+      "observacao_invalida",
+      "observacao_obrigatoria",
+      "saldo_inicial_ja_registrado",
+      "sem_alteracao",
+      "limite_excedido",
+    ].includes(msg)
+  )
+    return "estoque_invalido";
+  if (msg === "produto_nao_encontrado") return "nao_encontrado";
   if (e.code === "23505") return msg.includes("mesas_numero") ? "mesa_duplicada" : "nome_duplicado";
   if (e.code === "23503") {
     // Apagar uma categoria que ainda tem produtos vs. apontar para uma categoria que não existe/é de outra empresa.

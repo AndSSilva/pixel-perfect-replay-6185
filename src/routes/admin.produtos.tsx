@@ -1,7 +1,18 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, ImagePlus, Loader2, Package, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import {
+  Boxes,
+  Camera,
+  ImagePlus,
+  Loader2,
+  Package,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +42,7 @@ import {
   iconeCategoria,
 } from "@/components/app/common";
 import { estadoDaConsulta } from "@/components/app/Consulta";
+import { EstoqueDialog } from "@/components/catalogo/EstoqueDialog";
 import { useEmpresa } from "@/lib/empresa/contexto";
 import { formatarMargem, lucroCentavos, margemPercentual } from "@/lib/catalogo/calculos";
 import {
@@ -43,8 +55,9 @@ import {
   salvarProduto,
   urlFoto,
 } from "@/lib/catalogo/servico";
+import { ESTOQUE_MAX } from "@/lib/catalogo/estoque";
 import { mensagemDoErro } from "@/lib/catalogo/mensagem";
-import type { Produto } from "@/lib/catalogo/tipos";
+import { MENSAGENS_CATALOGO, type Produto } from "@/lib/catalogo/tipos";
 import { centavosParaInput, formatBRL, parseMoeda } from "@/lib/format";
 import { arquivoParaDataUrl, dataUrlParaBlob } from "@/lib/imagem";
 import { cn } from "@/lib/utils";
@@ -77,8 +90,6 @@ type Form = {
 };
 type Erros = Partial<Record<"nome" | "categoria" | "venda" | "custo" | "estoque", string>>;
 
-const ESTOQUE_MAX = 1_000_000;
-
 function Produtos() {
   const empresa = useEmpresa();
   const qc = useQueryClient();
@@ -93,6 +104,7 @@ function Produtos() {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todas");
   const [form, setForm] = useState<Form | null>(null);
+  const [estoqueDeId, setEstoqueDeId] = useState<string | null>(null);
   const [erros, setErros] = useState<Erros>({});
   const [erroGeral, setErroGeral] = useState<string>();
 
@@ -103,7 +115,7 @@ function Produtos() {
   const salvar = useMutation({
     mutationFn: async (v: { form: Form; venda: number; custo: number | null; estoque: number }) => {
       const f = v.form;
-      await salvarProduto(
+      return salvarProduto(
         empresa.id,
         {
           id: f.id,
@@ -121,9 +133,11 @@ function Produtos() {
         f.fotoPath,
       );
     },
-    onSuccess: async (_d, v) => {
+    onSuccess: async (r, v) => {
       await atualizar();
-      toast.success(v.form.id ? "Produto atualizado." : "Produto cadastrado.");
+      if (r.estoqueInicialRegistrado)
+        toast.success(v.form.id ? "Produto atualizado." : "Produto cadastrado.");
+      else toast.warning(MENSAGENS_CATALOGO.estoque_nao_registrado);
       setForm(null);
     },
     onError: (e) => setErroGeral(mensagemDoErro(e)),
@@ -192,9 +206,10 @@ function Produtos() {
     const custo = custoTexto === "" ? null : parseMoeda(custoTexto);
     if (custoTexto !== "" && custo === null)
       e.custo = "Informe um valor válido (ex.: 7,00) ou deixe em branco.";
+    // O estoque só é informado na criação; depois muda apenas por lançamentos com histórico.
     const estoqueTexto = form.estoque.trim();
-    const estoque = /^\d+$/.test(estoqueTexto) ? Number(estoqueTexto) : NaN;
-    if (!(estoque >= 0 && estoque <= ESTOQUE_MAX))
+    const estoque = form.id ? 0 : /^\d+$/.test(estoqueTexto) ? Number(estoqueTexto) : NaN;
+    if (!form.id && !(estoque >= 0 && estoque <= ESTOQUE_MAX))
       e.estoque = "Informe um número inteiro (0 ou mais).";
     setErros(e);
     if (Object.keys(e).length || venda === null) return;
@@ -334,6 +349,14 @@ function Produtos() {
                           <Button
                             size="icon"
                             variant="ghost"
+                            aria-label={`Estoque de ${p.nome}`}
+                            onClick={() => setEstoqueDeId(p.id)}
+                          >
+                            <Boxes className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
                             aria-label={`Editar ${p.nome}`}
                             onClick={() => abrir(p)}
                           >
@@ -468,15 +491,27 @@ function Produtos() {
                   </span>
                 )}
               </p>
-              <Campo id="estoque" rotulo="Quantidade em estoque" erro={erros.estoque}>
-                <Input
+              {form.id ? (
+                <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+                  O estoque só muda por lançamentos com histórico. Para repor, corrigir ou dar
+                  baixa, use o botão “Estoque” no cartão do produto.
+                </p>
+              ) : (
+                <Campo
                   id="estoque"
-                  inputMode="numeric"
-                  value={form.estoque}
-                  maxLength={7}
-                  onChange={(e) => setForm({ ...form, estoque: e.target.value })}
-                />
-              </Campo>
+                  rotulo="Estoque inicial (unidades)"
+                  erro={erros.estoque}
+                  dica="Fica registrado no histórico como saldo inicial."
+                >
+                  <Input
+                    id="estoque"
+                    inputMode="numeric"
+                    value={form.estoque}
+                    maxLength={7}
+                    onChange={(e) => setForm({ ...form, estoque: e.target.value })}
+                  />
+                </Campo>
+              )}
               <div className="flex items-start gap-2">
                 <Switch
                   id="zerar"
@@ -526,6 +561,11 @@ function Produtos() {
           )}
         </DialogContent>
       </Dialog>
+      <EstoqueDialog
+        produto={todos.find((p) => p.id === estoqueDeId) ?? null}
+        empresaId={empresa.id}
+        onFechar={() => setEstoqueDeId(null)}
+      />
     </>
   );
 }

@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import type { TipoAjuste } from "./estoque";
 import { ErroCatalogo, codigoDoErroBanco, type Categoria, type Mesa, type Produto } from "./tipos";
 
 // Acesso aos dados do catálogo (categorias, produtos, mesas e fotos) da empresa em uso.
@@ -164,6 +166,7 @@ export interface DadosProduto {
   categoriaId: string;
   precoVendaCentavos: number;
   precoCustoCentavos: number | null;
+  /** Estoque inicial: só vale na criação (depois, o estoque muda por ajustes com histórico). */
   estoqueQtd: number;
   /** Se verdadeiro, o produto fica indisponível sozinho quando o estoque zerar (por entrega). */
   inativarAoZerarEstoque: boolean;
@@ -174,18 +177,22 @@ export interface DadosProduto {
   removerFoto?: boolean | undefined;
 }
 
+/** Resultado: na criação com estoque inicial, informa se o saldo inicial foi registrado no histórico. */
+export interface ResultadoSalvarProduto {
+  estoqueInicialRegistrado: boolean;
+}
+
 export async function salvarProduto(
   empresaId: string,
   dados: DadosProduto,
   fotoAtual?: string | null,
-): Promise<void> {
+): Promise<ResultadoSalvarProduto> {
   const base = {
     nome: dados.nome.trim(),
     descricao: dados.descricao.trim() || null,
     categoria_id: dados.categoriaId,
     preco_venda_centavos: dados.precoVendaCentavos,
     preco_custo_centavos: dados.precoCustoCentavos,
-    estoque_qtd: dados.estoqueQtd,
     inativar_ao_zerar_estoque: dados.inativarAoZerarEstoque,
     disponivel: dados.disponivel,
   };
@@ -201,7 +208,22 @@ export async function salvarProduto(
       await apagarFoto(foto); // não deixa foto órfã se o cadastro falhar
       falhar("criarProduto", error);
     }
-    return;
+    // O estoque físico só muda por movimento registrado: o inicial entra como "saldo inicial".
+    if (dados.estoqueQtd > 0) {
+      const r = await supabase.rpc("ajustar_estoque", {
+        _produto: id,
+        _tipo: "saldo_inicial",
+        _quantidade: dados.estoqueQtd,
+      });
+      if (r.error) {
+        console.error("[catalogo] saldo inicial", {
+          codigo: r.error.code,
+          mensagem: r.error.message,
+        });
+        return { estoqueInicialRegistrado: false };
+      }
+    }
+    return { estoqueInicialRegistrado: true };
   }
 
   const novaFoto = dados.fotoNova
@@ -225,6 +247,40 @@ export async function salvarProduto(
     throw new ErroCatalogo("nao_encontrado");
   }
   if (novaFoto !== undefined || dados.removerFoto) await apagarFoto(fotoAtual);
+  return { estoqueInicialRegistrado: true };
+}
+
+// ---------- Estoque (histórico de movimentos) ----------
+export const chaveMovimentos = (produtoId: string) => ["movimentos", produtoId] as const;
+
+export type MovimentoEstoque = Database["public"]["Tables"]["movimentos_estoque"]["Row"];
+
+/** Lança um ajuste manual e devolve o novo saldo. A função do banco decide e registra no histórico. */
+export async function ajustarEstoque(dados: {
+  produtoId: string;
+  tipo: TipoAjuste;
+  quantidade: number;
+  observacao: string;
+}): Promise<number> {
+  const { data, error } = await supabase.rpc("ajustar_estoque", {
+    _produto: dados.produtoId,
+    _tipo: dados.tipo,
+    _quantidade: dados.quantidade,
+    ...(dados.observacao.trim() ? { _observacao: dados.observacao.trim() } : {}),
+  });
+  if (error) falhar("ajustarEstoque", error);
+  return data;
+}
+
+export async function listarMovimentos(produtoId: string): Promise<MovimentoEstoque[]> {
+  const { data, error } = await supabase
+    .from("movimentos_estoque")
+    .select("*")
+    .eq("produto_id", produtoId)
+    .order("criado_em", { ascending: false })
+    .limit(200);
+  if (error) falhar("listarMovimentos", error);
+  return data;
 }
 
 export async function definirProdutoDisponivel(

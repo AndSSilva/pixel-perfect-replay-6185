@@ -224,6 +224,60 @@ export type Database = {
         }
         Relationships: []
       }
+      movimentos_estoque: {
+        Row: {
+          criado_em: string
+          estabelecimento_id: string
+          id: string
+          nome_produto: string
+          observacao: string | null
+          produto_id: string | null
+          saldo_apos: number
+          tipo: Database["public"]["Enums"]["tipo_movimento_estoque"]
+          usuario_id: string | null
+          variacao: number
+        }
+        Insert: {
+          criado_em?: string
+          estabelecimento_id: string
+          id?: string
+          nome_produto: string
+          observacao?: string | null
+          produto_id?: string | null
+          saldo_apos: number
+          tipo: Database["public"]["Enums"]["tipo_movimento_estoque"]
+          usuario_id?: string | null
+          variacao: number
+        }
+        Update: {
+          criado_em?: string
+          estabelecimento_id?: string
+          id?: string
+          nome_produto?: string
+          observacao?: string | null
+          produto_id?: string | null
+          saldo_apos?: number
+          tipo?: Database["public"]["Enums"]["tipo_movimento_estoque"]
+          usuario_id?: string | null
+          variacao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentos_estoque_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentos_estoque_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfis_acesso: {
         Row: {
           atualizado_em: string
@@ -253,6 +307,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ajustar_estoque: {
+        Args: {
+          _observacao?: string
+          _produto: string
+          _quantidade: number
+          _tipo: Database["public"]["Enums"]["tipo_movimento_estoque"]
+        }
+        Returns: number
+      }
       eh_master: { Args: never; Returns: boolean }
       eh_membro: { Args: { _estabelecimento: string }; Returns: boolean }
       marcar_senha_trocada: { Args: never; Returns: undefined }
@@ -271,6 +334,12 @@ export type Database = {
     }
     Enums: {
       papel_app: "admin" | "master"
+      tipo_movimento_estoque:
+        | "saldo_inicial"
+        | "reposicao"
+        | "alteracao_quantidade"
+        | "baixa_avaria"
+        | "baixa_entrega"
     }
     CompositeTypes: {
       [_ in never]: never

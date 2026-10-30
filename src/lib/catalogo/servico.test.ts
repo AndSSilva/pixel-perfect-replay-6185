@@ -6,6 +6,7 @@ const m = vi.hoisted(() => ({
   resolver: (() => ({})) as (tabela: string, op: string) => Res,
   upload: vi.fn(),
   remove: vi.fn(),
+  rpc: vi.fn(),
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
@@ -20,6 +21,7 @@ vi.mock("@/integrations/supabase/client", () => {
     const b: Record<string, unknown> = {
       select: () => b,
       order: () => b,
+      limit: () => b,
       insert: (d: unknown) => ((op = "insert"), (dados = d), b),
       update: (d: unknown) => ((op = "update"), (dados = d), b),
       delete: () => ((op = "delete"), b),
@@ -31,6 +33,7 @@ vi.mock("@/integrations/supabase/client", () => {
   return {
     supabase: {
       from,
+      rpc: m.rpc,
       storage: {
         from: () => ({
           upload: m.upload,
@@ -44,8 +47,10 @@ vi.mock("@/integrations/supabase/client", () => {
 
 import { ErroCatalogo, codigoDoErroBanco } from "./tipos";
 import {
+  ajustarEstoque,
   excluirCategoria,
   excluirProduto,
+  listarMovimentos,
   salvarCategoria,
   salvarProduto,
   urlFoto,
@@ -68,6 +73,7 @@ beforeEach(() => {
   m.resolver = () => ({});
   m.upload.mockReset().mockResolvedValue({ error: null });
   m.remove.mockReset().mockResolvedValue({ error: null });
+  m.rpc.mockReset().mockResolvedValue({ data: 0, error: null });
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
@@ -165,7 +171,6 @@ describe("produtos e fotos", () => {
       descricao: null,
       preco_venda_centavos: 1200,
       preco_custo_centavos: 700,
-      estoque_qtd: 10,
       inativar_ao_zerar_estoque: false,
       estabelecimento_id: E,
       foto_path: null,
@@ -230,5 +235,89 @@ describe("produtos e fotos", () => {
   it("monta a URL pública da foto", () => {
     expect(urlFoto(`${E}/f.jpg`)).toBe(`https://x/${E}/f.jpg`);
     expect(urlFoto(null)).toBeNull();
+  });
+});
+
+describe("estoque", () => {
+  it("o estoque físico não vai no cadastro do produto (só por movimento)", async () => {
+    await salvarProduto(E, dadosProduto);
+    const ins = m.chamadas.find((c) => c[1] === "insert")!;
+    expect(ins[2]).not.toHaveProperty("estoque_qtd");
+    m.resolver = (t, op) => (op === "update" ? { data: [{ id: "p1" }] } : {});
+    await salvarProduto(E, { ...dadosProduto, id: "p1" });
+    expect(m.chamadas.find((c) => c[1] === "update")![2]).not.toHaveProperty("estoque_qtd");
+  });
+  it("estoque inicial vira um movimento de saldo inicial", async () => {
+    const r = await salvarProduto(E, { ...dadosProduto, estoqueQtd: 10 });
+    expect(r).toEqual({ estoqueInicialRegistrado: true });
+    expect(m.rpc).toHaveBeenCalledWith("ajustar_estoque", {
+      _produto: expect.any(String),
+      _tipo: "saldo_inicial",
+      _quantidade: 10,
+    });
+  });
+  it("sem estoque inicial, não registra movimento", async () => {
+    await salvarProduto(E, { ...dadosProduto, estoqueQtd: 0 });
+    expect(m.rpc).not.toHaveBeenCalled();
+  });
+  it("se o saldo inicial falhar, o produto fica salvo e o resultado avisa", async () => {
+    m.rpc.mockResolvedValue({ data: null, error: { code: "P0001", message: "boom" } });
+    expect(await salvarProduto(E, { ...dadosProduto, estoqueQtd: 10 })).toEqual({
+      estoqueInicialRegistrado: false,
+    });
+    expect(m.chamadas.some((c) => c[1] === "insert")).toBe(true);
+  });
+  it("ajuste manual chama a função do banco e devolve o novo saldo", async () => {
+    m.rpc.mockResolvedValue({ data: 17, error: null });
+    expect(
+      await ajustarEstoque({
+        produtoId: "p1",
+        tipo: "reposicao",
+        quantidade: 7,
+        observacao: " Compra ",
+      }),
+    ).toBe(17);
+    expect(m.rpc).toHaveBeenCalledWith("ajustar_estoque", {
+      _produto: "p1",
+      _tipo: "reposicao",
+      _quantidade: 7,
+      _observacao: "Compra",
+    });
+    await ajustarEstoque({ produtoId: "p1", tipo: "reposicao", quantidade: 1, observacao: "  " });
+    expect(m.rpc).toHaveBeenLastCalledWith("ajustar_estoque", {
+      _produto: "p1",
+      _tipo: "reposicao",
+      _quantidade: 1,
+    });
+  });
+  it("erros da função viram mensagens claras", async () => {
+    m.rpc.mockResolvedValue({
+      data: null,
+      error: { code: "P0001", message: "estoque_insuficiente" },
+    });
+    await expect(
+      ajustarEstoque({ produtoId: "p1", tipo: "baixa_avaria", quantidade: 99, observacao: "x" }),
+    ).rejects.toMatchObject({ codigo: "estoque_insuficiente" });
+    m.rpc.mockResolvedValue({
+      data: null,
+      error: { code: "P0001", message: "observacao_obrigatoria" },
+    });
+    await expect(
+      ajustarEstoque({
+        produtoId: "p1",
+        tipo: "alteracao_quantidade",
+        quantidade: 3,
+        observacao: "",
+      }),
+    ).rejects.toMatchObject({ codigo: "estoque_invalido" });
+    m.rpc.mockResolvedValue({ data: null, error: { code: "42501", message: "sem_permissao" } });
+    await expect(
+      ajustarEstoque({ produtoId: "p1", tipo: "reposicao", quantidade: 1, observacao: "" }),
+    ).rejects.toMatchObject({ codigo: "sem_permissao" });
+  });
+  it("lista os movimentos de um produto", async () => {
+    m.resolver = () => ({ data: [{ id: "m1" }] });
+    expect(await listarMovimentos("p1")).toEqual([{ id: "m1" }]);
+    expect(m.chamadas.at(-1)![3]).toContainEqual(["produto_id", "p1"]);
   });
 });
