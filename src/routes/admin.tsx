@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
+  ArrowLeftRight,
   History,
   LayoutDashboard,
   LogOut,
@@ -14,8 +15,13 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Carregando } from "@/components/app/common";
+import { Carregando, EmptyState } from "@/components/app/common";
+import { ThemeToggle } from "@/components/app/ThemeToggle";
+import { EscolherEmpresa } from "@/components/empresa/EscolherEmpresa";
 import { useDados } from "@/lib/store";
+import type { AppData } from "@/lib/types";
+import type { SessaoAdmin } from "@/lib/auth/tipos";
+import { useEmpresaAtual } from "@/lib/empresa/atual";
 import { authService } from "@/lib/auth/servico";
 import { useGuardaAdmin } from "@/lib/auth/use-sessao";
 import { cn } from "@/lib/utils";
@@ -35,7 +41,15 @@ const itens = [
   { to: "/admin/configuracoes", rotulo: "Configurações", icone: Settings },
 ] as const;
 
-function Navegacao({ pendentes, onNavegar }: { pendentes: number; onNavegar?: () => void }) {
+function Navegacao({
+  pendentes,
+  onNavegar,
+  trocarEmpresa,
+}: {
+  pendentes: number;
+  onNavegar?: () => void;
+  trocarEmpresa?: { rotulo: string; aoClicar: () => void } | undefined;
+}) {
   const caminho = useRouterState({ select: (s) => s.location.pathname });
   const nav = useNavigate();
   return (
@@ -60,31 +74,101 @@ function Navegacao({ pendentes, onNavegar }: { pendentes: number; onNavegar?: ()
           </Link>
         );
       })}
-      <button
-        onClick={async () => {
-          await authService.sair();
-          nav({ to: "/admin/login" });
-        }}
-        className="mt-auto flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
-      >
-        <LogOut className="h-4 w-4" /> Sair do painel
-      </button>
+      <div className="mt-auto space-y-1">
+        {trocarEmpresa && (
+          <button
+            onClick={() => {
+              onNavegar?.();
+              trocarEmpresa.aoClicar();
+            }}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
+          >
+            <ArrowLeftRight className="h-4 w-4" /> {trocarEmpresa.rotulo}
+          </button>
+        )}
+        <div className="px-3 py-1">
+          <ThemeToggle />
+        </div>
+        <button
+          onClick={async () => {
+            await authService.sair();
+            nav({ to: "/admin/login" });
+          }}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
+        >
+          <LogOut className="h-4 w-4" /> Sair do painel
+        </button>
+      </div>
     </nav>
   );
 }
 
 function AdminLayout() {
   const d = useDados();
-  const nav = useNavigate();
-  const { liberado } = useGuardaAdmin();
-  const [menuAberto, setMenuAberto] = useState(false);
+  const { liberado, sessao } = useGuardaAdmin();
+  if (!d || !liberado || !sessao) return <Carregando />;
+  return <AdminComEmpresa d={d} sessao={sessao} />;
+}
 
-  if (!d || !liberado) return <Carregando />;
+/** Só renderiza depois do login; garante que há uma empresa escolhida antes de mostrar o painel. */
+function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
+  const nav = useNavigate();
+  const [menuAberto, setMenuAberto] = useState(false);
+  const ctx = useEmpresaAtual(sessao.usuarioId, sessao.papel);
+  const ehMaster = sessao.papel === "master";
+
+  // O master escolhe a empresa no cadastro da plataforma (/master).
+  useEffect(() => {
+    if (!ctx.carregando && !ctx.erro && !ctx.atual && ehMaster) nav({ to: "/master", replace: true });
+  }, [ctx.carregando, ctx.erro, ctx.atual, ehMaster, nav]);
+
+  const sair = async () => {
+    await authService.sair();
+    nav({ to: "/admin/login" });
+  };
+
+  if (ctx.carregando) return <Carregando />;
+  if (ctx.erro) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-md items-center px-4">
+        <EmptyState
+          icone={ArrowLeftRight}
+          titulo="Não foi possível carregar suas empresas"
+          texto="Verifique sua conexão e tente novamente."
+          acao={<Button onClick={() => void ctx.recarregar()}>Tentar novamente</Button>}
+        />
+      </div>
+    );
+  }
+  if (!ctx.atual) {
+    if (ehMaster) return <Carregando />;
+    if (ctx.empresas.length === 0) {
+      return (
+        <div className="mx-auto flex min-h-screen max-w-md items-center px-4">
+          <EmptyState
+            icone={ArrowLeftRight}
+            titulo="Nenhuma empresa vinculada"
+            texto="Seu acesso ainda não está vinculado a nenhuma empresa ativa. Fale com o administrador da plataforma."
+            acao={<Button variant="outline" onClick={sair}>Sair</Button>}
+          />
+        </div>
+      );
+    }
+    return <EscolherEmpresa empresas={ctx.empresas} onEscolher={ctx.escolher} onSair={sair} />;
+  }
+
+  const empresa = ctx.atual;
+  const trocarEmpresa = ehMaster
+    ? { rotulo: "Voltar à plataforma", aoClicar: () => { ctx.limpar(); nav({ to: "/master" }); } }
+    : ctx.empresas.length > 1
+      ? { rotulo: "Trocar de empresa", aoClicar: ctx.limpar }
+      : undefined;
+
   const pendentes = d.pedidos.filter((p) => p.status === "pendente").length;
   const marca = (
     <div className="flex items-center gap-2 px-6 py-5">
       <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-      <span className="truncate font-display font-semibold">{d.config.nomeEstabelecimento}</span>
+      <span className="truncate font-display font-semibold">{empresa.nome}</span>
     </div>
   );
 
@@ -92,7 +176,7 @@ function AdminLayout() {
     <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
       <aside className="no-print sticky top-0 hidden h-screen flex-col border-r bg-sidebar lg:flex">
         {marca}
-        <Navegacao pendentes={pendentes} />
+        <Navegacao pendentes={pendentes} trocarEmpresa={trocarEmpresa} />
       </aside>
       <header className="no-print sticky top-0 z-30 flex items-center justify-between border-b bg-sidebar/95 px-3 py-2 backdrop-blur lg:hidden">
         <Sheet open={menuAberto} onOpenChange={setMenuAberto}>
@@ -104,10 +188,10 @@ function AdminLayout() {
           <SheetContent side="left" className="w-72 bg-sidebar p-0">
             <SheetTitle className="sr-only">Menu</SheetTitle>
             {marca}
-            <Navegacao pendentes={pendentes} onNavegar={() => setMenuAberto(false)} />
+            <Navegacao pendentes={pendentes} onNavegar={() => setMenuAberto(false)} trocarEmpresa={trocarEmpresa} />
           </SheetContent>
         </Sheet>
-        <span className="truncate font-display font-semibold">{d.config.nomeEstabelecimento}</span>
+        <span className="truncate font-display font-semibold">{empresa.nome}</span>
         <Button asChild variant="ghost" size="sm">
           <Link to="/admin/pedidos">
             <ClipboardList className="h-4 w-4" />

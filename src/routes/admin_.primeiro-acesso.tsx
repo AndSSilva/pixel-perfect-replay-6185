@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { FormNovaSenha } from "@/components/auth/FormNovaSenha";
 import { authService } from "@/lib/auth/servico";
-import { useSessao } from "@/lib/auth/use-sessao";
+import { destinoInicial, useSessao } from "@/lib/auth/use-sessao";
 import type { ResultadoAuth } from "@/lib/auth/tipos";
 
 export const Route = createFileRoute("/admin_/primeiro-acesso")({
@@ -25,12 +25,12 @@ function PrimeiroAcesso() {
   useEffect(() => {
     if (carregando) return;
     if (!sessao) nav({ to: "/admin/login", replace: true });
-    else if (!sessao.deveTrocarSenha) nav({ to: "/admin", replace: true });
+    else if (!sessao.deveTrocarSenha) nav({ to: destinoInicial(sessao), replace: true });
   }, [carregando, sessao, nav]);
 
   const enviar = async (senha: string, senhaAtual?: string): Promise<ResultadoAuth> => {
     const r = await authService.definirNovaSenha(senha, senhaAtual);
-    if (r.ok) nav({ to: "/admin", replace: true });
+    if (r.ok) nav({ to: sessao ? destinoInicial({ ...sessao, deveTrocarSenha: false }) : "/admin", replace: true });
     return r;
   };
 

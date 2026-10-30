@@ -10,7 +10,7 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { CampoSenha } from "@/components/auth/CampoSenha";
 import { authService } from "@/lib/auth/servico";
 import { mensagemAuth } from "@/lib/auth/mensagens";
-import { useSessao } from "@/lib/auth/use-sessao";
+import { destinoInicial, useSessao } from "@/lib/auth/use-sessao";
 import { esquemaLogin, type DadosLogin } from "@/lib/auth/validacao";
 
 export const Route = createFileRoute("/admin_/login")({
@@ -43,7 +43,7 @@ function Login() {
   // Quem já está autenticado não precisa ver o login.
   useEffect(() => {
     if (carregando || !sessao) return;
-    nav({ to: sessao.deveTrocarSenha ? "/admin/primeiro-acesso" : "/admin", replace: true });
+    nav({ to: destinoInicial(sessao), replace: true });
   }, [carregando, sessao, nav]);
 
   const entrar = handleSubmit(async ({ email, senha }) => {
@@ -51,7 +51,7 @@ function Login() {
     const r = await authService.entrar(email, senha).catch(() => null);
     if (!r) return setErroGeral(mensagemAuth("rede"));
     if (!r.ok) return setErroGeral(mensagemAuth(r.codigo));
-    nav({ to: r.valor.deveTrocarSenha ? "/admin/primeiro-acesso" : "/admin", replace: true });
+    nav({ to: destinoInicial(r.valor), replace: true });
   });
 
   return (

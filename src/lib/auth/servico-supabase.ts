@@ -56,14 +56,15 @@ function ouvirRecuperacao() {
   });
 }
 
-/** Sessão do painel: só existe para quem tem papel "admin" na tabela de perfis. */
+/** Sessão do painel: só existe para quem tem papel ("admin" ou "master") na tabela de perfis. */
 async function sessaoAdminDe(sessao: Session | null): Promise<SessaoAdmin | null> {
   if (!sessao) return null;
   const perfil = await buscarPerfilAcesso(sessao.user.id);
-  if (!perfil || perfil.papel !== "admin") return null;
+  if (!perfil) return null;
   return {
     usuarioId: sessao.user.id,
     email: sessao.user.email ?? "",
+    papel: perfil.papel,
     deveTrocarSenha: perfil.deve_trocar_senha,
   };
 }

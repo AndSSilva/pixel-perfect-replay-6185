@@ -79,14 +79,22 @@ describe("entrar", () => {
     expect(await svc.entrar("a@b.co", "x")).toEqual({ ok: false, codigo: "sem_permissao" });
     expect(m.signOut).toHaveBeenCalled();
   });
-  it("papel master não entra neste painel", async () => {
+  it("master também entra e a sessão carrega o papel", async () => {
     m.signInWithPassword.mockResolvedValue({ data: { session: sessao }, error: null });
     m.maybeSingle.mockResolvedValue({
       data: { papel: "master", deve_trocar_senha: false },
       error: null,
     });
-    expect(await svc.entrar("a@b.co", "x")).toEqual({ ok: false, codigo: "sem_permissao" });
-    expect(m.signOut).toHaveBeenCalled();
+    expect(await svc.entrar("a@b.co", "x")).toEqual({
+      ok: true,
+      valor: {
+        usuarioId: "u1",
+        email: "admin@exemplo.com",
+        papel: "master",
+        deveTrocarSenha: false,
+      },
+    });
+    expect(m.signOut).not.toHaveBeenCalled();
   });
   it("admin com senha provisória → sessão com deveTrocarSenha", async () => {
     m.signInWithPassword.mockResolvedValue({ data: { session: sessao }, error: null });
@@ -96,7 +104,7 @@ describe("entrar", () => {
     });
     expect(await svc.entrar("a@b.co", "x")).toEqual({
       ok: true,
-      valor: { usuarioId: "u1", email: "admin@exemplo.com", deveTrocarSenha: true },
+      valor: { usuarioId: "u1", email: "admin@exemplo.com", papel: "admin", deveTrocarSenha: true },
     });
   });
   it("falha ao ler o perfil → nega e sai (nunca libera por engano)", async () => {

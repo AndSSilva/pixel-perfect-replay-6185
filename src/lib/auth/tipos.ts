@@ -18,9 +18,13 @@ export type CodigoErroAuth =
 export type ResultadoAuth<T = void> =
   { ok: true; valor: T } | { ok: false; codigo: CodigoErroAuth };
 
+export type PapelSessao = "admin" | "master";
+
 export interface SessaoAdmin {
   usuarioId: string;
   email: string;
+  /** `master` acessa a plataforma toda; `admin` só as empresas às quais está vinculado. */
+  papel: PapelSessao;
   /** Verdadeiro enquanto o administrador ainda usa a senha provisória (primeiro acesso). */
   deveTrocarSenha: boolean;
 }

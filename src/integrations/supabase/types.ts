@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      // NOTE: estabelecimentos e estabelecimento_membros foram criados direto no editor de SQL
+      // (não pela ferramenta de migração do Lovable); estes tipos espelham o script e serão
+      // substituídos quando o Lovable regenerar este arquivo a partir do banco.
+      estabelecimento_membros: {
+        Row: {
+          criado_em: string
+          estabelecimento_id: string
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          estabelecimento_id: string
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          estabelecimento_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estabelecimento_membros_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estabelecimento_membros_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_acesso"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      estabelecimentos: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          cor_primaria: string | null
+          cor_secundaria: string | null
+          criado_em: string
+          id: string
+          logo_url: string | null
+          nome: string
+          slug: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          cor_primaria?: string | null
+          cor_secundaria?: string | null
+          criado_em?: string
+          id?: string
+          logo_url?: string | null
+          nome: string
+          slug: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          cor_primaria?: string | null
+          cor_secundaria?: string | null
+          criado_em?: string
+          id?: string
+          logo_url?: string | null
+          nome?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       perfis_acesso: {
         Row: {
           atualizado_em: string
@@ -43,7 +115,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      eh_master: { Args: never; Returns: boolean }
+      eh_membro: { Args: { _estabelecimento: string }; Returns: boolean }
       marcar_senha_trocada: { Args: never; Returns: undefined }
+      obter_estabelecimento_publico: {
+        Args: { _slug: string }
+        Returns: {
+          cor_primaria: string
+          cor_secundaria: string
+          id: string
+          logo_url: string
+          nome: string
+          slug: string
+        }[]
+      }
+      tem_acesso_estabelecimento: { Args: { _estabelecimento: string }; Returns: boolean }
     }
     Enums: {
       papel_app: "admin" | "master"

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as MasterRouteImport } from './routes/master'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configuracoes'
@@ -22,6 +23,7 @@ import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AdminPrimeiroAcessoRouteImport } from './routes/admin_.primeiro-acesso'
 import { Route as AdminRedefinirSenhaRouteImport } from './routes/admin_.redefinir-senha'
 import { Route as CardapioMesaIdRouteImport } from './routes/cardapio.$mesaId'
+import { Route as MasterIndexRouteImport } from './routes/master.index'
 import { Route as AdminContasIndexRouteImport } from './routes/admin.contas.index'
 import { Route as AdminContasContaIdRouteImport } from './routes/admin.contas.$contaId'
 import { Route as AdminMesasIndexRouteImport } from './routes/admin.mesas.index'
@@ -36,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MasterRoute = MasterRouteImport.update({
+  id: '/master',
+  path: '/master',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -93,6 +100,11 @@ const CardapioMesaIdRoute = CardapioMesaIdRouteImport.update({
   path: '/cardapio/$mesaId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MasterIndexRoute = MasterIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MasterRoute,
+} as any)
 const AdminContasIndexRoute = AdminContasIndexRouteImport.update({
   id: '/contas/',
   path: '/contas/',
@@ -122,6 +134,7 @@ const AdminImprimirMesaIdRoute = AdminImprimirMesaIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/master': typeof MasterRouteWithChildren
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/historico': typeof AdminHistoricoRoute
@@ -133,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/master/': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
   '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
   '/admin/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
@@ -152,6 +166,7 @@ export interface FileRoutesByTo {
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
   '/admin': typeof AdminIndexRoute
+  '/master': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
   '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
   '/admin/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
@@ -162,6 +177,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/master': typeof MasterRouteWithChildren
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/historico': typeof AdminHistoricoRoute
@@ -173,6 +189,7 @@ export interface FileRoutesById {
   '/admin_/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/master/': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
   '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
   '/admin_/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
@@ -184,6 +201,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/master'
     | '/admin/categorias'
     | '/admin/configuracoes'
     | '/admin/historico'
@@ -195,6 +213,7 @@ export interface FileRouteTypes {
     | '/admin/redefinir-senha'
     | '/cardapio/$mesaId'
     | '/admin/'
+    | '/master/'
     | '/admin/contas/$contaId'
     | '/admin/mesas/$mesaId'
     | '/admin/imprimir/$mesaId'
@@ -214,6 +233,7 @@ export interface FileRouteTypes {
     | '/admin/redefinir-senha'
     | '/cardapio/$mesaId'
     | '/admin'
+    | '/master'
     | '/admin/contas/$contaId'
     | '/admin/mesas/$mesaId'
     | '/admin/imprimir/$mesaId'
@@ -223,6 +243,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/master'
     | '/admin/categorias'
     | '/admin/configuracoes'
     | '/admin/historico'
@@ -234,6 +255,7 @@ export interface FileRouteTypes {
     | '/admin_/redefinir-senha'
     | '/cardapio/$mesaId'
     | '/admin/'
+    | '/master/'
     | '/admin/contas/$contaId'
     | '/admin/mesas/$mesaId'
     | '/admin_/imprimir/$mesaId'
@@ -244,6 +266,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  MasterRoute: typeof MasterRouteWithChildren
   AdminEsqueciSenhaRoute: typeof AdminEsqueciSenhaRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminPrimeiroAcessoRoute: typeof AdminPrimeiroAcessoRoute
@@ -266,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/master': {
+      id: '/master'
+      path: '/master'
+      fullPath: '/master'
+      preLoaderRoute: typeof MasterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -345,6 +375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CardapioMesaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/master/': {
+      id: '/master/'
+      path: '/'
+      fullPath: '/master/'
+      preLoaderRoute: typeof MasterIndexRouteImport
+      parentRoute: typeof MasterRoute
+    }
     '/admin/contas/': {
       id: '/admin/contas/'
       path: '/contas'
@@ -411,9 +448,21 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface MasterRouteChildren {
+  MasterIndexRoute: typeof MasterIndexRoute
+}
+
+const MasterRouteChildren: MasterRouteChildren = {
+  MasterIndexRoute: MasterIndexRoute,
+}
+
+const MasterRouteWithChildren =
+  MasterRoute._addFileChildren(MasterRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  MasterRoute: MasterRouteWithChildren,
   AdminEsqueciSenhaRoute: AdminEsqueciSenhaRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminPrimeiroAcessoRoute: AdminPrimeiroAcessoRoute,
