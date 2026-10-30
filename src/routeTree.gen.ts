@@ -24,6 +24,7 @@ import { Route as AdminPrimeiroAcessoRouteImport } from './routes/admin_.primeir
 import { Route as AdminRedefinirSenhaRouteImport } from './routes/admin_.redefinir-senha'
 import { Route as CardapioMesaIdRouteImport } from './routes/cardapio.$mesaId'
 import { Route as MasterIndexRouteImport } from './routes/master.index'
+import { Route as MasterLoginRouteImport } from './routes/master_.login'
 import { Route as AdminContasIndexRouteImport } from './routes/admin.contas.index'
 import { Route as AdminContasContaIdRouteImport } from './routes/admin.contas.$contaId'
 import { Route as AdminMesasIndexRouteImport } from './routes/admin.mesas.index'
@@ -105,6 +106,11 @@ const MasterIndexRoute = MasterIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MasterRoute,
 } as any)
+const MasterLoginRoute = MasterLoginRouteImport.update({
+  id: '/master_/login',
+  path: '/master/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminContasIndexRoute = AdminContasIndexRouteImport.update({
   id: '/contas/',
   path: '/contas/',
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/admin/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
+  '/master/login': typeof MasterLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/master/': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/admin/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
+  '/master/login': typeof MasterLoginRoute
   '/admin': typeof AdminIndexRoute
   '/master': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/admin_/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin_/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
+  '/master_/login': typeof MasterLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/master/': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/admin/primeiro-acesso'
     | '/admin/redefinir-senha'
     | '/cardapio/$mesaId'
+    | '/master/login'
     | '/admin/'
     | '/master/'
     | '/admin/contas/$contaId'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/admin/primeiro-acesso'
     | '/admin/redefinir-senha'
     | '/cardapio/$mesaId'
+    | '/master/login'
     | '/admin'
     | '/master'
     | '/admin/contas/$contaId'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/admin_/primeiro-acesso'
     | '/admin_/redefinir-senha'
     | '/cardapio/$mesaId'
+    | '/master_/login'
     | '/admin/'
     | '/master/'
     | '/admin/contas/$contaId'
@@ -272,6 +284,7 @@ export interface RootRouteChildren {
   AdminPrimeiroAcessoRoute: typeof AdminPrimeiroAcessoRoute
   AdminRedefinirSenhaRoute: typeof AdminRedefinirSenhaRoute
   CardapioMesaIdRoute: typeof CardapioMesaIdRoute
+  MasterLoginRoute: typeof MasterLoginRoute
   AdminImprimirMesaIdRoute: typeof AdminImprimirMesaIdRoute
 }
 
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MasterIndexRouteImport
       parentRoute: typeof MasterRoute
     }
+    '/master_/login': {
+      id: '/master_/login'
+      path: '/master/login'
+      fullPath: '/master/login'
+      preLoaderRoute: typeof MasterLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/contas/': {
       id: '/admin/contas/'
       path: '/contas'
@@ -468,6 +488,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPrimeiroAcessoRoute: AdminPrimeiroAcessoRoute,
   AdminRedefinirSenhaRoute: AdminRedefinirSenhaRoute,
   CardapioMesaIdRoute: CardapioMesaIdRoute,
+  MasterLoginRoute: MasterLoginRoute,
   AdminImprimirMesaIdRoute: AdminImprimirMesaIdRoute,
 }
 export const routeTree = rootRouteImport
