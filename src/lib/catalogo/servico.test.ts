@@ -59,6 +59,7 @@ const dadosProduto = {
   precoVendaCentavos: 1200,
   precoCustoCentavos: 700,
   estoqueQtd: 10,
+  inativarAoZerarEstoque: false,
   disponivel: true,
 };
 
@@ -165,10 +166,17 @@ describe("produtos e fotos", () => {
       preco_venda_centavos: 1200,
       preco_custo_centavos: 700,
       estoque_qtd: 10,
+      inativar_ao_zerar_estoque: false,
       estabelecimento_id: E,
       foto_path: null,
     });
     expect(m.upload).not.toHaveBeenCalled();
+  });
+  it("grava a regra de inativar sozinho ao zerar o estoque", async () => {
+    await salvarProduto(E, { ...dadosProduto, inativarAoZerarEstoque: true });
+    expect(m.chamadas.find((c) => c[1] === "insert")![2]).toMatchObject({
+      inativar_ao_zerar_estoque: true,
+    });
   });
   it("cria com foto: envia para a pasta da empresa e grava o caminho", async () => {
     await salvarProduto(E, { ...dadosProduto, fotoNova: new Blob(["x"]) });

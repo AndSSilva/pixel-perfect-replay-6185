@@ -165,6 +165,8 @@ export interface DadosProduto {
   precoVendaCentavos: number;
   precoCustoCentavos: number | null;
   estoqueQtd: number;
+  /** Se verdadeiro, o produto fica indisponível sozinho quando o estoque zerar (por entrega). */
+  inativarAoZerarEstoque: boolean;
   disponivel: boolean;
   /** Foto nova já reduzida (JPEG). `undefined` = não mexe na foto. */
   fotoNova?: Blob | undefined;
@@ -184,6 +186,7 @@ export async function salvarProduto(
     preco_venda_centavos: dados.precoVendaCentavos,
     preco_custo_centavos: dados.precoCustoCentavos,
     estoque_qtd: dados.estoqueQtd,
+    inativar_ao_zerar_estoque: dados.inativarAoZerarEstoque,
     disponivel: dados.disponivel,
   };
   if (!base.nome || !dados.categoriaId) throw new ErroCatalogo("dados_invalidos");

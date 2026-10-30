@@ -67,6 +67,7 @@ type Form = {
   venda: string;
   custo: string;
   estoque: string;
+  inativarAoZerar: boolean;
   disponivel: boolean;
   /** Caminho da foto já salva (para mostrar e para apagar na troca). */
   fotoPath: string | null;
@@ -112,6 +113,7 @@ function Produtos() {
           precoVendaCentavos: v.venda,
           precoCustoCentavos: v.custo,
           estoqueQtd: v.estoque,
+          inativarAoZerarEstoque: f.inativarAoZerar,
           disponivel: f.disponivel,
           fotoNova: f.fotoNova ? await dataUrlParaBlob(f.fotoNova) : undefined,
           removerFoto: f.removerFoto && !f.fotoNova,
@@ -159,6 +161,7 @@ function Produtos() {
             venda: centavosParaInput(p.preco_venda_centavos),
             custo: p.preco_custo_centavos === null ? "" : centavosParaInput(p.preco_custo_centavos),
             estoque: String(p.estoque_qtd),
+            inativarAoZerar: p.inativar_ao_zerar_estoque,
             disponivel: p.disponivel,
             fotoPath: p.foto_path,
             removerFoto: false,
@@ -170,6 +173,7 @@ function Produtos() {
             venda: "",
             custo: "",
             estoque: "0",
+            inativarAoZerar: false,
             disponivel: true,
             fotoPath: null,
             removerFoto: false,
@@ -473,6 +477,21 @@ function Produtos() {
                   onChange={(e) => setForm({ ...form, estoque: e.target.value })}
                 />
               </Campo>
+              <div className="flex items-start gap-2">
+                <Switch
+                  id="zerar"
+                  className="mt-0.5"
+                  checked={form.inativarAoZerar}
+                  onCheckedChange={(v) => setForm({ ...form, inativarAoZerar: v })}
+                />
+                <Label htmlFor="zerar" className="leading-snug">
+                  Inativar automaticamente quando o estoque zerar
+                  <span className="block text-xs font-normal text-muted-foreground">
+                    Ligado: depois da entrega que zerar o estoque, o produto fica indisponível
+                    sozinho. Desligado: ele continua ativo e você decide quando inativar.
+                  </span>
+                </Label>
+              </div>
               <div className="flex items-center gap-2">
                 <Switch
                   id="disp"

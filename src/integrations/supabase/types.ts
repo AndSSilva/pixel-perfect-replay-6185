@@ -103,6 +103,7 @@ export type Database = {
           estoque_qtd: number
           foto_path: string | null
           id: string
+          inativar_ao_zerar_estoque: boolean
           nome: string
           preco_custo_centavos: number | null
           preco_venda_centavos: number
@@ -117,6 +118,7 @@ export type Database = {
           estoque_qtd?: number
           foto_path?: string | null
           id?: string
+          inativar_ao_zerar_estoque?: boolean
           nome: string
           preco_custo_centavos?: number | null
           preco_venda_centavos: number
@@ -131,6 +133,7 @@ export type Database = {
           estoque_qtd?: number
           foto_path?: string | null
           id?: string
+          inativar_ao_zerar_estoque?: boolean
           nome?: string
           preco_custo_centavos?: number | null
           preco_venda_centavos?: number
