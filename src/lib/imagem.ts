@@ -39,3 +39,9 @@ export function arquivoParaDataUrl(arquivo: File): Promise<string> {
     img.src = url;
   });
 }
+
+/** Converte o data URL (já reduzido por arquivoParaDataUrl) em Blob JPEG para envio ao armazenamento. */
+export async function dataUrlParaBlob(dataUrl: string): Promise<Blob> {
+  const r = await fetch(dataUrl);
+  return r.blob();
+}

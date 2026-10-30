@@ -17,6 +17,141 @@ export type Database = {
       // NOTE: estabelecimentos e estabelecimento_membros foram criados direto no editor de SQL
       // (não pela ferramenta de migração do Lovable); estes tipos espelham o script e serão
       // substituídos quando o Lovable regenerar este arquivo a partir do banco.
+      // NOTE: categorias, produtos e mesas também foram criadas direto no editor de SQL;
+      // tipos escritos à mão espelhando o script (o Lovable pode regenerar este arquivo).
+      categorias: {
+        Row: {
+          ativa: boolean
+          atualizado_em: string
+          criado_em: string
+          descricao: string | null
+          estabelecimento_id: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativa?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          estabelecimento_id: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativa?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          estabelecimento_id?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesas: {
+        Row: {
+          ativa: boolean
+          atualizado_em: string
+          criado_em: string
+          estabelecimento_id: string
+          id: string
+          numero: number
+        }
+        Insert: {
+          ativa?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          estabelecimento_id: string
+          id?: string
+          numero: number
+        }
+        Update: {
+          ativa?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          estabelecimento_id?: string
+          id?: string
+          numero?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesas_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produtos: {
+        Row: {
+          atualizado_em: string
+          categoria_id: string
+          criado_em: string
+          descricao: string | null
+          disponivel: boolean
+          estabelecimento_id: string
+          estoque_qtd: number
+          foto_path: string | null
+          id: string
+          nome: string
+          preco_custo_centavos: number | null
+          preco_venda_centavos: number
+        }
+        Insert: {
+          atualizado_em?: string
+          categoria_id: string
+          criado_em?: string
+          descricao?: string | null
+          disponivel?: boolean
+          estabelecimento_id: string
+          estoque_qtd?: number
+          foto_path?: string | null
+          id?: string
+          nome: string
+          preco_custo_centavos?: number | null
+          preco_venda_centavos: number
+        }
+        Update: {
+          atualizado_em?: string
+          categoria_id?: string
+          criado_em?: string
+          descricao?: string | null
+          disponivel?: boolean
+          estabelecimento_id?: string
+          estoque_qtd?: number
+          foto_path?: string | null
+          id?: string
+          nome?: string
+          preco_custo_centavos?: number | null
+          preco_venda_centavos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_categoria_fkey"
+            columns: ["categoria_id", "estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id", "estabelecimento_id"]
+          },
+        ]
+      }
       estabelecimento_membros: {
         Row: {
           criado_em: string
