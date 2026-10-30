@@ -24,6 +24,7 @@ import { Route as AdminPrimeiroAcessoRouteImport } from './routes/admin_.primeir
 import { Route as AdminRedefinirSenhaRouteImport } from './routes/admin_.redefinir-senha'
 import { Route as CardapioMesaIdRouteImport } from './routes/cardapio.$mesaId'
 import { Route as MasterIndexRouteImport } from './routes/master.index'
+import { Route as MasterAdministradoresRouteImport } from './routes/master.administradores'
 import { Route as MasterLoginRouteImport } from './routes/master_.login'
 import { Route as AdminContasIndexRouteImport } from './routes/admin.contas.index'
 import { Route as AdminContasContaIdRouteImport } from './routes/admin.contas.$contaId'
@@ -106,6 +107,11 @@ const MasterIndexRoute = MasterIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MasterRoute,
 } as any)
+const MasterAdministradoresRoute = MasterAdministradoresRouteImport.update({
+  id: '/administradores',
+  path: '/administradores',
+  getParentRoute: () => MasterRoute,
+} as any)
 const MasterLoginRoute = MasterLoginRouteImport.update({
   id: '/master_/login',
   path: '/master/login',
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/admin/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
+  '/master/administradores': typeof MasterAdministradoresRoute
   '/master/login': typeof MasterLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/master/': typeof MasterIndexRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/admin/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
+  '/master/administradores': typeof MasterAdministradoresRoute
   '/master/login': typeof MasterLoginRoute
   '/admin': typeof AdminIndexRoute
   '/master': typeof MasterIndexRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/admin_/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin_/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/cardapio/$mesaId': typeof CardapioMesaIdRoute
+  '/master/administradores': typeof MasterAdministradoresRoute
   '/master_/login': typeof MasterLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/master/': typeof MasterIndexRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
     | '/admin/primeiro-acesso'
     | '/admin/redefinir-senha'
     | '/cardapio/$mesaId'
+    | '/master/administradores'
     | '/master/login'
     | '/admin/'
     | '/master/'
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/admin/primeiro-acesso'
     | '/admin/redefinir-senha'
     | '/cardapio/$mesaId'
+    | '/master/administradores'
     | '/master/login'
     | '/admin'
     | '/master'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/admin_/primeiro-acesso'
     | '/admin_/redefinir-senha'
     | '/cardapio/$mesaId'
+    | '/master/administradores'
     | '/master_/login'
     | '/admin/'
     | '/master/'
@@ -395,6 +407,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MasterIndexRouteImport
       parentRoute: typeof MasterRoute
     }
+    '/master/administradores': {
+      id: '/master/administradores'
+      path: '/administradores'
+      fullPath: '/master/administradores'
+      preLoaderRoute: typeof MasterAdministradoresRouteImport
+      parentRoute: typeof MasterRoute
+    }
     '/master_/login': {
       id: '/master_/login'
       path: '/master/login'
@@ -469,10 +488,12 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface MasterRouteChildren {
+  MasterAdministradoresRoute: typeof MasterAdministradoresRoute
   MasterIndexRoute: typeof MasterIndexRoute
 }
 
 const MasterRouteChildren: MasterRouteChildren = {
+  MasterAdministradoresRoute: MasterAdministradoresRoute,
   MasterIndexRoute: MasterIndexRoute,
 }
 
