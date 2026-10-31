@@ -1,6 +1,8 @@
+import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { ErroPedido, codigoDoErro } from "./tipos";
+import type { ComandaPainel } from "./contas";
 import type { PedidoPainel } from "./painel";
 
 // Operações do painel (administrador/master logado). Leitura direta (RLS) e escrita só por funções.
@@ -99,4 +101,152 @@ export async function contarPendentes(empresaId: string): Promise<number> {
     .gt("expira_em", new Date().toISOString());
   if (error) falhar("contarPendentes", error);
   return count ?? 0;
+}
+
+// ---------- Contas (comandas), pagamentos e mesas ----------
+
+export const chaveSessoes = (empresaId: string) => ["sessoes", empresaId] as const;
+
+/** Depois de qualquer ação de atendimento: refaz pedidos, contas, mesas e estoque. */
+export function atualizarAtendimento(qc: QueryClient, empresaId: string): void {
+  for (const chave of [
+    chavePedidos(empresaId),
+    chaveComandas(empresaId),
+    chaveSessoes(empresaId),
+    ["produtos", empresaId],
+  ]) {
+    void qc.invalidateQueries({ queryKey: chave });
+  }
+}
+
+/** Sessões em andamento (mesas ocupadas ou em fechamento). */
+export async function listarSessoesAtivas(empresaId: string): Promise<Tables<"sessoes_mesa">[]> {
+  const { data, error } = await supabase
+    .from("sessoes_mesa")
+    .select("*")
+    .eq("estabelecimento_id", empresaId)
+    .neq("status", "encerrada");
+  if (error) falhar("listarSessoes", error);
+  return data;
+}
+
+async function montarComandas(
+  empresaId: string,
+  comandas: Tables<"comandas">[],
+): Promise<ComandaPainel[]> {
+  if (comandas.length === 0) return [];
+  const ids = comandas.map((c) => c.id);
+  const [pedidos, pagamentos] = await Promise.all([
+    supabase.from("pedidos").select("*").eq("estabelecimento_id", empresaId).in("comanda_id", ids),
+    supabase
+      .from("pagamentos")
+      .select("*")
+      .eq("estabelecimento_id", empresaId)
+      .in("comanda_id", ids),
+  ]);
+  if (pedidos.error) falhar("comandas/pedidos", pedidos.error);
+  if (pagamentos.error) falhar("comandas/pagamentos", pagamentos.error);
+  const itens =
+    pedidos.data.length === 0
+      ? { data: [] as Tables<"itens_pedido">[], error: null }
+      : await supabase
+          .from("itens_pedido")
+          .select("*")
+          .eq("estabelecimento_id", empresaId)
+          .in(
+            "pedido_id",
+            pedidos.data.map((p) => p.id),
+          );
+  if (itens.error) falhar("comandas/itens", itens.error);
+
+  return comandas.map((c) => ({
+    ...c,
+    pagamentos: pagamentos.data
+      .filter((g) => g.comanda_id === c.id)
+      .sort((a, b) => a.criado_em.localeCompare(b.criado_em)),
+    pedidos: pedidos.data
+      .filter((p) => p.comanda_id === c.id)
+      .sort((a, b) => a.criado_em.localeCompare(b.criado_em))
+      .map((p) => ({
+        ...p,
+        cliente_nome: c.cliente_nome,
+        mesa_numero: c.mesa_numero,
+        itens: itens.data
+          .filter((i) => i.pedido_id === p.id)
+          .sort((a, b) => a.nome_produto.localeCompare(b.nome_produto)),
+      })),
+  }));
+}
+
+/** Comandas das mesas em atendimento (abertas, ou já pagas aguardando a liberação da mesa). */
+export async function listarComandasAtivas(empresaId: string): Promise<ComandaPainel[]> {
+  const sessoes = await listarSessoesAtivas(empresaId);
+  if (sessoes.length === 0) return [];
+  const { data, error } = await supabase
+    .from("comandas")
+    .select(COLUNAS_COMANDA)
+    .eq("estabelecimento_id", empresaId)
+    .in(
+      "sessao_id",
+      sessoes.map((s) => s.id),
+    )
+    .order("aberta_em");
+  if (error) falhar("listarComandasAtivas", error);
+  return montarComandas(empresaId, data);
+}
+
+/** null = não existe (ou não é desta empresa). */
+export async function obterComanda(empresaId: string, id: string): Promise<ComandaPainel | null> {
+  const { data, error } = await supabase
+    .from("comandas")
+    .select(COLUNAS_COMANDA)
+    .eq("estabelecimento_id", empresaId)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) falhar("obterComanda", error);
+  if (!data) return null;
+  return (await montarComandas(empresaId, [data]))[0] ?? null;
+}
+
+export async function registrarPagamento(dados: {
+  comandaId: string;
+  valorCentavos: number;
+  forma: Tables<"pagamentos">["forma"];
+  observacao: string;
+  recebidoCentavos: number | undefined;
+}): Promise<void> {
+  const obs = dados.observacao.trim();
+  const { error } = await supabase.rpc("registrar_pagamento", {
+    _comanda: dados.comandaId,
+    _valor: dados.valorCentavos,
+    _forma: dados.forma,
+    ...(obs ? { _observacao: obs } : {}),
+    ...(dados.recebidoCentavos !== undefined ? { _recebido: dados.recebidoCentavos } : {}),
+  });
+  if (error) falhar("registrarPagamento", error);
+}
+
+export async function excluirPagamento(id: string): Promise<void> {
+  const { error } = await supabase.rpc("excluir_pagamento", { _pagamento: id });
+  if (error) falhar("excluirPagamento", error);
+}
+
+export async function fecharComanda(id: string): Promise<void> {
+  const { error } = await supabase.rpc("fechar_comanda", { _comanda: id });
+  if (error) falhar("fecharComanda", error);
+}
+
+export async function iniciarFechamentoMesa(mesaId: string): Promise<void> {
+  const { error } = await supabase.rpc("iniciar_fechamento_mesa", { _mesa: mesaId });
+  if (error) falhar("iniciarFechamentoMesa", error);
+}
+
+export async function retomarAtendimentoMesa(mesaId: string): Promise<void> {
+  const { error } = await supabase.rpc("retomar_atendimento_mesa", { _mesa: mesaId });
+  if (error) falhar("retomarAtendimentoMesa", error);
+}
+
+export async function liberarMesa(mesaId: string): Promise<void> {
+  const { error } = await supabase.rpc("liberar_mesa", { _mesa: mesaId });
+  if (error) falhar("liberarMesa", error);
 }

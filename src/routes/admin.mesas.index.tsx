@@ -34,6 +34,8 @@ import {
   rotuloMesa,
 } from "@/lib/catalogo/mesas";
 import { cn } from "@/lib/utils";
+import { situacaoDaMesa, type SituacaoMesa } from "@/lib/pedidos/contas";
+import { chaveSessoes, listarSessoesAtivas } from "@/lib/pedidos/servico-painel";
 
 export const Route = createFileRoute("/admin/mesas/")({
   head: () => ({
@@ -45,6 +47,16 @@ export const Route = createFileRoute("/admin/mesas/")({
   component: Mesas,
 });
 
+const SELO_SITUACAO: Record<
+  SituacaoMesa,
+  readonly ["sucesso" | "destaque" | "alerta" | "neutro", string]
+> = {
+  livre: ["sucesso", "Livre"],
+  ocupada: ["destaque", "Ocupada"],
+  fechamento: ["alerta", "Em fechamento"],
+  inativa: ["neutro", "Desativada"],
+};
+
 const inteiro = (v: string) => (/^\d+$/.test(v.trim()) ? Number(v.trim()) : NaN);
 
 function Mesas() {
@@ -53,6 +65,11 @@ function Mesas() {
   const consulta = useQuery({
     queryKey: chaveMesas(empresa.id),
     queryFn: () => listarMesas(empresa.id),
+  });
+  const sessoes = useQuery({
+    queryKey: chaveSessoes(empresa.id),
+    queryFn: () => listarSessoesAtivas(empresa.id),
+    refetchInterval: 10_000,
   });
   const [aberto, setAberto] = useState(false);
   const [inicio, setInicio] = useState("1");
@@ -131,12 +148,26 @@ function Mesas() {
             >
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-display text-xl font-semibold">{rotuloMesa(m.numero)}</h3>
-                <Selo tom={m.ativa ? "sucesso" : "neutro"}>{m.ativa ? "Ativa" : "Desativada"}</Selo>
+                {(() => {
+                  const [tom, rotulo] =
+                    SELO_SITUACAO[
+                      situacaoDaMesa(
+                        m,
+                        sessoes.data?.find((x) => x.mesa_id === m.id),
+                      )
+                    ];
+                  return <Selo tom={tom}>{rotulo}</Selo>;
+                })()}
               </div>
               <p className="mt-1 truncate text-xs text-muted-foreground">
                 {caminhoMesa(empresa.slug, m.numero)}
               </p>
               <div className="mt-4 flex items-center gap-1">
+                <Button asChild size="sm" className="flex-1">
+                  <Link to="/admin/mesas/$mesaId" params={{ mesaId: m.id }}>
+                    Atendimento
+                  </Link>
+                </Button>
                 <Button asChild size="sm" variant="secondary" className="flex-1">
                   <Link to="/admin/imprimir/$mesaId" params={{ mesaId: m.id }}>
                     <QrCode className="h-4 w-4" aria-hidden /> QR Code
