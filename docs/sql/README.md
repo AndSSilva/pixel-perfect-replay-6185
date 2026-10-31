@@ -14,6 +14,8 @@ Este diretório é o registro do que existe no banco; ao criar uma mudança nova
 | `07_estoque.sql` | Histórico de movimentos e `ajustar_estoque()`; o estoque físico deixa de ser editável direto |
 | `08_pedidos.sql` | Sessões de mesa, comandas, pedidos, itens, pagamentos e as funções do cliente e do painel |
 | `09_caixa.sql` | Caixa: abertura, sangria/reforço, fechamento (esperado × contado); pagamento passa a exigir caixa aberto |
+| `10_liberar_mesa_ignora_comandas_vazias.sql` | Liberar mesa encerra comandas sem pedido aprovado (mesa só ocupa após aprovar) |
+| `11_apresentacao_empresa.sql` | Textos, endereço e logo da empresa, e a função pública da página `/{slug}` com mesas disponíveis |
 
 ## Testes
 
