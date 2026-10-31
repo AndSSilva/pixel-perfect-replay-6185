@@ -302,6 +302,91 @@ export type Database = {
         }
         Relationships: []
       }
+      // NOTE: sessoes_mesa, comandas, pedidos, itens_pedido e pagamentos (docs/sql/08_pedidos.sql):
+      // o painel só LÊ (escrita apenas pelas funções); comandas não expõe token_hash (sem permissão).
+      sessoes_mesa: {
+        Row: {
+          aberta_em: string
+          encerrada_em: string | null
+          estabelecimento_id: string
+          id: string
+          mesa_id: string
+          status: Database["public"]["Enums"]["status_sessao"]
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
+      comandas: {
+        Row: {
+          aberta_em: string
+          cliente_nome: string
+          estabelecimento_id: string
+          fechada_em: string | null
+          id: string
+          mesa_id: string
+          mesa_numero: number
+          sessao_id: string
+          status: Database["public"]["Enums"]["status_comanda"]
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
+      pedidos: {
+        Row: {
+          comanda_id: string
+          confirmado_em: string | null
+          criado_em: string
+          estabelecimento_id: string
+          expira_em: string
+          id: string
+          mesa_id: string
+          motivo_rejeicao: string | null
+          rejeitado_em: string | null
+          sessao_id: string
+          status: Database["public"]["Enums"]["status_pedido"]
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
+      itens_pedido: {
+        Row: {
+          cancelado_em: string | null
+          custo_unitario_centavos: number | null
+          entregue_em: string | null
+          estabelecimento_id: string
+          id: string
+          motivo_cancelamento: string | null
+          nome_produto: string
+          pedido_id: string
+          preco_unitario_centavos: number
+          produto_id: string | null
+          quantidade: number
+          status: Database["public"]["Enums"]["status_item"]
+          subtotal_centavos: number
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
+      pagamentos: {
+        Row: {
+          comanda_id: string
+          criado_em: string
+          estabelecimento_id: string
+          forma: Database["public"]["Enums"]["forma_pagamento"]
+          id: string
+          observacao: string | null
+          recebido_centavos: number | null
+          troco_centavos: number | null
+          valor_centavos: number
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -316,6 +401,34 @@ export type Database = {
         }
         Returns: number
       }
+      cancelar_item: { Args: { _item: string; _motivo: string }; Returns: undefined }
+      cancelar_meu_pedido: { Args: { _pedido: string; _token: string }; Returns: undefined }
+      confirmar_pedido: { Args: { _pedido: string }; Returns: undefined }
+      enviar_pedido: { Args: { _itens: Json; _token: string }; Returns: string }
+      entregar_itens: { Args: { _itens: string[] }; Returns: number }
+      entregar_pedido: { Args: { _pedido: string }; Returns: number }
+      excluir_pagamento: { Args: { _pagamento: string }; Returns: undefined }
+      fechar_comanda: { Args: { _comanda: string }; Returns: undefined }
+      identificar_cliente: {
+        Args: { _nome: string; _numero: number; _slug: string }
+        Returns: Json
+      }
+      iniciar_fechamento_mesa: { Args: { _mesa: string }; Returns: undefined }
+      liberar_mesa: { Args: { _mesa: string }; Returns: undefined }
+      minha_comanda: { Args: { _token: string }; Returns: Json }
+      obter_cardapio_publico: { Args: { _numero: number; _slug: string }; Returns: Json }
+      registrar_pagamento: {
+        Args: {
+          _comanda: string
+          _forma: Database["public"]["Enums"]["forma_pagamento"]
+          _observacao?: string
+          _recebido?: number
+          _valor: number
+        }
+        Returns: string
+      }
+      rejeitar_pedido: { Args: { _motivo?: string; _pedido: string }; Returns: undefined }
+      retomar_atendimento_mesa: { Args: { _mesa: string }; Returns: undefined }
       eh_master: { Args: never; Returns: boolean }
       eh_membro: { Args: { _estabelecimento: string }; Returns: boolean }
       marcar_senha_trocada: { Args: never; Returns: undefined }
@@ -334,6 +447,11 @@ export type Database = {
     }
     Enums: {
       papel_app: "admin" | "master"
+      forma_pagamento: "dinheiro" | "pix" | "debito" | "credito" | "outro"
+      status_comanda: "aberta" | "paga"
+      status_item: "aguardando" | "entregue" | "cancelado"
+      status_pedido: "pendente" | "confirmado" | "rejeitado" | "cancelado"
+      status_sessao: "aberta" | "fechamento" | "encerrada"
       tipo_movimento_estoque:
         | "saldo_inicial"
         | "reposicao"

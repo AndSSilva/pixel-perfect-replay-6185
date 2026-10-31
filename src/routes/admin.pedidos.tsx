@@ -1,62 +1,124 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Inbox } from "lucide-react";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState, PageHeader } from "@/components/app/common";
-import { PedidoCard } from "@/components/app/PedidoCard";
-import { useDados } from "@/lib/store";
+import { estadoDaConsulta } from "@/components/app/Consulta";
+import { PedidoPainelCard, type AcoesPedido } from "@/components/pedidos/PedidoPainelCard";
+import { useEmpresa } from "@/lib/empresa/contexto";
+import { chaveProdutos } from "@/lib/catalogo/servico";
+import { agruparPedidos } from "@/lib/pedidos/painel";
+import {
+  cancelarItem,
+  chavePedidos,
+  confirmarPedido,
+  entregarItens,
+  entregarPedido,
+  listarPedidos,
+  rejeitarPedido,
+} from "@/lib/pedidos/servico-painel";
+import { ErroPedido, mensagemDoErroPedido } from "@/lib/pedidos/tipos";
 
 export const Route = createFileRoute("/admin/pedidos")({
   head: () => ({
     meta: [
       { title: "Pedidos — Mesa Digital" },
-      { name: "description", content: "Fila de pedidos para confirmação manual." },
-      { property: "og:title", content: "Pedidos — Mesa Digital" },
-      { property: "og:description", content: "Fila de pedidos para confirmação manual." },
+      { name: "description", content: "Fila de pedidos: confirmar, entregar e cancelar itens." },
     ],
   }),
   component: Pedidos,
 });
 
 function Pedidos() {
-  const d = useDados()!;
-  const [status, setStatus] = useState("todos");
-  const ordenados = [...d.pedidos].sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
-  const pendentes = ordenados.filter((p) => p.status === "pendente").reverse(); // oldest first in the queue
-  const anteriores = ordenados.filter((p) => p.status !== "pendente" && (status === "todos" || p.status === status));
+  const empresa = useEmpresa();
+  const qc = useQueryClient();
+  const consulta = useQuery({
+    queryKey: chavePedidos(empresa.id),
+    queryFn: () => listarPedidos(empresa.id),
+    refetchInterval: 10_000,
+  });
+  const [agora, setAgora] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setAgora(Date.now()), 15_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const atualizar = () => {
+    void qc.invalidateQueries({ queryKey: chavePedidos(empresa.id) });
+    void qc.invalidateQueries({ queryKey: chaveProdutos(empresa.id) });
+  };
+  const rodar = useMutation({
+    mutationFn: ({ fn }: { fn: () => Promise<unknown>; ok: string }) => fn(),
+    onSuccess: (_r, v) => {
+      toast.success(v.ok);
+      atualizar();
+    },
+    onError: (e) => {
+      const falta =
+        e instanceof ErroPedido && e.codigo === "estoque_insuficiente" ? e.detalhe : undefined;
+      toast.error(mensagemDoErroPedido(e), falta ? { description: falta } : undefined);
+      atualizar();
+    },
+  });
+  // mutateAsync rejeita em caso de erro: os botões ignoram (o toast já foi mostrado)
+  const exec = (fn: () => Promise<unknown>, ok: string) => rodar.mutateAsync({ fn, ok });
+
+  const acoes: AcoesPedido = {
+    ocupado: rodar.isPending,
+    confirmar: (p) => exec(() => confirmarPedido(p.id), "Pedido confirmado."),
+    rejeitar: (p, m) => exec(() => rejeitarPedido(p.id, m), "Pedido rejeitado."),
+    entregarPedido: (p) => exec(() => entregarPedido(p.id), "Itens entregues."),
+    entregarItem: (id) => exec(() => entregarItens([id]), "Item entregue."),
+    cancelarItem: (id, m) => exec(() => cancelarItem(id, m), "Item cancelado."),
+  };
+
+  const grupos = useMemo(() => agruparPedidos(consulta.data ?? []), [consulta.data]);
+  const estado = estadoDaConsulta(consulta);
 
   return (
     <>
-      <PageHeader titulo="Pedidos" descricao="Confirme ou rejeite os pedidos enviados pelo cardápio." />
-      <Tabs defaultValue="pendentes">
-        <TabsList>
-          <TabsTrigger value="pendentes">Pendentes ({pendentes.length})</TabsTrigger>
-          <TabsTrigger value="anteriores">Anteriores</TabsTrigger>
-        </TabsList>
-        <TabsContent value="pendentes" className="mt-4">
-          {pendentes.length === 0 ? (
-            <EmptyState icone={Inbox} titulo="Nenhum pedido pendente" texto="Novos pedidos do cardápio aparecerão aqui para confirmação." />
-          ) : (
-            <div className="grid gap-3 lg:grid-cols-2">{pendentes.map((p) => <PedidoCard key={p.id} d={d} pedido={p} />)}</div>
-          )}
-        </TabsContent>
-        <TabsContent value="anteriores" className="mt-4 space-y-4">
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-56" aria-label="Filtrar por situação"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Confirmados e rejeitados</SelectItem>
-              <SelectItem value="confirmado">Somente confirmados</SelectItem>
-              <SelectItem value="rejeitado">Somente rejeitados</SelectItem>
-            </SelectContent>
-          </Select>
-          {anteriores.length === 0 ? (
-            <EmptyState icone={Inbox} titulo="Nenhum pedido anterior" />
-          ) : (
-            <div className="grid gap-3 lg:grid-cols-2">{anteriores.map((p) => <PedidoCard key={p.id} d={d} pedido={p} />)}</div>
-          )}
-        </TabsContent>
-      </Tabs>
+      <PageHeader
+        titulo="Pedidos"
+        descricao="Confirme os pedidos, marque as entregas (o estoque baixa na entrega) e cancele itens que faltarem."
+      />
+      {estado ?? (
+        <Tabs defaultValue="pendentes">
+          <TabsList>
+            <TabsTrigger value="pendentes">Pendentes ({grupos.pendentes.length})</TabsTrigger>
+            <TabsTrigger value="andamento">A entregar ({grupos.andamento.length})</TabsTrigger>
+            <TabsTrigger value="encerrados">Encerrados</TabsTrigger>
+          </TabsList>
+          {(
+            [
+              ["pendentes", "Nenhum pedido pendente", "Novos pedidos dos clientes aparecem aqui."],
+              [
+                "andamento",
+                "Nada aguardando entrega",
+                "Pedidos confirmados com itens por entregar aparecem aqui.",
+              ],
+              [
+                "encerrados",
+                "Nenhum pedido encerrado",
+                "Entregues, recusados e cancelados ficam aqui.",
+              ],
+            ] as const
+          ).map(([g, titulo, texto]) => (
+            <TabsContent key={g} value={g} className="mt-4">
+              {grupos[g].length === 0 ? (
+                <EmptyState icone={Inbox} titulo={titulo} texto={texto} />
+              ) : (
+                <div className="grid gap-3 lg:grid-cols-2">
+                  {grupos[g].map((p) => (
+                    <PedidoPainelCard key={p.id} pedido={p} agora={agora} acoes={acoes} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
     </>
   );
 }
