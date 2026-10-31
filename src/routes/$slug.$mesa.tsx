@@ -6,6 +6,7 @@ import {
   Minus,
   Plus,
   ReceiptText,
+  Search,
   ShoppingBag,
   TriangleAlert,
   UtensilsCrossed,
@@ -36,6 +37,7 @@ import {
 import { apagarToken, lerToken, salvarToken } from "@/lib/pedidos/token-local";
 import { mensagemDoErroPedido, type ProdutoCardapio } from "@/lib/pedidos/tipos";
 import { corSegura } from "@/lib/pedidos/rotulos";
+import { filtrarCategorias } from "@/lib/pedidos/filtro";
 import { numeroDaMesa } from "@/lib/pedidos/mesa-url";
 
 export const Route = createFileRoute("/$slug/$mesa")({
@@ -243,6 +245,8 @@ function Atendimento({
   const [aba, setAba] = useState<"cardapio" | "comanda">("cardapio");
   const [carrinho, setCarrinho] = useState<Carrinho>({});
   const [revisando, setRevisando] = useState(false);
+  const [categoriaFiltro, setCategoriaFiltro] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
 
   const produtos = useMemo(() => {
     const mapa = new Map<string, ProdutoCardapio>();
@@ -261,6 +265,15 @@ function Atendimento({
       return JSON.stringify(novo) === JSON.stringify(c) ? c : novo;
     });
   }, [produtos]);
+
+  // Categoria escolhida que saiu do cardápio: volta para "Todas".
+  const filtroValido =
+    categoriaFiltro === null || cardapio.categorias.some((c) => c.id === categoriaFiltro);
+  const categoriasVisiveis = useMemo(
+    () => filtrarCategorias(cardapio.categorias, filtroValido ? categoriaFiltro : null, busca),
+    [cardapio.categorias, categoriaFiltro, filtroValido, busca],
+  );
+  const filtrando = busca.trim() !== "" || (categoriaFiltro !== null && filtroValido);
 
   const aceitaPedido =
     comanda.comanda.status === "aberta" && comanda.comanda.sessao_status === "aberta";
@@ -317,10 +330,66 @@ function Atendimento({
                 : "A mesa está sendo fechada. Chame o atendente para novos pedidos."}
             </div>
           ) : null}
+          {cardapio.categorias.length > 0 ? (
+            <div className="mb-4 space-y-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="search"
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  placeholder="Buscar item pelo nome"
+                  aria-label="Buscar item pelo nome"
+                  className="pl-9"
+                />
+              </div>
+              <div
+                className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1"
+                role="group"
+                aria-label="Filtrar por categoria"
+              >
+                {[
+                  { id: null, nome: "Todas" },
+                  ...cardapio.categorias.map((c) => ({ id: c.id, nome: c.nome })),
+                ].map((c) => {
+                  const ativa = (filtroValido ? categoriaFiltro : null) === c.id;
+                  return (
+                    <button
+                      key={c.id ?? "todas"}
+                      type="button"
+                      aria-pressed={ativa}
+                      onClick={() => setCategoriaFiltro(c.id)}
+                      className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${ativa ? "border-transparent text-white" : "bg-card text-muted-foreground"}`}
+                      style={ativa ? { backgroundColor: cor } : undefined}
+                    >
+                      {c.nome}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
           {cardapio.categorias.length === 0 ? (
             <EmptyState icone={UtensilsCrossed} titulo="Cardápio indisponível no momento" />
+          ) : categoriasVisiveis.length === 0 && filtrando ? (
+            <EmptyState
+              icone={Search}
+              titulo="Nenhum item encontrado"
+              texto="Tente outro nome ou escolha outra categoria."
+              acao={
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setBusca("");
+                    setCategoriaFiltro(null);
+                  }}
+                >
+                  Limpar filtros
+                </Button>
+              }
+            />
           ) : (
-            cardapio.categorias.map((c) => (
+            categoriasVisiveis.map((c) => (
               <section key={c.id} className="mb-6">
                 <h2 className="text-base font-semibold">{c.nome}</h2>
                 {c.descricao ? (
