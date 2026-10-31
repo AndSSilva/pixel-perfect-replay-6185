@@ -25,3 +25,6 @@ grant select, insert, update, delete on storage.objects to authenticated;
 
 grant usage on schema public to anon, authenticated, service_role;
 alter default privileges in schema public grant all on tables to service_role;
+-- O Supabase concede EXECUTE em toda função nova a anon e authenticated: replicamos para que
+-- esquecimentos de REVOKE apareçam nos testes.
+alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;
