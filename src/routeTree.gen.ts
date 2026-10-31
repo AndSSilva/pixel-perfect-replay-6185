@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as MasterRouteImport } from './routes/master'
+import { Route as SlugIndexRouteImport } from './routes/$slug.index'
 import { Route as SlugMesaRouteImport } from './routes/$slug.$mesa'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
@@ -46,6 +47,11 @@ const AdminRoute = AdminRouteImport.update({
 const MasterRoute = MasterRouteImport.update({
   id: '/master',
   path: '/master',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlugIndexRoute = SlugIndexRouteImport.update({
+  id: '/$slug/',
+  path: '/$slug/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SlugMesaRoute = SlugMesaRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/master/administradores': typeof MasterAdministradoresRoute
   '/master/login': typeof MasterLoginRoute
+  '/$slug/': typeof SlugIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/master/': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/master/administradores': typeof MasterAdministradoresRoute
   '/master/login': typeof MasterLoginRoute
+  '/$slug': typeof SlugIndexRoute
   '/admin': typeof AdminIndexRoute
   '/master': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/admin_/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/master/administradores': typeof MasterAdministradoresRoute
   '/master_/login': typeof MasterLoginRoute
+  '/$slug/': typeof SlugIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/master/': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/admin/redefinir-senha'
     | '/master/administradores'
     | '/master/login'
+    | '/$slug/'
     | '/admin/'
     | '/master/'
     | '/admin/contas/$contaId'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/admin/redefinir-senha'
     | '/master/administradores'
     | '/master/login'
+    | '/$slug'
     | '/admin'
     | '/master'
     | '/admin/contas/$contaId'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/admin_/redefinir-senha'
     | '/master/administradores'
     | '/master_/login'
+    | '/$slug/'
     | '/admin/'
     | '/master/'
     | '/admin/contas/$contaId'
@@ -309,6 +321,7 @@ export interface RootRouteChildren {
   AdminPrimeiroAcessoRoute: typeof AdminPrimeiroAcessoRoute
   AdminRedefinirSenhaRoute: typeof AdminRedefinirSenhaRoute
   MasterLoginRoute: typeof MasterLoginRoute
+  SlugIndexRoute: typeof SlugIndexRoute
   AdminImprimirMesaIdRoute: typeof AdminImprimirMesaIdRoute
 }
 
@@ -333,6 +346,13 @@ declare module '@tanstack/react-router' {
       path: '/master'
       fullPath: '/master'
       preLoaderRoute: typeof MasterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$slug/': {
+      id: '/$slug/'
+      path: '/$slug'
+      fullPath: '/$slug/'
+      preLoaderRoute: typeof SlugIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$slug/$mesa': {
@@ -531,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPrimeiroAcessoRoute: AdminPrimeiroAcessoRoute,
   AdminRedefinirSenhaRoute: AdminRedefinirSenhaRoute,
   MasterLoginRoute: MasterLoginRoute,
+  SlugIndexRoute: SlugIndexRoute,
   AdminImprimirMesaIdRoute: AdminImprimirMesaIdRoute,
 }
 export const routeTree = rootRouteImport

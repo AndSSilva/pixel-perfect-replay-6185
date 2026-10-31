@@ -195,6 +195,10 @@ export type Database = {
           cor_primaria: string | null
           cor_secundaria: string | null
           criado_em: string
+          descricao: string | null
+          destaques: string[]
+          endereco: string | null
+          horario_funcionamento: string | null
           id: string
           logo_url: string | null
           nome: string
@@ -206,6 +210,10 @@ export type Database = {
           cor_primaria?: string | null
           cor_secundaria?: string | null
           criado_em?: string
+          descricao?: string | null
+          destaques?: string[]
+          endereco?: string | null
+          horario_funcionamento?: string | null
           id?: string
           logo_url?: string | null
           nome: string
@@ -217,6 +225,10 @@ export type Database = {
           cor_primaria?: string | null
           cor_secundaria?: string | null
           criado_em?: string
+          descricao?: string | null
+          destaques?: string[]
+          endereco?: string | null
+          horario_funcionamento?: string | null
           id?: string
           logo_url?: string | null
           nome?: string
@@ -483,6 +495,7 @@ export type Database = {
       eh_master: { Args: never; Returns: boolean }
       eh_membro: { Args: { _estabelecimento: string }; Returns: boolean }
       marcar_senha_trocada: { Args: never; Returns: undefined }
+      obter_apresentacao_publica: { Args: { _slug: string }; Returns: Json }
       obter_estabelecimento_publico: {
         Args: { _slug: string }
         Returns: {

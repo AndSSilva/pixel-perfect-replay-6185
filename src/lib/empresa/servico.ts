@@ -2,7 +2,8 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { ErroEmpresa, type CodigoErroEmpresa, type Empresa } from "./tipos";
 
-const COLUNAS = "id, slug, nome, ativo, cor_primaria, cor_secundaria, logo_url, criado_em";
+const COLUNAS =
+  "id, slug, nome, ativo, cor_primaria, cor_secundaria, logo_url, criado_em, descricao, destaques, endereco, horario_funcionamento";
 
 /** Converte erros do Postgres/PostgREST em códigos nossos. */
 export function codigoDoErroEmpresa(
@@ -13,6 +14,7 @@ export function codigoDoErroEmpresa(
     if (e.message.includes("slug_reservado")) return "slug_reservado";
     if (e.message.includes("slug_formato")) return "slug_formato";
     if (e.message.includes("nome_tamanho")) return "nome_invalido";
+    return "dados_invalidos";
   }
   if (e.code === "42501") return "sem_permissao";
   return "desconhecido";
@@ -40,14 +42,37 @@ export async function criarEmpresa(dados: { nome: string; slug: string }): Promi
   return data;
 }
 
-/** O endereço (slug) não pode ser alterado depois de criado. */
-export async function atualizarEmpresa(
-  id: string,
-  dados: { nome?: string; ativo?: boolean },
-): Promise<Empresa> {
-  const campos: { nome?: string; ativo?: boolean } = {};
+export type DadosEmpresa = {
+  nome?: string;
+  ativo?: boolean;
+  descricao?: string | null;
+  destaques?: string[];
+  endereco?: string | null;
+  horario_funcionamento?: string | null;
+  cor_primaria?: string | null;
+  cor_secundaria?: string | null;
+  logo_url?: string | null;
+};
+
+/** O endereço (slug) não pode ser alterado depois de criado. Texto vazio vira "sem valor". */
+export async function atualizarEmpresa(id: string, dados: DadosEmpresa): Promise<Empresa> {
+  const vazioParaNulo = (v: string | null | undefined) =>
+    v === undefined ? undefined : v?.trim() || null;
+  const campos: Partial<Omit<DadosEmpresa, "nome">> & { nome?: string } = {};
   if (dados.nome !== undefined) campos.nome = dados.nome.trim();
   if (dados.ativo !== undefined) campos.ativo = dados.ativo;
+  if (dados.destaques !== undefined) campos.destaques = dados.destaques;
+  for (const k of [
+    "descricao",
+    "endereco",
+    "horario_funcionamento",
+    "cor_primaria",
+    "cor_secundaria",
+    "logo_url",
+  ] as const) {
+    const v = vazioParaNulo(dados[k]);
+    if (v !== undefined) campos[k] = v;
+  }
   const { data, error } = await supabase
     .from("estabelecimentos")
     .update(campos)
