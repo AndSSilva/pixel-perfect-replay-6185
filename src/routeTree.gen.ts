@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as MasterRouteImport } from './routes/master'
+import { Route as SlugMesaRouteImport } from './routes/$slug.$mesa'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configuracoes'
@@ -45,6 +46,11 @@ const AdminRoute = AdminRouteImport.update({
 const MasterRoute = MasterRouteImport.update({
   id: '/master',
   path: '/master',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlugMesaRoute = SlugMesaRouteImport.update({
+  id: '/$slug/$mesa',
+  path: '/$slug/$mesa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/master': typeof MasterRouteWithChildren
+  '/$slug/$mesa': typeof SlugMesaRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/historico': typeof AdminHistoricoRoute
@@ -169,6 +176,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$slug/$mesa': typeof SlugMesaRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/historico': typeof AdminHistoricoRoute
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/master': typeof MasterRouteWithChildren
+  '/$slug/$mesa': typeof SlugMesaRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
   '/admin/historico': typeof AdminHistoricoRoute
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/master'
+    | '/$slug/$mesa'
     | '/admin/categorias'
     | '/admin/configuracoes'
     | '/admin/historico'
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$slug/$mesa'
     | '/admin/categorias'
     | '/admin/configuracoes'
     | '/admin/historico'
@@ -266,6 +277,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/master'
+    | '/$slug/$mesa'
     | '/admin/categorias'
     | '/admin/configuracoes'
     | '/admin/historico'
@@ -291,6 +303,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   MasterRoute: typeof MasterRouteWithChildren
+  SlugMesaRoute: typeof SlugMesaRoute
   AdminEsqueciSenhaRoute: typeof AdminEsqueciSenhaRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminPrimeiroAcessoRoute: typeof AdminPrimeiroAcessoRoute
@@ -321,6 +334,13 @@ declare module '@tanstack/react-router' {
       path: '/master'
       fullPath: '/master'
       preLoaderRoute: typeof MasterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$slug/$mesa': {
+      id: '/$slug/$mesa'
+      path: '/$slug/$mesa'
+      fullPath: '/$slug/$mesa'
+      preLoaderRoute: typeof SlugMesaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -504,6 +524,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   MasterRoute: MasterRouteWithChildren,
+  SlugMesaRoute: SlugMesaRoute,
   AdminEsqueciSenhaRoute: AdminEsqueciSenhaRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminPrimeiroAcessoRoute: AdminPrimeiroAcessoRoute,

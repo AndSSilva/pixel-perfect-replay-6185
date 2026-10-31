@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
@@ -24,6 +25,7 @@ import type { SessaoAdmin } from "@/lib/auth/tipos";
 import { useEmpresaAtual } from "@/lib/empresa/atual";
 import { EmpresaProvider } from "@/lib/empresa/contexto";
 import { authService } from "@/lib/auth/servico";
+import { chavePendentes, contarPendentes } from "@/lib/pedidos/servico-painel";
 import { useGuardaAdmin } from "@/lib/auth/use-sessao";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +45,7 @@ const itens = [
 ] as const;
 
 /** Áreas do painel já ligadas ao banco; as demais ainda usam os dados de demonstração do MVP. */
-const ROTAS_NO_BANCO = ["/admin/categorias", "/admin/mesas", "/admin/produtos"];
+const ROTAS_NO_BANCO = ["/admin/categorias", "/admin/mesas", "/admin/produtos", "/admin/pedidos"];
 
 function Navegacao({
   pendentes,
@@ -126,6 +128,13 @@ function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
   const [menuAberto, setMenuAberto] = useState(false);
   const ctx = useEmpresaAtual(sessao.usuarioId, sessao.papel);
   const ehMaster = sessao.papel === "master";
+  const empresaId = ctx.atual?.id ?? null;
+  const pendentesQuery = useQuery({
+    queryKey: chavePendentes(empresaId ?? ""),
+    queryFn: () => contarPendentes(empresaId as string),
+    enabled: empresaId !== null,
+    refetchInterval: 15_000,
+  });
 
   // O master escolhe a empresa no cadastro da plataforma (/master).
   useEffect(() => {
@@ -186,7 +195,7 @@ function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
       ? { rotulo: "Trocar de empresa", aoClicar: ctx.limpar }
       : undefined;
 
-  const pendentes = d.pedidos.filter((p) => p.status === "pendente").length;
+  const pendentes = pendentesQuery.data ?? 0;
   const marca = (
     <div className="flex items-center gap-2 px-6 py-5">
       <div className="h-2.5 w-2.5 rounded-full bg-primary" />
