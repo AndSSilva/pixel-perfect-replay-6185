@@ -12,9 +12,10 @@ const emp = (id: string, ativo = true): Empresa => ({
   logo_url: null,
   criado_em: "2026-10-30T00:00:00Z",
   descricao: null,
-  destaques: [],
   endereco: null,
-  horario_funcionamento: null,
+  horarios: null,
+  whatsapp: null,
+  instagram: null,
 });
 
 describe("empresas selecionáveis", () => {

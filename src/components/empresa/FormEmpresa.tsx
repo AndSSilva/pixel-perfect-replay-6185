@@ -19,15 +19,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/components/app/common";
 import { CHAVE_EMPRESAS } from "@/lib/empresa/atual";
 import { atualizarEmpresa, criarEmpresa } from "@/lib/empresa/servico";
+import { COR_HEX, LIMITE_DESCRICAO, LIMITE_ENDERECO } from "@/lib/empresa/apresentacao";
 import {
-  COR_HEX,
-  LIMITE_DESCRICAO,
-  LIMITE_ENDERECO,
-  LIMITE_HORARIO,
-  destaquesDoTexto,
-  textoDosDestaques,
-  validarDestaques,
-} from "@/lib/empresa/apresentacao";
+  ORDEM_EXIBICAO,
+  horariosParaLinhas,
+  instagramValido,
+  linhasParaHorarios,
+  nomeDoDia,
+  normalizarInstagram,
+  normalizarWhatsapp,
+  validarLinhas,
+  whatsappValido,
+  type Horarios,
+} from "@/lib/empresa/horarios";
 import { apagarLogo, arquivoParaLogoPng, enviarLogo } from "@/lib/empresa/logo";
 import { sugerirSlug, validarSlug } from "@/lib/empresa/slug";
 import { ErroEmpresa, MENSAGENS_EMPRESA, type Empresa } from "@/lib/empresa/tipos";
@@ -43,12 +47,26 @@ const esquema = z.object({
     if (erro) ctx.addIssue({ code: "custom", message: erro });
   }),
   descricao: z.string().max(LIMITE_DESCRICAO, `Use no máximo ${LIMITE_DESCRICAO} caracteres.`),
-  destaques: z.string().superRefine((v, ctx) => {
-    const erro = validarDestaques(destaquesDoTexto(v));
-    if (erro) ctx.addIssue({ code: "custom", message: erro });
-  }),
-  horario: z.string().max(LIMITE_HORARIO, `Use no máximo ${LIMITE_HORARIO} caracteres.`),
+  whatsapp: z
+    .string()
+    .refine(
+      (v) => v.trim() === "" || whatsappValido(normalizarWhatsapp(v)),
+      "Informe DDD e número, ex.: (51) 93500-1383.",
+    ),
+  instagram: z
+    .string()
+    .refine(
+      (v) => v.trim() === "" || instagramValido(normalizarInstagram(v)),
+      "Use só o nome de usuário, ex.: nevoa.lounge.",
+    ),
   endereco: z.string().max(LIMITE_ENDERECO, `Use no máximo ${LIMITE_ENDERECO} caracteres.`),
+  horarios: z
+    .array(z.object({ aberto: z.boolean(), abre: z.string(), fecha: z.string() }))
+    .length(7)
+    .superRefine((linhas, ctx) => {
+      for (const [i, msg] of Object.entries(validarLinhas(linhas)))
+        ctx.addIssue({ code: "custom", message: msg, path: [Number(i), "abre"] });
+    }),
   corPrimaria: z.string().refine((v) => v === "" || COR_HEX.test(v), "Use o formato #RRGGBB."),
   corSecundaria: z.string().refine((v) => v === "" || COR_HEX.test(v), "Use o formato #RRGGBB."),
 });
@@ -58,9 +76,10 @@ const valoresIniciais = (e?: Empresa): Dados => ({
   nome: e?.nome ?? "",
   slug: e?.slug ?? "",
   descricao: e?.descricao ?? "",
-  destaques: textoDosDestaques(e?.destaques ?? []),
-  horario: e?.horario_funcionamento ?? "",
+  whatsapp: e?.whatsapp ?? "",
+  instagram: e?.instagram ?? "",
   endereco: e?.endereco ?? "",
+  horarios: horariosParaLinhas((e?.horarios as Horarios | null | undefined) ?? null),
   corPrimaria: e?.cor_primaria ?? "",
   corSecundaria: e?.cor_secundaria ?? "",
 });
@@ -122,9 +141,10 @@ export function FormEmpresa({
         const salva = await atualizarEmpresa(empresa.id, {
           nome: d.nome,
           descricao: d.descricao,
-          destaques: destaquesDoTexto(d.destaques),
-          horario_funcionamento: d.horario,
+          whatsapp: normalizarWhatsapp(d.whatsapp),
+          instagram: normalizarInstagram(d.instagram),
           endereco: d.endereco,
+          horarios: linhasParaHorarios(d.horarios),
           cor_primaria: d.corPrimaria,
           cor_secundaria: d.corSecundaria,
           ...(logoUrl !== undefined ? { logo_url: logoUrl } : {}),
@@ -266,7 +286,7 @@ export function FormEmpresa({
                 id="empresa-descricao"
                 rotulo="Apresentação"
                 erro={errors.descricao?.message}
-                dica={`Até ${LIMITE_DESCRICAO} caracteres. Texto curto sobre o lugar.`}
+                dica={`Até ${LIMITE_DESCRICAO} caracteres. Aparece logo abaixo do nome. Pode usar emoji.`}
               >
                 <Textarea
                   id="empresa-descricao"
@@ -275,33 +295,112 @@ export function FormEmpresa({
                   {...register("descricao")}
                 />
               </Campo>
+              <div className="grid grid-cols-2 gap-3">
+                <Campo
+                  id="empresa-whatsapp"
+                  rotulo="WhatsApp"
+                  erro={errors.whatsapp?.message}
+                  dica="Com DDD"
+                >
+                  <Input
+                    id="empresa-whatsapp"
+                    inputMode="tel"
+                    placeholder="(51) 93500-1383"
+                    {...register("whatsapp")}
+                  />
+                </Campo>
+                <Campo
+                  id="empresa-instagram"
+                  rotulo="Instagram"
+                  erro={errors.instagram?.message}
+                  dica="Só o usuário"
+                >
+                  <Input
+                    id="empresa-instagram"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    placeholder="@nevoa.lounge"
+                    {...register("instagram")}
+                  />
+                </Campo>
+              </div>
               <Campo
-                id="empresa-destaques"
-                rotulo="Destaques"
-                erro={errors.destaques?.message}
-                dica="Um por linha, até 8. Pode usar emoji. Ex.: 🎱 Sinuca"
-              >
-                <Textarea id="empresa-destaques" rows={4} {...register("destaques")} />
-              </Campo>
-              <Campo
-                id="empresa-horario"
-                rotulo="Horário de funcionamento"
-                erro={errors.horario?.message}
+                id="empresa-endereco"
+                rotulo="Endereço"
+                erro={errors.endereco?.message}
+                dica="Pode usar duas linhas (ex.: local e cidade/CEP)."
               >
                 <Textarea
-                  id="empresa-horario"
-                  rows={2}
-                  maxLength={LIMITE_HORARIO}
-                  {...register("horario")}
-                />
-              </Campo>
-              <Campo id="empresa-endereco" rotulo="Endereço" erro={errors.endereco?.message}>
-                <Input
                   id="empresa-endereco"
+                  rows={2}
                   maxLength={LIMITE_ENDERECO}
                   {...register("endereco")}
                 />
               </Campo>
+              <fieldset className="space-y-2">
+                <legend className="text-sm font-medium">Horário de atendimento</legend>
+                <p className="text-xs text-muted-foreground">
+                  Se fechar depois da meia-noite, informe o horário do dia seguinte (ex.: abre
+                  19:00, fecha 02:00).
+                </p>
+                {ORDEM_EXIBICAO.map((dia, i) => {
+                  const aberto = watch(`horarios.${i}.aberto`);
+                  const msg = errors.horarios?.[i]?.abre?.message;
+                  return (
+                    <div key={dia} className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className="flex w-28 items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            {...register(`horarios.${i}.aberto`)}
+                          />
+                          {nomeDoDia(dia)}
+                        </label>
+                        {aberto ? (
+                          <>
+                            <Input
+                              type="time"
+                              aria-label={`${nomeDoDia(dia)}: abre`}
+                              className="w-28"
+                              {...register(`horarios.${i}.abre`)}
+                            />
+                            <span className="text-sm text-muted-foreground">às</span>
+                            <Input
+                              type="time"
+                              aria-label={`${nomeDoDia(dia)}: fecha`}
+                              className="w-28"
+                              {...register(`horarios.${i}.fecha`)}
+                            />
+                            {i > 0 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setValue(`horarios.${i}.abre`, watch(`horarios.${i - 1}.abre`), {
+                                    shouldValidate: true,
+                                  });
+                                  setValue(
+                                    `horarios.${i}.fecha`,
+                                    watch(`horarios.${i - 1}.fecha`),
+                                    { shouldValidate: true },
+                                  );
+                                }}
+                              >
+                                Copiar do dia anterior
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Fechado</span>
+                        )}
+                      </div>
+                      {msg ? <p className="text-xs text-destructive">{msg}</p> : null}
+                    </div>
+                  );
+                })}
+              </fieldset>
               <div className="grid grid-cols-2 gap-3">
                 <Campo
                   id="empresa-cor1"

@@ -196,13 +196,14 @@ export type Database = {
           cor_secundaria: string | null
           criado_em: string
           descricao: string | null
-          destaques: string[]
           endereco: string | null
-          horario_funcionamento: string | null
+          horarios: Json | null
+          instagram: string | null
           id: string
           logo_url: string | null
           nome: string
           slug: string
+          whatsapp: string | null
         }
         Insert: {
           ativo?: boolean
@@ -211,13 +212,14 @@ export type Database = {
           cor_secundaria?: string | null
           criado_em?: string
           descricao?: string | null
-          destaques?: string[]
           endereco?: string | null
-          horario_funcionamento?: string | null
+          horarios?: Json | null
+          instagram?: string | null
           id?: string
           logo_url?: string | null
           nome: string
           slug: string
+          whatsapp?: string | null
         }
         Update: {
           ativo?: boolean
@@ -226,13 +228,14 @@ export type Database = {
           cor_secundaria?: string | null
           criado_em?: string
           descricao?: string | null
-          destaques?: string[]
           endereco?: string | null
-          horario_funcionamento?: string | null
+          horarios?: Json | null
+          instagram?: string | null
           id?: string
           logo_url?: string | null
           nome?: string
           slug?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }

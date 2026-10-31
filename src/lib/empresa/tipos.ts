@@ -12,9 +12,10 @@ export type Empresa = Pick<
   | "logo_url"
   | "criado_em"
   | "descricao"
-  | "destaques"
   | "endereco"
-  | "horario_funcionamento"
+  | "horarios"
+  | "whatsapp"
+  | "instagram"
 >;
 
 export type CodigoErroEmpresa =
