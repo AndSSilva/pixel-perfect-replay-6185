@@ -17,7 +17,12 @@ import { chaveMesas, listarMesas } from "@/lib/catalogo/servico";
 import { rotuloMesa } from "@/lib/catalogo/mesas";
 import { useEmpresa } from "@/lib/empresa/contexto";
 import { formatBRL, formatDataHora, formatHora } from "@/lib/format";
-import { devidoDaComanda, saldoDaComanda, situacaoDaMesa } from "@/lib/pedidos/contas";
+import {
+  comandaTemAtividade,
+  devidoDaComanda,
+  saldoDaComanda,
+  situacaoDaMesa,
+} from "@/lib/pedidos/contas";
 import { pedidoExpirado, totalDoPedido } from "@/lib/pedidos/painel";
 import { rotuloPedido } from "@/lib/pedidos/rotulos";
 import {
@@ -106,7 +111,9 @@ function Dashboard() {
   ).length;
   const recentes = todosPedidos.slice(0, 6);
   const contasAtivas = comandas.data ?? [];
-  const abertas = contasAtivas.filter((c) => c.status === "aberta").length;
+  const abertas = contasAtivas.filter(
+    (c) => c.status === "aberta" && comandaTemAtividade(c, agora),
+  ).length;
   const fechadasHoje = vendas.data?.contas ?? [];
   const totais = totaisDasVendas(fechadasHoje);
 

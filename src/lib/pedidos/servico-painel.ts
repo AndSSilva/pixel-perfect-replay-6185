@@ -121,23 +121,43 @@ export function atualizarAtendimento(qc: QueryClient, empresaId: string): void {
   }
 }
 
-/** Sessões em andamento (mesas ocupadas ou em fechamento). */
-export async function listarSessoesAtivas(empresaId: string): Promise<Tables<"sessoes_mesa">[]> {
-  const { data, error } = await supabase
-    .from("sessoes_mesa")
-    .select("*")
-    .eq("estabelecimento_id", empresaId)
-    .neq("status", "encerrada");
-  if (error) falhar("listarSessoes", error);
-  return data;
-}
-
 const LOTE = 80;
 
 async function emLotes<T>(ids: string[], buscar: (lote: string[]) => Promise<T[]>): Promise<T[]> {
   const partes: string[][] = [];
   for (let i = 0; i < ids.length; i += LOTE) partes.push(ids.slice(i, i + LOTE));
   return (await Promise.all(partes.map(buscar))).flat();
+}
+
+export type SessaoPainel = Tables<"sessoes_mesa"> & {
+  /** A mesa só conta como ocupada depois que o atendente aprova um pedido da sessão. */
+  confirmada: boolean;
+};
+
+/** Sessões em andamento (mesas ocupadas ou em fechamento, ou só com gente identificada). */
+export async function listarSessoesAtivas(empresaId: string): Promise<SessaoPainel[]> {
+  const { data, error } = await supabase
+    .from("sessoes_mesa")
+    .select("*")
+    .eq("estabelecimento_id", empresaId)
+    .neq("status", "encerrada");
+  if (error) falhar("listarSessoes", error);
+  if (data.length === 0) return [];
+  const confirmadas = await emLotes(
+    data.map((x) => x.id),
+    async (lote) => {
+      const { data: peds, error: e2 } = await supabase
+        .from("pedidos")
+        .select("sessao_id")
+        .eq("estabelecimento_id", empresaId)
+        .eq("status", "confirmado")
+        .in("sessao_id", lote);
+      if (e2) falhar("listarSessoes/confirmadas", e2);
+      return peds.map((x) => x.sessao_id);
+    },
+  );
+  const comConfirmado = new Set(confirmadas);
+  return data.map((x) => ({ ...x, confirmada: comConfirmado.has(x.id) }));
 }
 
 async function montarComandas(

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Tables } from "@/integrations/supabase/types";
 import {
+  comandaTemAtividade,
   devidoDaComanda,
   impedimentoParaFechar,
   impedimentoParaLiberar,
@@ -115,20 +116,51 @@ describe("conta", () => {
     });
     expect(impedimentoParaFechar(comanda({ pedidos: [expirado] }), AGORA)).toBeNull();
   });
-  it("liberar mesa", () => {
-    const paga = comanda({ status: "paga" });
+  it("liberar mesa: comanda aberta sem pedido aprovado não impede", () => {
+    const paga = comanda({ status: "paga", pedidos: [pedido({})] });
     expect(impedimentoParaLiberar([paga], AGORA)).toBeNull();
-    expect(impedimentoParaLiberar([paga, comanda({})], AGORA)).toBe("comandas_em_aberto");
+    expect(impedimentoParaLiberar([paga, comanda({})], AGORA)).toBeNull(); // curioso: só identificado
+    expect(
+      impedimentoParaLiberar(
+        [paga, comanda({ pedidos: [pedido({ status: "rejeitado" })] })],
+        AGORA,
+      ),
+    ).toBeNull();
+    expect(
+      impedimentoParaLiberar(
+        [paga, comanda({ pedidos: [pedido({ itens: [item({ status: "entregue" })] })] })],
+        AGORA,
+      ),
+    ).toBe("comandas_em_aberto"); // aprovado e ainda não pago
     expect(
       impedimentoParaLiberar([comanda({ status: "paga", pedidos: [pendente()] })], AGORA),
     ).toBe("pedidos_pendentes");
   });
-  it("situação da mesa", () => {
+  it("comanda aparece no painel só com pedido aprovado ou pendente válido", () => {
+    expect(comandaTemAtividade(comanda({}), AGORA)).toBe(false);
+    expect(
+      comandaTemAtividade(comanda({ pedidos: [pedido({ status: "rejeitado" })] }), AGORA),
+    ).toBe(false);
+    expect(comandaTemAtividade(comanda({ pedidos: [pendente()] }), AGORA)).toBe(true);
+    expect(
+      comandaTemAtividade(
+        comanda({ pedidos: [pedido({ status: "pendente", expira_em: "2026-10-30T11:30:00Z" })] }),
+        AGORA,
+      ),
+    ).toBe(false);
+    expect(comandaTemAtividade(comanda({ pedidos: [pedido({})] }), AGORA)).toBe(true);
+  });
+  it("situação da mesa: só ocupa depois de aprovar um pedido", () => {
+    const sess = (status: "aberta" | "fechamento" | "encerrada", confirmada: boolean) => ({
+      status,
+      confirmada,
+    });
     expect(situacaoDaMesa({ ativa: true }, undefined)).toBe("livre");
     expect(situacaoDaMesa({ ativa: false }, undefined)).toBe("inativa");
-    expect(situacaoDaMesa({ ativa: true }, { status: "aberta" })).toBe("ocupada");
-    expect(situacaoDaMesa({ ativa: false }, { status: "fechamento" })).toBe("fechamento");
-    expect(situacaoDaMesa({ ativa: true }, { status: "encerrada" })).toBe("livre");
+    expect(situacaoDaMesa({ ativa: true }, sess("aberta", false))).toBe("livre"); // só identificado
+    expect(situacaoDaMesa({ ativa: true }, sess("aberta", true))).toBe("ocupada");
+    expect(situacaoDaMesa({ ativa: false }, sess("fechamento", true))).toBe("fechamento");
+    expect(situacaoDaMesa({ ativa: true }, sess("encerrada", true))).toBe("livre");
   });
 });
 

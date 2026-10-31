@@ -49,18 +49,30 @@ export const ROTULO_IMPEDIMENTO: Record<ImpedimentoFechar, string> = {
 // ---------- Mesa ----------
 export type SituacaoMesa = "livre" | "ocupada" | "fechamento" | "inativa";
 
+/**
+ * A mesa só é "ocupada" quando o atendente aprovou ao menos um pedido da sessão. Quem só abriu o
+ * QR Code, ou fez um pedido que ninguém aprovou, não ocupa a mesa.
+ */
 export function situacaoDaMesa(
   mesa: Pick<Tables<"mesas">, "ativa">,
-  sessao: Pick<Tables<"sessoes_mesa">, "status"> | undefined,
+  sessao: (Pick<Tables<"sessoes_mesa">, "status"> & { confirmada: boolean }) | undefined,
 ): SituacaoMesa {
-  if (sessao && sessao.status !== "encerrada") {
+  if (sessao && sessao.status !== "encerrada" && sessao.confirmada) {
     return sessao.status === "fechamento" ? "fechamento" : "ocupada";
   }
   return mesa.ativa ? "livre" : "inativa";
 }
 
+export const comandaTemPedidoConfirmado = (c: Pick<ComandaPainel, "pedidos">): boolean =>
+  c.pedidos.some((p) => p.status === "confirmado");
+
+/** Comanda que aparece no painel: tem pedido aprovado ou pedido pendente ainda válido. */
+export const comandaTemAtividade = (c: ComandaPainel, agora: number): boolean =>
+  comandaTemPedidoConfirmado(c) || pedidosPendentesDaComanda(c, agora).length > 0;
+
 export type ImpedimentoLiberar = "pedidos_pendentes" | "itens_nao_entregues" | "comandas_em_aberto";
 
+/** Mesmas regras de `liberar_mesa`: comandas sem pedido aprovado não impedem (o banco as encerra). */
 export function impedimentoParaLiberar(
   comandas: readonly ComandaPainel[],
   agora: number,
@@ -68,7 +80,8 @@ export function impedimentoParaLiberar(
   if (comandas.some((c) => pedidosPendentesDaComanda(c, agora).length > 0))
     return "pedidos_pendentes";
   if (comandas.some((c) => itensAguardandoDaComanda(c) > 0)) return "itens_nao_entregues";
-  if (comandas.some((c) => c.status === "aberta")) return "comandas_em_aberto";
+  if (comandas.some((c) => c.status === "aberta" && comandaTemPedidoConfirmado(c)))
+    return "comandas_em_aberto";
   return null;
 }
 
