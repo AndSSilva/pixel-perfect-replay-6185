@@ -17,6 +17,144 @@ export type Database = {
       // NOTE: estabelecimentos e estabelecimento_membros foram criados direto no editor de SQL
       // (não pela ferramenta de migração do Lovable); estes tipos espelham o script e serão
       // substituídos quando o Lovable regenerar este arquivo a partir do banco.
+      // NOTE: categorias, produtos e mesas também foram criadas direto no editor de SQL;
+      // tipos escritos à mão espelhando o script (o Lovable pode regenerar este arquivo).
+      categorias: {
+        Row: {
+          ativa: boolean
+          atualizado_em: string
+          criado_em: string
+          descricao: string | null
+          estabelecimento_id: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativa?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          estabelecimento_id: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          ativa?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          descricao?: string | null
+          estabelecimento_id?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mesas: {
+        Row: {
+          ativa: boolean
+          atualizado_em: string
+          criado_em: string
+          estabelecimento_id: string
+          id: string
+          numero: number
+        }
+        Insert: {
+          ativa?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          estabelecimento_id: string
+          id?: string
+          numero: number
+        }
+        Update: {
+          ativa?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          estabelecimento_id?: string
+          id?: string
+          numero?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mesas_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produtos: {
+        Row: {
+          atualizado_em: string
+          categoria_id: string
+          criado_em: string
+          descricao: string | null
+          disponivel: boolean
+          estabelecimento_id: string
+          estoque_qtd: number
+          foto_path: string | null
+          id: string
+          inativar_ao_zerar_estoque: boolean
+          nome: string
+          preco_custo_centavos: number | null
+          preco_venda_centavos: number
+        }
+        Insert: {
+          atualizado_em?: string
+          categoria_id: string
+          criado_em?: string
+          descricao?: string | null
+          disponivel?: boolean
+          estabelecimento_id: string
+          estoque_qtd?: number
+          foto_path?: string | null
+          id?: string
+          inativar_ao_zerar_estoque?: boolean
+          nome: string
+          preco_custo_centavos?: number | null
+          preco_venda_centavos: number
+        }
+        Update: {
+          atualizado_em?: string
+          categoria_id?: string
+          criado_em?: string
+          descricao?: string | null
+          disponivel?: boolean
+          estabelecimento_id?: string
+          estoque_qtd?: number
+          foto_path?: string | null
+          id?: string
+          inativar_ao_zerar_estoque?: boolean
+          nome?: string
+          preco_custo_centavos?: number | null
+          preco_venda_centavos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_categoria_fkey"
+            columns: ["categoria_id", "estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id", "estabelecimento_id"]
+          },
+        ]
+      }
       estabelecimento_membros: {
         Row: {
           criado_em: string
@@ -86,6 +224,60 @@ export type Database = {
         }
         Relationships: []
       }
+      movimentos_estoque: {
+        Row: {
+          criado_em: string
+          estabelecimento_id: string
+          id: string
+          nome_produto: string
+          observacao: string | null
+          produto_id: string | null
+          saldo_apos: number
+          tipo: Database["public"]["Enums"]["tipo_movimento_estoque"]
+          usuario_id: string | null
+          variacao: number
+        }
+        Insert: {
+          criado_em?: string
+          estabelecimento_id: string
+          id?: string
+          nome_produto: string
+          observacao?: string | null
+          produto_id?: string | null
+          saldo_apos: number
+          tipo: Database["public"]["Enums"]["tipo_movimento_estoque"]
+          usuario_id?: string | null
+          variacao: number
+        }
+        Update: {
+          criado_em?: string
+          estabelecimento_id?: string
+          id?: string
+          nome_produto?: string
+          observacao?: string | null
+          produto_id?: string | null
+          saldo_apos?: number
+          tipo?: Database["public"]["Enums"]["tipo_movimento_estoque"]
+          usuario_id?: string | null
+          variacao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentos_estoque_estabelecimento_id_fkey"
+            columns: ["estabelecimento_id"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentos_estoque_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfis_acesso: {
         Row: {
           atualizado_em: string
@@ -115,6 +307,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ajustar_estoque: {
+        Args: {
+          _observacao?: string
+          _produto: string
+          _quantidade: number
+          _tipo: Database["public"]["Enums"]["tipo_movimento_estoque"]
+        }
+        Returns: number
+      }
       eh_master: { Args: never; Returns: boolean }
       eh_membro: { Args: { _estabelecimento: string }; Returns: boolean }
       marcar_senha_trocada: { Args: never; Returns: undefined }
@@ -133,6 +334,12 @@ export type Database = {
     }
     Enums: {
       papel_app: "admin" | "master"
+      tipo_movimento_estoque:
+        | "saldo_inicial"
+        | "reposicao"
+        | "alteracao_quantidade"
+        | "baixa_avaria"
+        | "baixa_entrega"
     }
     CompositeTypes: {
       [_ in never]: never

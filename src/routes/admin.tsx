@@ -22,6 +22,7 @@ import { useDados } from "@/lib/store";
 import type { AppData } from "@/lib/types";
 import type { SessaoAdmin } from "@/lib/auth/tipos";
 import { useEmpresaAtual } from "@/lib/empresa/atual";
+import { EmpresaProvider } from "@/lib/empresa/contexto";
 import { authService } from "@/lib/auth/servico";
 import { useGuardaAdmin } from "@/lib/auth/use-sessao";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,9 @@ const itens = [
   { to: "/admin/configuracoes", rotulo: "Configurações", icone: Settings },
 ] as const;
 
+/** Áreas do painel já ligadas ao banco; as demais ainda usam os dados de demonstração do MVP. */
+const ROTAS_NO_BANCO = ["/admin/categorias", "/admin/mesas", "/admin/produtos"];
+
 function Navegacao({
   pendentes,
   onNavegar,
@@ -55,7 +59,8 @@ function Navegacao({
   return (
     <nav className="flex h-full flex-col gap-1 p-3" aria-label="Menu do painel">
       {itens.map((i) => {
-        const ativo = "exato" in i ? caminho === i.to || caminho === i.to + "/" : caminho.startsWith(i.to);
+        const ativo =
+          "exato" in i ? caminho === i.to || caminho === i.to + "/" : caminho.startsWith(i.to);
         return (
           <Link
             key={i.to}
@@ -63,13 +68,17 @@ function Navegacao({
             onClick={onNavegar}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-              ativo ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+              ativo
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
             )}
           >
             <i.icone className={cn("h-4 w-4", ativo && "text-link")} />
             <span className="flex-1">{i.rotulo}</span>
             {i.to === "/admin/pedidos" && pendentes > 0 && (
-              <span className="rounded-full bg-warning px-2 text-xs font-semibold text-warning-foreground">{pendentes}</span>
+              <span className="rounded-full bg-warning px-2 text-xs font-semibold text-warning-foreground">
+                {pendentes}
+              </span>
             )}
           </Link>
         );
@@ -113,13 +122,15 @@ function AdminLayout() {
 /** Só renderiza depois do login; garante que há uma empresa escolhida antes de mostrar o painel. */
 function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
   const nav = useNavigate();
+  const caminho = useRouterState({ select: (s) => s.location.pathname });
   const [menuAberto, setMenuAberto] = useState(false);
   const ctx = useEmpresaAtual(sessao.usuarioId, sessao.papel);
   const ehMaster = sessao.papel === "master";
 
   // O master escolhe a empresa no cadastro da plataforma (/master).
   useEffect(() => {
-    if (!ctx.carregando && !ctx.erro && !ctx.atual && ehMaster) nav({ to: "/master", replace: true });
+    if (!ctx.carregando && !ctx.erro && !ctx.atual && ehMaster)
+      nav({ to: "/master", replace: true });
   }, [ctx.carregando, ctx.erro, ctx.atual, ehMaster, nav]);
 
   const sair = async () => {
@@ -149,7 +160,11 @@ function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
             icone={ArrowLeftRight}
             titulo="Nenhuma empresa vinculada"
             texto="Seu acesso ainda não está vinculado a nenhuma empresa ativa. Fale com o administrador da plataforma."
-            acao={<Button variant="outline" onClick={sair}>Sair</Button>}
+            acao={
+              <Button variant="outline" onClick={sair}>
+                Sair
+              </Button>
+            }
           />
         </div>
       );
@@ -158,8 +173,15 @@ function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
   }
 
   const empresa = ctx.atual;
+  const naoMigrada = !ROTAS_NO_BANCO.some((r) => caminho === r || caminho === `${r}/`);
   const trocarEmpresa = ehMaster
-    ? { rotulo: "Voltar à plataforma", aoClicar: () => { ctx.limpar(); nav({ to: "/master" }); } }
+    ? {
+        rotulo: "Voltar à plataforma",
+        aoClicar: () => {
+          ctx.limpar();
+          nav({ to: "/master" });
+        },
+      }
     : ctx.empresas.length > 1
       ? { rotulo: "Trocar de empresa", aoClicar: ctx.limpar }
       : undefined;
@@ -188,7 +210,11 @@ function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
           <SheetContent side="left" className="w-72 bg-sidebar p-0">
             <SheetTitle className="sr-only">Menu</SheetTitle>
             {marca}
-            <Navegacao pendentes={pendentes} onNavegar={() => setMenuAberto(false)} trocarEmpresa={trocarEmpresa} />
+            <Navegacao
+              pendentes={pendentes}
+              onNavegar={() => setMenuAberto(false)}
+              trocarEmpresa={trocarEmpresa}
+            />
           </SheetContent>
         </Sheet>
         <span className="truncate font-display font-semibold">{empresa.nome}</span>
@@ -200,7 +226,18 @@ function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
         </Button>
       </header>
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8">
-        <Outlet />
+        {naoMigrada && (
+          <p
+            role="note"
+            className="mb-4 rounded-md border border-info/40 bg-info/10 px-3 py-2 text-sm text-info"
+          >
+            Esta área ainda usa dados de demonstração guardados neste navegador e será conectada ao
+            banco em uma próxima etapa.
+          </p>
+        )}
+        <EmpresaProvider empresa={empresa}>
+          <Outlet />
+        </EmpresaProvider>
       </main>
     </div>
   );
