@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ReceiptText } from "lucide-react";
+import { Landmark, ReceiptText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -19,7 +20,13 @@ import {
   pedidosPendentesDaComanda,
   saldoDaComanda,
 } from "@/lib/pedidos/contas";
-import { chaveComandas, listarComandasAtivas } from "@/lib/pedidos/servico-painel";
+import { caixaAberto } from "@/lib/pedidos/caixa";
+import {
+  chaveCaixas,
+  chaveComandas,
+  listarCaixas,
+  listarComandasAtivas,
+} from "@/lib/pedidos/servico-painel";
 
 export const Route = createFileRoute("/admin/contas/")({
   head: () => ({
@@ -38,6 +45,12 @@ function Contas() {
     queryFn: () => listarComandasAtivas(empresa.id),
     refetchInterval: 10_000,
   });
+  const caixas = useQuery({
+    queryKey: chaveCaixas(empresa.id),
+    queryFn: () => listarCaixas(empresa.id),
+    refetchInterval: 15_000,
+  });
+  const caixa = caixas.data ? caixaAberto(caixas.data) : undefined;
   const [mesa, setMesa] = useState("todas");
   const [agora, setAgora] = useState(() => Date.now());
   useEffect(() => {
@@ -59,21 +72,40 @@ function Contas() {
         titulo="Contas e pagamentos"
         descricao="Selecione uma conta para conferir os itens e registrar pagamentos."
         acoes={
-          <Select value={mesa} onValueChange={setMesa}>
-            <SelectTrigger className="w-48" aria-label="Filtrar por mesa">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as mesas</SelectItem>
-              {mesas.map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  Mesa {n}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <>
+            <Button asChild variant="outline">
+              <Link to="/admin/contas/caixa">
+                <Landmark className="h-4 w-4" /> Caixa
+              </Link>
+            </Button>
+            <Select value={mesa} onValueChange={setMesa}>
+              <SelectTrigger className="w-48" aria-label="Filtrar por mesa">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as mesas</SelectItem>
+                {mesas.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    Mesa {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
         }
       />
+      {caixas.isSuccess && !caixa ? (
+        <div className="mb-4 rounded-xl border border-warning/40 bg-warning/5 p-4 text-sm">
+          <p className="font-medium text-warning">O caixa está fechado</p>
+          <p className="mt-1 text-muted-foreground">
+            Para registrar pagamentos, primeiro{" "}
+            <Link to="/admin/contas/caixa" className="text-link underline">
+              abra o caixa
+            </Link>
+            .
+          </p>
+        </div>
+      ) : null}
       {estado ??
         (lista.length === 0 ? (
           <EmptyState

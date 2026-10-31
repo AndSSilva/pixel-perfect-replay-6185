@@ -12,6 +12,8 @@ Este diretório é o registro do que existe no banco; ao criar uma mudança nova
 | `05_fotos_storage.sql` | Espaço público das fotos, escrita só de quem tem acesso à empresa |
 | `06_inativar_ao_zerar.sql` | Coluna `produtos.inativar_ao_zerar_estoque` |
 | `07_estoque.sql` | Histórico de movimentos e `ajustar_estoque()`; o estoque físico deixa de ser editável direto |
+| `08_pedidos.sql` | Sessões de mesa, comandas, pedidos, itens, pagamentos e as funções do cliente e do painel |
+| `09_caixa.sql` | Caixa: abertura, sangria/reforço, fechamento (esperado × contado); pagamento passa a exigir caixa aberto |
 
 ## Testes
 

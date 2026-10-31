@@ -46,6 +46,7 @@ const pedido = (o: Partial<PedidoPainel>): PedidoPainel => ({
 });
 const pendente = () => pedido({ status: "pendente", expira_em: "2026-10-30T12:30:00Z" });
 const pag = (v: number): Tables<"pagamentos"> => ({
+  caixa_id: null,
   comanda_id: "c",
   criado_em: "",
   estabelecimento_id: "e",

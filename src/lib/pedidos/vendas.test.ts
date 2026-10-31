@@ -46,6 +46,7 @@ const pedido = (
   itens,
 });
 const pag = (forma: Tables<"pagamentos">["forma"], v: number): Tables<"pagamentos"> => ({
+  caixa_id: null,
   comanda_id: "c",
   criado_em: "",
   estabelecimento_id: "e",

@@ -36,6 +36,11 @@ export const MENSAGENS_PEDIDO = {
   mesa_nao_encontrada: "Mesa não encontrada.",
   comanda_nao_encontrada: "Comanda não encontrada. Atualize a tela.",
   pagamento_nao_encontrado: "Pagamento não encontrado. Atualize a tela.",
+  caixa_ja_aberto: "Já existe um caixa aberto nesta empresa.",
+  caixa_fechado: "Não há caixa aberto. Abra o caixa para continuar.",
+  caixa_ja_fechado: "Este caixa já foi fechado e não pode mais ser alterado.",
+  caixa_nao_encontrado: "Caixa não encontrado. Atualize a tela.",
+  valor_excede_caixa: "A sangria é maior que o dinheiro esperado no caixa.",
   sem_permissao: "Você não tem permissão para esta ação (a empresa pode estar desativada).",
   desconhecido: "Não foi possível concluir. Tente novamente.",
 } as const;

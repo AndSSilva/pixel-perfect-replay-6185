@@ -133,6 +133,9 @@ begin
   perform t.erro(format('select public.fechar_comanda(%L)', comA), 'pedidos_pendentes');
   foreach ped in array ids loop perform public.rejeitar_pedido(ped, 'Limpeza'); end loop;
   perform t.erro(format('select public.fechar_comanda(%L)', comA), 'saldo_em_aberto');
+  -- pagamento exige caixa aberto (script 09)
+  perform t.erro(format('select public.registrar_pagamento(%L, 1000, %L)', comA, 'pix'), 'caixa_fechado');
+  perform public.abrir_caixa(E1, 5000);
   perform t.erro(format('select public.registrar_pagamento(%L, 0, %L)', comA, 'pix'), 'valor_invalido');
   perform t.erro(format('select public.registrar_pagamento(%L, 3001, %L)', comA, 'pix'), 'valor_excede_saldo');
   perform t.erro(format('select public.registrar_pagamento(%L, 1000, %L, null, 500)', comA, 'dinheiro'), 'recebido_menor_que_valor');
