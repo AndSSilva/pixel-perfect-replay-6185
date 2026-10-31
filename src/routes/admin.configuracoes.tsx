@@ -1,70 +1,68 @@
-import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { RotateCcw } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Campo, Confirmar, PageHeader, Painel } from "@/components/app/common";
-import type { Erros } from "@/components/app/common";
-import { executar, restaurarDemo, useDados } from "@/lib/store";
-import { salvarConfig } from "@/lib/services/regras";
+import { PageHeader, Painel, Selo } from "@/components/app/common";
+import { useEmpresa } from "@/lib/empresa/contexto";
+import { corSegura } from "@/lib/pedidos/rotulos";
 
 export const Route = createFileRoute("/admin/configuracoes")({
   head: () => ({
     meta: [
       { title: "Configurações — Mesa Digital" },
-      { name: "description", content: "Nome do estabelecimento, texto do cardápio e dados de demonstração." },
-      { property: "og:title", content: "Configurações — Mesa Digital" },
-      { property: "og:description", content: "Nome do estabelecimento, texto do cardápio e dados de demonstração." },
+      { name: "description", content: "Dados do estabelecimento." },
     ],
   }),
   component: Configuracoes,
 });
 
 function Configuracoes() {
-  const d = useDados()!;
-  const [cfg, setCfg] = useState(d.config);
-  const [erros, setErros] = useState<Erros>({});
-
-  const salvar = () => {
-    const e: Erros = {};
-    if (!cfg.nomeEstabelecimento.trim()) e.nome = "Informe o nome.";
-    setErros(e);
-    if (!Object.keys(e).length) executar((x) => salvarConfig(x, cfg), "Configurações salvas.");
-  };
-
+  const empresa = useEmpresa();
+  const primaria = corSegura(empresa.cor_primaria, "#2563EB");
+  const secundaria = corSegura(empresa.cor_secundaria, "#0F172A");
+  const endereco = `${window.location.origin}/${empresa.slug}`;
   return (
     <>
-      <PageHeader titulo="Configurações" />
-      <div className="grid max-w-2xl gap-6">
+      <PageHeader
+        titulo="Configurações"
+        descricao="Dados do estabelecimento. Para alterar nome, endereço ou identidade visual, fale com o administrador da plataforma."
+      />
+      <div className="max-w-2xl space-y-6">
         <Painel titulo="Estabelecimento">
-          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); salvar(); }}>
-            <Campo id="nomeEst" rotulo="Nome do estabelecimento *" erro={erros.nome}>
-              <Input id="nomeEst" value={cfg.nomeEstabelecimento} maxLength={60} onChange={(e) => setCfg({ ...cfg, nomeEstabelecimento: e.target.value })} />
-            </Campo>
-            <Campo id="texto" rotulo="Texto auxiliar do cardápio">
-              <Textarea id="texto" value={cfg.textoCardapio} maxLength={200} onChange={(e) => setCfg({ ...cfg, textoCardapio: e.target.value })} />
-            </Campo>
-            <Button type="submit">Salvar alterações</Button>
-          </form>
-        </Painel>
-        <Painel titulo="Dados de demonstração">
-          <p className="mb-4 text-sm text-muted-foreground">
-            Todos os dados deste navegador (produtos, mesas, pedidos, contas e pagamentos) serão substituídos pelo cenário inicial.
+          <dl className="space-y-3 text-sm">
+            <div className="flex flex-wrap justify-between gap-2">
+              <dt className="text-muted-foreground">Nome</dt>
+              <dd className="font-medium">{empresa.nome}</dd>
+            </div>
+            <div className="flex flex-wrap justify-between gap-2">
+              <dt className="text-muted-foreground">Endereço do cardápio</dt>
+              <dd className="break-all font-medium">{endereco}</dd>
+            </div>
+            <div className="flex flex-wrap justify-between gap-2">
+              <dt className="text-muted-foreground">Situação</dt>
+              <dd>
+                <Selo tom={empresa.ativo ? "sucesso" : "neutro"}>
+                  {empresa.ativo ? "Ativa" : "Desativada"}
+                </Selo>
+              </dd>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <dt className="text-muted-foreground">Cores do cardápio</dt>
+              <dd className="flex items-center gap-2">
+                {[primaria, secundaria].map((c) => (
+                  <span key={c} className="flex items-center gap-1 text-xs">
+                    <span
+                      className="h-5 w-5 rounded border"
+                      style={{ backgroundColor: c }}
+                      aria-hidden
+                    />
+                    {c}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          </dl>
+          <p className="mt-4 text-xs text-muted-foreground">
+            O endereço do cardápio de cada mesa é {endereco}/mesa_<em>número</em> (use o QR Code em
+            Mesas).
           </p>
-          <Confirmar
-            gatilho={<Button variant="destructive"><RotateCcw className="h-4 w-4" /> Restaurar dados de demonstração</Button>}
-            titulo="Restaurar dados de demonstração?"
-            descricao="Os dados locais atuais serão apagados e substituídos pelos dados iniciais. Esta ação não pode ser desfeita."
-            rotuloAcao="Restaurar"
-            perigo
-            onConfirmar={() => {
-              restaurarDemo();
-              toast.success("Dados de demonstração restaurados.");
-              location.reload();
-            }}
-          />
         </Painel>
       </div>
     </>

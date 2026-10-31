@@ -19,8 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Carregando, EmptyState } from "@/components/app/common";
 import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { EscolherEmpresa } from "@/components/empresa/EscolherEmpresa";
-import { useDados } from "@/lib/store";
-import type { AppData } from "@/lib/types";
 import type { SessaoAdmin } from "@/lib/auth/tipos";
 import { useEmpresaAtual } from "@/lib/empresa/atual";
 import { EmpresaProvider } from "@/lib/empresa/contexto";
@@ -43,15 +41,6 @@ const itens = [
   { to: "/admin/historico", rotulo: "Histórico de vendas", icone: History },
   { to: "/admin/configuracoes", rotulo: "Configurações", icone: Settings },
 ] as const;
-
-/** Áreas do painel já ligadas ao banco; as demais ainda usam os dados de demonstração do MVP. */
-const ROTAS_NO_BANCO = [
-  "/admin/categorias",
-  "/admin/mesas",
-  "/admin/produtos",
-  "/admin/pedidos",
-  "/admin/contas",
-];
 
 function Navegacao({
   pendentes,
@@ -121,14 +110,13 @@ function Navegacao({
 }
 
 function AdminLayout() {
-  const d = useDados();
   const { liberado, sessao } = useGuardaAdmin();
-  if (!d || !liberado || !sessao) return <Carregando />;
-  return <AdminComEmpresa d={d} sessao={sessao} />;
+  if (!liberado || !sessao) return <Carregando />;
+  return <AdminComEmpresa sessao={sessao} />;
 }
 
 /** Só renderiza depois do login; garante que há uma empresa escolhida antes de mostrar o painel. */
-function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
+function AdminComEmpresa({ sessao }: { sessao: SessaoAdmin }) {
   const nav = useNavigate();
   const caminho = useRouterState({ select: (s) => s.location.pathname });
   const [menuAberto, setMenuAberto] = useState(false);
@@ -188,7 +176,6 @@ function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
   }
 
   const empresa = ctx.atual;
-  const naoMigrada = !ROTAS_NO_BANCO.some((r) => caminho === r || caminho.startsWith(`${r}/`));
   const trocarEmpresa = ehMaster
     ? {
         rotulo: "Voltar à plataforma",
@@ -241,15 +228,6 @@ function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
         </Button>
       </header>
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8">
-        {naoMigrada && (
-          <p
-            role="note"
-            className="mb-4 rounded-md border border-info/40 bg-info/10 px-3 py-2 text-sm text-info"
-          >
-            Esta área ainda usa dados de demonstração guardados neste navegador e será conectada ao
-            banco em uma próxima etapa.
-          </p>
-        )}
         <EmpresaProvider empresa={empresa}>
           <Outlet />
         </EmpresaProvider>

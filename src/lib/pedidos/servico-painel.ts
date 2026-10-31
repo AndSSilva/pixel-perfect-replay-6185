@@ -130,48 +130,69 @@ export async function listarSessoesAtivas(empresaId: string): Promise<Tables<"se
   return data;
 }
 
+const LOTE = 80;
+
+async function emLotes<T>(ids: string[], buscar: (lote: string[]) => Promise<T[]>): Promise<T[]> {
+  const partes: string[][] = [];
+  for (let i = 0; i < ids.length; i += LOTE) partes.push(ids.slice(i, i + LOTE));
+  return (await Promise.all(partes.map(buscar))).flat();
+}
+
 async function montarComandas(
   empresaId: string,
   comandas: Tables<"comandas">[],
 ): Promise<ComandaPainel[]> {
   if (comandas.length === 0) return [];
-  const ids = comandas.map((c) => c.id);
-  const [pedidos, pagamentos] = await Promise.all([
-    supabase.from("pedidos").select("*").eq("estabelecimento_id", empresaId).in("comanda_id", ids),
-    supabase
-      .from("pagamentos")
-      .select("*")
-      .eq("estabelecimento_id", empresaId)
-      .in("comanda_id", ids),
-  ]);
-  if (pedidos.error) falhar("comandas/pedidos", pedidos.error);
-  if (pagamentos.error) falhar("comandas/pagamentos", pagamentos.error);
-  const itens =
-    pedidos.data.length === 0
-      ? { data: [] as Tables<"itens_pedido">[], error: null }
-      : await supabase
-          .from("itens_pedido")
-          .select("*")
-          .eq("estabelecimento_id", empresaId)
-          .in(
-            "pedido_id",
-            pedidos.data.map((p) => p.id),
-          );
-  if (itens.error) falhar("comandas/itens", itens.error);
+  const pedidos = await emLotes(
+    comandas.map((c) => c.id),
+    async (lote) => {
+      const { data, error } = await supabase
+        .from("pedidos")
+        .select("*")
+        .eq("estabelecimento_id", empresaId)
+        .in("comanda_id", lote);
+      if (error) falhar("comandas/pedidos", error);
+      return data;
+    },
+  );
+  const pagamentos = await emLotes(
+    comandas.map((c) => c.id),
+    async (lote) => {
+      const { data, error } = await supabase
+        .from("pagamentos")
+        .select("*")
+        .eq("estabelecimento_id", empresaId)
+        .in("comanda_id", lote);
+      if (error) falhar("comandas/pagamentos", error);
+      return data;
+    },
+  );
+  const itens = await emLotes(
+    pedidos.map((p) => p.id),
+    async (lote) => {
+      const { data, error } = await supabase
+        .from("itens_pedido")
+        .select("*")
+        .eq("estabelecimento_id", empresaId)
+        .in("pedido_id", lote);
+      if (error) falhar("comandas/itens", error);
+      return data;
+    },
+  );
 
   return comandas.map((c) => ({
     ...c,
-    pagamentos: pagamentos.data
+    pagamentos: pagamentos
       .filter((g) => g.comanda_id === c.id)
       .sort((a, b) => a.criado_em.localeCompare(b.criado_em)),
-    pedidos: pedidos.data
+    pedidos: pedidos
       .filter((p) => p.comanda_id === c.id)
       .sort((a, b) => a.criado_em.localeCompare(b.criado_em))
       .map((p) => ({
         ...p,
         cliente_nome: c.cliente_nome,
         mesa_numero: c.mesa_numero,
-        itens: itens.data
+        itens: itens
           .filter((i) => i.pedido_id === p.id)
           .sort((a, b) => a.nome_produto.localeCompare(b.nome_produto)),
       })),
@@ -250,3 +271,27 @@ export async function liberarMesa(mesaId: string): Promise<void> {
   const { error } = await supabase.rpc("liberar_mesa", { _mesa: mesaId });
   if (error) falhar("liberarMesa", error);
 }
+
+export const LIMITE_VENDAS = 500;
+
+/** Contas fechadas (vendas) com fechamento em [inicio, fim). Mais recentes primeiro. */
+export async function listarContasFechadas(
+  empresaId: string,
+  inicio: Date,
+  fim: Date,
+): Promise<{ contas: ComandaPainel[]; truncado: boolean }> {
+  const { data, error } = await supabase
+    .from("comandas")
+    .select(COLUNAS_COMANDA)
+    .eq("estabelecimento_id", empresaId)
+    .eq("status", "paga")
+    .gte("fechada_em", inicio.toISOString())
+    .lt("fechada_em", fim.toISOString())
+    .order("fechada_em", { ascending: false })
+    .limit(LIMITE_VENDAS);
+  if (error) falhar("listarContasFechadas", error);
+  return { contas: await montarComandas(empresaId, data), truncado: data.length >= LIMITE_VENDAS };
+}
+
+export const chaveVendas = (empresaId: string, de: string, ate: string) =>
+  [...chaveComandas(empresaId), "fechadas", de, ate] as const;
