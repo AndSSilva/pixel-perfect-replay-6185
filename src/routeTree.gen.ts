@@ -23,7 +23,6 @@ import { Route as AdminEsqueciSenhaRouteImport } from './routes/admin_.esqueci-s
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AdminPrimeiroAcessoRouteImport } from './routes/admin_.primeiro-acesso'
 import { Route as AdminRedefinirSenhaRouteImport } from './routes/admin_.redefinir-senha'
-import { Route as CardapioMesaIdRouteImport } from './routes/cardapio.$mesaId'
 import { Route as MasterIndexRouteImport } from './routes/master.index'
 import { Route as MasterAdministradoresRouteImport } from './routes/master.administradores'
 import { Route as MasterLoginRouteImport } from './routes/master_.login'
@@ -103,11 +102,6 @@ const AdminRedefinirSenhaRoute = AdminRedefinirSenhaRouteImport.update({
   path: '/admin/redefinir-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CardapioMesaIdRoute = CardapioMesaIdRouteImport.update({
-  id: '/cardapio/$mesaId',
-  path: '/cardapio/$mesaId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MasterIndexRoute = MasterIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -163,7 +157,6 @@ export interface FileRoutesByFullPath {
   '/admin/login': typeof AdminLoginRoute
   '/admin/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
-  '/cardapio/$mesaId': typeof CardapioMesaIdRoute
   '/master/administradores': typeof MasterAdministradoresRoute
   '/master/login': typeof MasterLoginRoute
   '/admin/': typeof AdminIndexRoute
@@ -186,7 +179,6 @@ export interface FileRoutesByTo {
   '/admin/login': typeof AdminLoginRoute
   '/admin/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
-  '/cardapio/$mesaId': typeof CardapioMesaIdRoute
   '/master/administradores': typeof MasterAdministradoresRoute
   '/master/login': typeof MasterLoginRoute
   '/admin': typeof AdminIndexRoute
@@ -212,7 +204,6 @@ export interface FileRoutesById {
   '/admin_/login': typeof AdminLoginRoute
   '/admin_/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin_/redefinir-senha': typeof AdminRedefinirSenhaRoute
-  '/cardapio/$mesaId': typeof CardapioMesaIdRoute
   '/master/administradores': typeof MasterAdministradoresRoute
   '/master_/login': typeof MasterLoginRoute
   '/admin/': typeof AdminIndexRoute
@@ -239,7 +230,6 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/primeiro-acesso'
     | '/admin/redefinir-senha'
-    | '/cardapio/$mesaId'
     | '/master/administradores'
     | '/master/login'
     | '/admin/'
@@ -262,7 +252,6 @@ export interface FileRouteTypes {
     | '/admin/login'
     | '/admin/primeiro-acesso'
     | '/admin/redefinir-senha'
-    | '/cardapio/$mesaId'
     | '/master/administradores'
     | '/master/login'
     | '/admin'
@@ -287,7 +276,6 @@ export interface FileRouteTypes {
     | '/admin_/login'
     | '/admin_/primeiro-acesso'
     | '/admin_/redefinir-senha'
-    | '/cardapio/$mesaId'
     | '/master/administradores'
     | '/master_/login'
     | '/admin/'
@@ -308,7 +296,6 @@ export interface RootRouteChildren {
   AdminLoginRoute: typeof AdminLoginRoute
   AdminPrimeiroAcessoRoute: typeof AdminPrimeiroAcessoRoute
   AdminRedefinirSenhaRoute: typeof AdminRedefinirSenhaRoute
-  CardapioMesaIdRoute: typeof CardapioMesaIdRoute
   MasterLoginRoute: typeof MasterLoginRoute
   AdminImprimirMesaIdRoute: typeof AdminImprimirMesaIdRoute
 }
@@ -411,13 +398,6 @@ declare module '@tanstack/react-router' {
       path: '/admin/redefinir-senha'
       fullPath: '/admin/redefinir-senha'
       preLoaderRoute: typeof AdminRedefinirSenhaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cardapio/$mesaId': {
-      id: '/cardapio/$mesaId'
-      path: '/cardapio/$mesaId'
-      fullPath: '/cardapio/$mesaId'
-      preLoaderRoute: typeof CardapioMesaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/master/': {
@@ -529,7 +509,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLoginRoute: AdminLoginRoute,
   AdminPrimeiroAcessoRoute: AdminPrimeiroAcessoRoute,
   AdminRedefinirSenhaRoute: AdminRedefinirSenhaRoute,
-  CardapioMesaIdRoute: CardapioMesaIdRoute,
   MasterLoginRoute: MasterLoginRoute,
   AdminImprimirMesaIdRoute: AdminImprimirMesaIdRoute,
 }
