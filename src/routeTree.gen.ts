@@ -28,6 +28,7 @@ import { Route as MasterAdministradoresRouteImport } from './routes/master.admin
 import { Route as MasterLoginRouteImport } from './routes/master_.login'
 import { Route as AdminContasIndexRouteImport } from './routes/admin.contas.index'
 import { Route as AdminContasContaIdRouteImport } from './routes/admin.contas.$contaId'
+import { Route as AdminContasCaixaRouteImport } from './routes/admin.contas.caixa'
 import { Route as AdminMesasIndexRouteImport } from './routes/admin.mesas.index'
 import { Route as AdminMesasMesaIdRouteImport } from './routes/admin.mesas.$mesaId'
 import { Route as AdminImprimirMesaIdRouteImport } from './routes/admin_.imprimir.$mesaId'
@@ -127,6 +128,11 @@ const AdminContasContaIdRoute = AdminContasContaIdRouteImport.update({
   path: '/contas/$contaId',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminContasCaixaRoute = AdminContasCaixaRouteImport.update({
+  id: '/contas/caixa',
+  path: '/contas/caixa',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMesasIndexRoute = AdminMesasIndexRouteImport.update({
   id: '/mesas/',
   path: '/mesas/',
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/master/': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
+  '/admin/contas/caixa': typeof AdminContasCaixaRoute
   '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
   '/admin/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
   '/admin/contas/': typeof AdminContasIndexRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/master': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
+  '/admin/contas/caixa': typeof AdminContasCaixaRoute
   '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
   '/admin/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
   '/admin/contas': typeof AdminContasIndexRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/master/': typeof MasterIndexRoute
   '/admin/contas/$contaId': typeof AdminContasContaIdRoute
+  '/admin/contas/caixa': typeof AdminContasCaixaRoute
   '/admin/mesas/$mesaId': typeof AdminMesasMesaIdRoute
   '/admin_/imprimir/$mesaId': typeof AdminImprimirMesaIdRoute
   '/admin/contas/': typeof AdminContasIndexRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/master/'
     | '/admin/contas/$contaId'
+    | '/admin/contas/caixa'
     | '/admin/mesas/$mesaId'
     | '/admin/imprimir/$mesaId'
     | '/admin/contas/'
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/master'
     | '/admin/contas/$contaId'
+    | '/admin/contas/caixa'
     | '/admin/mesas/$mesaId'
     | '/admin/imprimir/$mesaId'
     | '/admin/contas'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/master/'
     | '/admin/contas/$contaId'
+    | '/admin/contas/caixa'
     | '/admin/mesas/$mesaId'
     | '/admin_/imprimir/$mesaId'
     | '/admin/contas/'
@@ -435,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContasContaIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/contas/caixa': {
+      id: '/admin/contas/caixa'
+      path: '/contas/caixa'
+      fullPath: '/admin/contas/caixa'
+      preLoaderRoute: typeof AdminContasCaixaRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/mesas/': {
       id: '/admin/mesas/'
       path: '/mesas'
@@ -467,6 +486,7 @@ interface AdminRouteChildren {
   AdminProdutosRoute: typeof AdminProdutosRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminContasContaIdRoute: typeof AdminContasContaIdRoute
+  AdminContasCaixaRoute: typeof AdminContasCaixaRoute
   AdminMesasMesaIdRoute: typeof AdminMesasMesaIdRoute
   AdminContasIndexRoute: typeof AdminContasIndexRoute
   AdminMesasIndexRoute: typeof AdminMesasIndexRoute
@@ -480,6 +500,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminProdutosRoute: AdminProdutosRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminContasContaIdRoute: AdminContasContaIdRoute,
+  AdminContasCaixaRoute: AdminContasCaixaRoute,
   AdminMesasMesaIdRoute: AdminMesasMesaIdRoute,
   AdminContasIndexRoute: AdminContasIndexRoute,
   AdminMesasIndexRoute: AdminMesasIndexRoute,

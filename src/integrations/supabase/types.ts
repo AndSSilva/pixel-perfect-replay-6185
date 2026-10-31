@@ -304,6 +304,41 @@ export type Database = {
       }
       // NOTE: sessoes_mesa, comandas, pedidos, itens_pedido e pagamentos (docs/sql/08_pedidos.sql):
       // o painel só LÊ (escrita apenas pelas funções); comandas não expõe token_hash (sem permissão).
+      // NOTE: caixas e movimentos_caixa (docs/sql/09_caixa.sql): o painel só LÊ; escrita só pelas funções.
+      caixas: {
+        Row: {
+          abertura_centavos: number
+          aberto_em: string
+          aberto_por: string | null
+          contado_centavos: number | null
+          diferenca_centavos: number | null
+          esperado_centavos: number | null
+          estabelecimento_id: string
+          fechado_em: string | null
+          fechado_por: string | null
+          id: string
+          observacao_fechamento: string | null
+          status: Database["public"]["Enums"]["status_caixa"]
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
+      movimentos_caixa: {
+        Row: {
+          caixa_id: string
+          criado_em: string
+          criado_por: string | null
+          estabelecimento_id: string
+          id: string
+          motivo: string
+          tipo: Database["public"]["Enums"]["tipo_movimento_caixa"]
+          valor_centavos: number
+        }
+        Insert: Record<string, never>
+        Update: Record<string, never>
+        Relationships: []
+      }
       sessoes_mesa: {
         Row: {
           aberta_em: string
@@ -373,6 +408,7 @@ export type Database = {
       }
       pagamentos: {
         Row: {
+          caixa_id: string | null
           comanda_id: string
           criado_em: string
           estabelecimento_id: string
@@ -392,6 +428,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      abrir_caixa: { Args: { _empresa: string; _valor: number }; Returns: string }
+      fechar_caixa: {
+        Args: { _caixa: string; _contado: number; _observacao?: string }
+        Returns: number
+      }
+      movimentar_caixa: {
+        Args: {
+          _caixa: string
+          _motivo: string
+          _tipo: Database["public"]["Enums"]["tipo_movimento_caixa"]
+          _valor: number
+        }
+        Returns: string
+      }
+      resumo_caixa: { Args: { _caixa: string }; Returns: Json }
       ajustar_estoque: {
         Args: {
           _observacao?: string
@@ -448,10 +499,12 @@ export type Database = {
     Enums: {
       papel_app: "admin" | "master"
       forma_pagamento: "dinheiro" | "pix" | "debito" | "credito" | "outro"
+      status_caixa: "aberto" | "fechado"
       status_comanda: "aberta" | "paga"
       status_item: "aguardando" | "entregue" | "cancelado"
       status_pedido: "pendente" | "confirmado" | "rejeitado" | "cancelado"
       status_sessao: "aberta" | "fechamento" | "encerrada"
+      tipo_movimento_caixa: "sangria" | "reforco"
       tipo_movimento_estoque:
         | "saldo_inicial"
         | "reposicao"

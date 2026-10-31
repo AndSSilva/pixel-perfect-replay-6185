@@ -26,12 +26,15 @@ import {
   validarPagamento,
   type ErrosPagamento,
 } from "@/lib/pedidos/contas";
+import { caixaAberto } from "@/lib/pedidos/caixa";
 import { rotuloForma, rotuloItem } from "@/lib/pedidos/rotulos";
 import {
   atualizarAtendimento,
+  chaveCaixas,
   chaveComandas,
   excluirPagamento,
   fecharComanda,
+  listarCaixas,
   obterComanda,
   registrarPagamento,
 } from "@/lib/pedidos/servico-painel";
@@ -59,6 +62,12 @@ function ContaDetalhe() {
     queryFn: () => obterComanda(empresa.id, contaId),
     refetchInterval: 10_000,
   });
+  const caixas = useQuery({
+    queryKey: chaveCaixas(empresa.id),
+    queryFn: () => listarCaixas(empresa.id),
+    refetchInterval: 15_000,
+  });
+  const semCaixa = caixas.isSuccess && !caixaAberto(caixas.data);
   const [agora, setAgora] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setAgora(Date.now()), 15_000);
@@ -285,6 +294,15 @@ function ContaDetalhe() {
         {aberta ? (
           <div className="space-y-4">
             <Painel titulo="Registrar pagamento">
+              {semCaixa ? (
+                <p className="mb-4 rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-sm text-warning">
+                  O caixa está fechado.{" "}
+                  <Link to="/admin/contas/caixa" className="underline">
+                    Abra o caixa
+                  </Link>{" "}
+                  para registrar pagamentos.
+                </p>
+              ) : null}
               <form
                 className="space-y-4"
                 onSubmit={(e) => {
@@ -355,7 +373,11 @@ function ContaDetalhe() {
                     onChange={(e) => setObs(e.target.value)}
                   />
                 </Campo>
-                <Button type="submit" className="w-full" disabled={saldo <= 0 || rodar.isPending}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={saldo <= 0 || rodar.isPending || semCaixa}
+                >
                   Registrar pagamento
                 </Button>
               </form>

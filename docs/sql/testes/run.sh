@@ -8,7 +8,7 @@ psql -v ON_ERROR_STOP=1 -q -d postgres -c "create database $DB"
 trap 'psql -q -d postgres -c "drop database if exists $DB" >/dev/null' EXIT
 run() { psql -v ON_ERROR_STOP=1 -q -d "$DB" -f "$1"; }
 run testes/00_harness.sql
-for f in 01_perfis_acesso.sql 02_estabelecimentos.sql 03_master_unico_e_acesso.sql 04_catalogo.sql 05_fotos_storage.sql 06_inativar_ao_zerar.sql 07_estoque.sql 08_pedidos.sql; do
+for f in 01_perfis_acesso.sql 02_estabelecimentos.sql 03_master_unico_e_acesso.sql 04_catalogo.sql 05_fotos_storage.sql 06_inativar_ao_zerar.sql 07_estoque.sql 08_pedidos.sql 09_caixa.sql; do
   echo "aplicando $f"; run "$f"
 done
 for t in testes/1*.sql; do echo "== $t"; run "$t"; done

@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { ErroPedido, codigoDoErro } from "./tipos";
+import type { CaixaRow, MovimentoCaixa, ResumoCaixa } from "./caixa";
 import type { ComandaPainel } from "./contas";
 import type { PedidoPainel } from "./painel";
 
@@ -113,6 +114,7 @@ export function atualizarAtendimento(qc: QueryClient, empresaId: string): void {
     chavePedidos(empresaId),
     chaveComandas(empresaId),
     chaveSessoes(empresaId),
+    chaveCaixas(empresaId),
     ["produtos", empresaId],
   ]) {
     void qc.invalidateQueries({ queryKey: chave });
@@ -295,3 +297,76 @@ export async function listarContasFechadas(
 
 export const chaveVendas = (empresaId: string, de: string, ate: string) =>
   [...chaveComandas(empresaId), "fechadas", de, ate] as const;
+
+// ---------- Caixa (tesouraria) ----------
+
+export const chaveCaixas = (empresaId: string) => ["caixas", empresaId] as const;
+
+const LIMITE_CAIXAS = 60;
+
+/** Caixas da empresa, do mais recente para o mais antigo. */
+export async function listarCaixas(empresaId: string): Promise<CaixaRow[]> {
+  const { data, error } = await supabase
+    .from("caixas")
+    .select("*")
+    .eq("estabelecimento_id", empresaId)
+    .order("aberto_em", { ascending: false })
+    .limit(LIMITE_CAIXAS);
+  if (error) falhar("listarCaixas", error);
+  return data;
+}
+
+export async function obterResumoCaixa(caixaId: string): Promise<ResumoCaixa> {
+  const { data, error } = await supabase.rpc("resumo_caixa", { _caixa: caixaId });
+  if (error) falhar("obterResumoCaixa", error);
+  return data as unknown as ResumoCaixa;
+}
+
+export async function listarMovimentosCaixa(caixaId: string): Promise<MovimentoCaixa[]> {
+  const { data, error } = await supabase
+    .from("movimentos_caixa")
+    .select("*")
+    .eq("caixa_id", caixaId)
+    .order("criado_em", { ascending: false });
+  if (error) falhar("listarMovimentosCaixa", error);
+  return data;
+}
+
+export async function abrirCaixa(empresaId: string, valorCentavos: number): Promise<void> {
+  const { error } = await supabase.rpc("abrir_caixa", {
+    _empresa: empresaId,
+    _valor: valorCentavos,
+  });
+  if (error) falhar("abrirCaixa", error);
+}
+
+export async function movimentarCaixa(dados: {
+  caixaId: string;
+  tipo: "sangria" | "reforco";
+  valorCentavos: number;
+  motivo: string;
+}): Promise<void> {
+  const { error } = await supabase.rpc("movimentar_caixa", {
+    _caixa: dados.caixaId,
+    _tipo: dados.tipo,
+    _valor: dados.valorCentavos,
+    _motivo: dados.motivo.trim(),
+  });
+  if (error) falhar("movimentarCaixa", error);
+}
+
+/** Devolve a diferença (contado − esperado) em centavos. */
+export async function fecharCaixa(
+  caixaId: string,
+  contadoCentavos: number,
+  observacao: string,
+): Promise<number> {
+  const obs = observacao.trim();
+  const { data, error } = await supabase.rpc("fechar_caixa", {
+    _caixa: caixaId,
+    _contado: contadoCentavos,
+    ...(obs ? { _observacao: obs } : {}),
+  });
+  if (error) falhar("fecharCaixa", error);
+  return data;
+}
