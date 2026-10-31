@@ -15,6 +15,7 @@ import { estadoDaConsulta } from "@/components/app/Consulta";
 import { useEmpresa } from "@/lib/empresa/contexto";
 import { formatBRL, formatHora } from "@/lib/format";
 import {
+  comandaTemAtividade,
   devidoDaComanda,
   pagoDaComanda,
   pedidosPendentesDaComanda,
@@ -58,7 +59,10 @@ function Contas() {
     return () => clearInterval(t);
   }, []);
 
-  const todas = useMemo(() => consulta.data ?? [], [consulta.data]);
+  const todas = useMemo(
+    () => (consulta.data ?? []).filter((c) => comandaTemAtividade(c, agora)),
+    [consulta.data, agora],
+  );
   const mesas = useMemo(
     () => [...new Set(todas.map((c) => c.mesa_numero))].sort((a, b) => a - b),
     [todas],

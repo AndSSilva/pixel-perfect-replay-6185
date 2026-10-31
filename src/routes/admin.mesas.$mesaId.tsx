@@ -11,6 +11,7 @@ import { chaveMesas, listarMesas } from "@/lib/catalogo/servico";
 import { caminhoMesa, rotuloMesa } from "@/lib/catalogo/mesas";
 import { formatBRL, formatDataHora } from "@/lib/format";
 import {
+  comandaTemAtividade,
   devidoDaComanda,
   impedimentoParaLiberar,
   pagoDaComanda,
@@ -103,11 +104,16 @@ function MesaDetalhe() {
   }
 
   const sessao = sessoes.data?.find((s) => s.mesa_id === mesa.id);
-  const contas = (comandas.data ?? []).filter((c) => c.sessao_id === sessao?.id);
+  const contas = (comandas.data ?? []).filter(
+    (c) => c.sessao_id === sessao?.id && comandaTemAtividade(c, agora),
+  );
+  // Só vira atendimento de verdade depois que o primeiro pedido é aprovado.
+  const emAtendimento = sessao?.confirmada === true;
+  const aguardando = sessao !== undefined && !emAtendimento;
   const [tom, rotulo] = SELO[situacaoDaMesa(mesa, sessao)];
   const consumo = contas.reduce((s, c) => s + devidoDaComanda(c), 0);
   const pago = contas.reduce((s, c) => s + pagoDaComanda(c), 0);
-  const impedimento = sessao ? impedimentoParaLiberar(contas, agora) : null;
+  const impedimento = sessao && emAtendimento ? impedimentoParaLiberar(contas, agora) : null;
 
   return (
     <>
@@ -120,14 +126,16 @@ function MesaDetalhe() {
       <PageHeader
         titulo={rotuloMesa(mesa.numero)}
         descricao={
-          sessao
+          emAtendimento
             ? `Atendimento aberto em ${formatDataHora(sessao.aberta_em)}`
-            : "Sem atendimento em andamento"
+            : aguardando
+              ? "Há cliente identificado, mas a mesa só fica ocupada quando você aprovar o primeiro pedido."
+              : "Sem atendimento em andamento"
         }
         acoes={
           <>
             <Selo tom={tom}>{rotulo}</Selo>
-            {sessao?.status === "aberta" ? (
+            {emAtendimento && sessao?.status === "aberta" ? (
               <Button
                 size="sm"
                 variant="secondary"
@@ -142,7 +150,7 @@ function MesaDetalhe() {
                 <ClipboardCheck className="h-4 w-4" /> Iniciar fechamento
               </Button>
             ) : null}
-            {sessao?.status === "fechamento" ? (
+            {emAtendimento && sessao?.status === "fechamento" ? (
               <Button
                 size="sm"
                 variant="ghost"
@@ -152,7 +160,7 @@ function MesaDetalhe() {
                 <Undo2 className="h-4 w-4" /> Retomar atendimento
               </Button>
             ) : null}
-            {sessao ? (
+            {emAtendimento ? (
               <Confirmar
                 gatilho={
                   <Button size="sm" disabled={impedimento !== null || rodar.isPending}>
