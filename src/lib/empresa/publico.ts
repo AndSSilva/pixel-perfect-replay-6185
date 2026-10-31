@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Horarios } from "./horarios";
 
 export type ApresentacaoPublica = {
   empresa: {
@@ -8,9 +9,10 @@ export type ApresentacaoPublica = {
     cor_secundaria: string | null;
     logo_url: string | null;
     descricao: string | null;
-    destaques: string[];
-    horario_funcionamento: string | null;
+    whatsapp: string | null;
+    instagram: string | null;
     endereco: string | null;
+    horarios: Horarios | null;
   };
   mesas: { numero: number; disponivel: boolean }[];
 };

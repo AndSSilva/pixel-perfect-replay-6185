@@ -1,9 +1,10 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import type { Horarios } from "./horarios";
 import { ErroEmpresa, type CodigoErroEmpresa, type Empresa } from "./tipos";
 
 const COLUNAS =
-  "id, slug, nome, ativo, cor_primaria, cor_secundaria, logo_url, criado_em, descricao, destaques, endereco, horario_funcionamento";
+  "id, slug, nome, ativo, cor_primaria, cor_secundaria, logo_url, criado_em, descricao, endereco, horarios, whatsapp, instagram";
 
 /** Converte erros do Postgres/PostgREST em códigos nossos. */
 export function codigoDoErroEmpresa(
@@ -46,9 +47,10 @@ export type DadosEmpresa = {
   nome?: string;
   ativo?: boolean;
   descricao?: string | null;
-  destaques?: string[];
   endereco?: string | null;
-  horario_funcionamento?: string | null;
+  horarios?: Horarios | null;
+  whatsapp?: string | null;
+  instagram?: string | null;
   cor_primaria?: string | null;
   cor_secundaria?: string | null;
   logo_url?: string | null;
@@ -61,11 +63,12 @@ export async function atualizarEmpresa(id: string, dados: DadosEmpresa): Promise
   const campos: Partial<Omit<DadosEmpresa, "nome">> & { nome?: string } = {};
   if (dados.nome !== undefined) campos.nome = dados.nome.trim();
   if (dados.ativo !== undefined) campos.ativo = dados.ativo;
-  if (dados.destaques !== undefined) campos.destaques = dados.destaques;
+  if (dados.horarios !== undefined) campos.horarios = dados.horarios;
   for (const k of [
     "descricao",
     "endereco",
-    "horario_funcionamento",
+    "whatsapp",
+    "instagram",
     "cor_primaria",
     "cor_secundaria",
     "logo_url",
