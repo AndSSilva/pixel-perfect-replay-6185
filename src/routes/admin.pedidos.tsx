@@ -8,10 +8,10 @@ import { EmptyState, PageHeader } from "@/components/app/common";
 import { estadoDaConsulta } from "@/components/app/Consulta";
 import { PedidoPainelCard, type AcoesPedido } from "@/components/pedidos/PedidoPainelCard";
 import { useEmpresa } from "@/lib/empresa/contexto";
-import { chaveProdutos } from "@/lib/catalogo/servico";
 import { agruparPedidos } from "@/lib/pedidos/painel";
 import {
   cancelarItem,
+  atualizarAtendimento,
   chavePedidos,
   confirmarPedido,
   entregarItens,
@@ -45,10 +45,7 @@ function Pedidos() {
     return () => clearInterval(t);
   }, []);
 
-  const atualizar = () => {
-    void qc.invalidateQueries({ queryKey: chavePedidos(empresa.id) });
-    void qc.invalidateQueries({ queryKey: chaveProdutos(empresa.id) });
-  };
+  const atualizar = () => atualizarAtendimento(qc, empresa.id);
   const rodar = useMutation({
     mutationFn: ({ fn }: { fn: () => Promise<unknown>; ok: string }) => fn(),
     onSuccess: (_r, v) => {

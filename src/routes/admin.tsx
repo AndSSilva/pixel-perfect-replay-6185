@@ -45,7 +45,13 @@ const itens = [
 ] as const;
 
 /** Áreas do painel já ligadas ao banco; as demais ainda usam os dados de demonstração do MVP. */
-const ROTAS_NO_BANCO = ["/admin/categorias", "/admin/mesas", "/admin/produtos", "/admin/pedidos"];
+const ROTAS_NO_BANCO = [
+  "/admin/categorias",
+  "/admin/mesas",
+  "/admin/produtos",
+  "/admin/pedidos",
+  "/admin/contas",
+];
 
 function Navegacao({
   pendentes,
@@ -182,7 +188,7 @@ function AdminComEmpresa({ d, sessao }: { d: AppData; sessao: SessaoAdmin }) {
   }
 
   const empresa = ctx.atual;
-  const naoMigrada = !ROTAS_NO_BANCO.some((r) => caminho === r || caminho === `${r}/`);
+  const naoMigrada = !ROTAS_NO_BANCO.some((r) => caminho === r || caminho.startsWith(`${r}/`));
   const trocarEmpresa = ehMaster
     ? {
         rotulo: "Voltar à plataforma",
