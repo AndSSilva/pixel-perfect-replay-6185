@@ -28,6 +28,9 @@ describe("codigoDoErroEmpresa", () => {
     expect(codigoDoErroEmpresa({ code: "42501", message: "row-level security" })).toBe(
       "sem_permissao",
     );
+    expect(codigoDoErroEmpresa({ code: "P0002", message: "empresa não encontrada" })).toBe(
+      "nao_encontrada",
+    );
     expect(codigoDoErroEmpresa({ code: "XX000", message: "?" })).toBe("desconhecido");
   });
 });

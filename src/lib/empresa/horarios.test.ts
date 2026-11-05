@@ -12,8 +12,13 @@ import {
   linkWhatsapp,
   normalizarInstagram,
   normalizarWhatsapp,
+  formParaIntervalo,
+  intervaloParaForm,
+  intervaloValido,
   statusAgora,
+  textoDoIntervalo,
   textoDoStatus,
+  validarIntervalo,
   type Horarios,
 } from "./horarios";
 
@@ -156,5 +161,61 @@ describe("formulário de horários", () => {
       0: "Abertura e fechamento não podem ser iguais.",
       1: "Informe os dois horários.",
     });
+  });
+});
+
+describe("intervalo", () => {
+  const meioDia = { inicio: "12:00", fim: "14:00" };
+  const todoDia: Horarios = Array.from({ length: 7 }, () => ({ abre: "10:00", fecha: "22:00" }));
+  it("valida o formato", () => {
+    expect(intervaloValido(meioDia)).toBe(true);
+    expect(intervaloValido({ inicio: "12:00", fim: "12:00" })).toBe(false);
+    expect(intervaloValido({ inicio: "25:00", fim: "13:00" })).toBe(false);
+    expect(intervaloValido({ inicio: "12:00" })).toBe(false);
+    expect(intervaloValido(null)).toBe(false);
+  });
+  it("mostra 'em intervalo' só durante a pausa e com o estabelecimento aberto", () => {
+    const dentro = statusAgora(todoDia, sp("2026-10-31T13:00:00"), undefined, meioDia);
+    expect(dentro).toEqual({ aberto: true, fechaAs: "22:00", intervaloAte: "14:00" });
+    expect(textoDoStatus(dentro)).toBe("Em intervalo · volta às 14:00");
+    expect(statusAgora(todoDia, sp("2026-10-31T14:00:00"), undefined, meioDia)).toEqual({
+      aberto: true,
+      fechaAs: "22:00",
+    });
+    expect(statusAgora(todoDia, sp("2026-10-31T09:00:00"), undefined, meioDia).aberto).toBe(false);
+  });
+  it("intervalo que passa da meia-noite", () => {
+    const noite = { inicio: "23:30", fim: "00:30" };
+    const h: Horarios = Array.from({ length: 7 }, () => ({ abre: "19:00", fecha: "03:00" }));
+    expect(statusAgora(h, sp("2026-10-31T23:45:00"), undefined, noite)).toMatchObject({
+      intervaloAte: "00:30",
+    });
+    expect(statusAgora(h, sp("2026-11-01T00:10:00"), undefined, noite)).toMatchObject({
+      intervaloAte: "00:30",
+    });
+    expect(statusAgora(h, sp("2026-11-01T01:00:00"), undefined, noite)).not.toHaveProperty(
+      "intervaloAte",
+    );
+  });
+  it("sem intervalo informado, nada muda", () => {
+    expect(statusAgora(todoDia, sp("2026-10-31T13:00:00"))).toEqual({
+      aberto: true,
+      fechaAs: "22:00",
+    });
+  });
+  it("textos e formulário", () => {
+    expect(textoDoIntervalo(meioDia)).toBe("Intervalo: 12:00 – 14:00");
+    expect(textoDoIntervalo(null)).toBe("Sem intervalo");
+    expect(intervaloParaForm(null)).toEqual({ possui: false, inicio: "12:00", fim: "14:00" });
+    expect(formParaIntervalo(intervaloParaForm(meioDia))).toEqual(meioDia);
+    expect(formParaIntervalo({ possui: false, inicio: "12:00", fim: "14:00" })).toBeNull();
+    expect(validarIntervalo({ possui: false, inicio: "", fim: "" })).toBeNull();
+    expect(validarIntervalo({ possui: true, inicio: "", fim: "14:00" })).toBe(
+      "Informe os dois horários.",
+    );
+    expect(validarIntervalo({ possui: true, inicio: "12:00", fim: "12:00" })).toBe(
+      "Início e fim do intervalo não podem ser iguais.",
+    );
+    expect(validarIntervalo({ possui: true, inicio: "12:00", fim: "14:00" })).toBeNull();
   });
 });

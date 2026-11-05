@@ -16,6 +16,7 @@ export type Empresa = Pick<
   | "horarios"
   | "whatsapp"
   | "instagram"
+  | "intervalo"
 >;
 
 export type CodigoErroEmpresa =
@@ -25,6 +26,7 @@ export type CodigoErroEmpresa =
   | "nome_invalido"
   | "dados_invalidos"
   | "logo_falhou"
+  | "logo_falhou_empresa_criada"
   | "sem_permissao"
   | "nao_encontrada"
   | "desconhecido";
@@ -36,6 +38,8 @@ export const MENSAGENS_EMPRESA: Record<CodigoErroEmpresa, string> = {
   nome_invalido: "O nome deve ter de 2 a 80 caracteres.",
   dados_invalidos: "Confira os campos: algum valor passou do limite permitido.",
   logo_falhou: "Não foi possível enviar o logo. Use uma imagem PNG, JPG ou WebP.",
+  logo_falhou_empresa_criada:
+    "A empresa foi criada, mas o logo não foi enviado. Abra Editar empresa para tentar de novo.",
   sem_permissao: "Você não tem permissão para esta ação.",
   nao_encontrada: "Empresa não encontrada.",
   desconhecido: "Não foi possível concluir a operação. Tente novamente.",

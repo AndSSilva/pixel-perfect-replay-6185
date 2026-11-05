@@ -16,6 +16,7 @@ const emp = (id: string, ativo = true): Empresa => ({
   horarios: null,
   whatsapp: null,
   instagram: null,
+  intervalo: null,
 });
 
 describe("empresas selecionáveis", () => {

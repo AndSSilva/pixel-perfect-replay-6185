@@ -17,6 +17,7 @@ Este diretório é o registro do que existe no banco; ao criar uma mudança nova
 | `10_liberar_mesa_ignora_comandas_vazias.sql` | Liberar mesa encerra comandas sem pedido aprovado (mesa só ocupa após aprovar) |
 | `11_apresentacao_empresa.sql` | Textos, endereço e logo da empresa, e a função pública da página `/{slug}` com mesas disponíveis |
 | `12_apresentacao_v2.sql` | Apresentação num só campo, WhatsApp, Instagram e horário por dia (remove `destaques` e o horário em texto) |
+| `13_apresentacao_no_admin.sql` | Intervalo de atendimento; o administrador edita a apresentação da própria empresa (`atualizar_apresentacao`); corrige a validação do horário |
 
 ## Testes
 

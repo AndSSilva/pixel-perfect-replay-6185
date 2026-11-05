@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, Painel, Selo } from "@/components/app/common";
+import { FormApresentacao } from "@/components/empresa/FormApresentacao";
 import { useEmpresa } from "@/lib/empresa/contexto";
 import { corSegura } from "@/lib/pedidos/rotulos";
 
@@ -22,9 +23,15 @@ function Configuracoes() {
     <>
       <PageHeader
         titulo="Configurações"
-        descricao="Dados do estabelecimento. Para alterar nome, endereço ou identidade visual, fale com o administrador da plataforma."
+        descricao="Página da sua empresa e dados do estabelecimento. Para alterar nome, endereço do cardápio, logo ou cores, fale com o administrador da plataforma."
       />
       <div className="max-w-2xl space-y-6">
+        <Painel titulo="Página da empresa">
+          <p className="mb-4 text-sm text-muted-foreground">
+            É o que o cliente vê ao abrir {endereco}, antes de escolher a mesa.
+          </p>
+          <FormApresentacao empresa={empresa} />
+        </Painel>
         <Painel titulo="Estabelecimento">
           <dl className="space-y-3 text-sm">
             <div className="flex flex-wrap justify-between gap-2">
