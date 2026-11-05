@@ -73,7 +73,7 @@ export function PedidoPainelCard({
             </span>
             <span className="flex items-center gap-1">
               <span className="tabular-nums text-muted-foreground">
-                {formatBRL(i.subtotal_centavos)}
+                {formatBRL(i.subtotal_centavos ?? 0)}
               </span>
               {pedido.status === "confirmado" && i.status === "aguardando" ? (
                 <>

@@ -2,7 +2,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { parseMoeda } from "@/lib/format";
 import { pedidoExpirado, type PedidoPainel } from "./painel";
 
-export type ComandaPainel = Tables<"comandas"> & {
+/** O painel nunca lê token_hash: a linha vem sem essa coluna. */
+export type ComandaPainel = Omit<Tables<"comandas">, "token_hash"> & {
   pedidos: PedidoPainel[];
   pagamentos: Tables<"pagamentos">[];
 };
@@ -13,7 +14,7 @@ export const devidoDaComanda = (c: Pick<ComandaPainel, "pedidos">): number =>
     .filter((p) => p.status === "confirmado")
     .flatMap((p) => p.itens)
     .filter((i) => i.status !== "cancelado")
-    .reduce((s, i) => s + i.subtotal_centavos, 0);
+    .reduce((s, i) => s + (i.subtotal_centavos ?? 0), 0);
 
 export const pagoDaComanda = (c: Pick<ComandaPainel, "pagamentos">): number =>
   c.pagamentos.reduce((s, g) => s + g.valor_centavos, 0);
