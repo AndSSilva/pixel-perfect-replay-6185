@@ -21,12 +21,12 @@ export const Route = createFileRoute("/admin")({
 
 const itens = [
   { to: "/admin", rotulo: "Dashboard", exato: true },
-  { to: "/admin/mesas", rotulo: "Mesas", exato: false },
   { to: "/admin/pedidos", rotulo: "Pedidos", exato: false },
-  { to: "/admin/contas", rotulo: "Contas e pagamentos", exato: false },
+  { to: "/admin/contas", rotulo: "Pagamento", exato: false },
   { to: "/admin/produtos", rotulo: "Produtos", exato: false },
+  { to: "/admin/mesas", rotulo: "Mesas", exato: false },
   { to: "/admin/categorias", rotulo: "Categorias", exato: false },
-  { to: "/admin/historico", rotulo: "Histórico de vendas", exato: false },
+  { to: "/admin/historico", rotulo: "Histórico", exato: false },
   { to: "/admin/configuracoes", rotulo: "Configurações", exato: false },
 ] as const;
 

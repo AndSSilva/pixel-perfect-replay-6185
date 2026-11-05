@@ -67,7 +67,7 @@ function PaginaCaixa() {
         to="/admin/contas"
         className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Contas e pagamentos
+        <ArrowLeft className="h-4 w-4" /> Pagamento
       </Link>
       <PageHeader
         titulo="Caixa"

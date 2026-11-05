@@ -72,7 +72,7 @@ function Historico() {
   return (
     <>
       <PageHeader
-        titulo="Histórico de vendas"
+        titulo="Histórico"
         descricao="Somente contas fechadas. Pedidos pendentes ou rejeitados não entram."
       />
       <div className="mb-4 grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5">

@@ -73,7 +73,7 @@ function Contas() {
   return (
     <>
       <PageHeader
-        titulo="Contas e pagamentos"
+        titulo="Pagamento"
         descricao="Selecione uma conta para conferir os itens e registrar pagamentos."
         acoes={
           <>
