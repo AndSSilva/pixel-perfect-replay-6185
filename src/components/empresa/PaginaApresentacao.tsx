@@ -17,6 +17,20 @@ import {
   type Intervalo,
 } from "@/lib/empresa/horarios";
 import { corDoTextoSobre } from "@/lib/pedidos/rotulos";
+import { ThemeToggle } from "@/components/app/ThemeToggle";
+
+/**
+ * Fundo da página em cada tema. Se a cor da empresa já combina com o tema (clara no modo claro, escura
+ * no escuro) ela é usada como está; senão vira uma variação suave da mesma cor (tom de 7% sobre branco e 14%
+ * ou sobre grafite), mantendo a identidade sem estourar o contraste. A cor vem validada como #rrggbb.
+ */
+export function fundosPorTema(fundo: string): { claro: string; escuro: string } {
+  const clara = corDoTextoSobre(fundo) === "#0f172a";
+  return {
+    claro: clara ? fundo : `color-mix(in srgb, ${fundo} 7%, #ffffff)`,
+    escuro: clara ? `color-mix(in srgb, ${fundo} 14%, #0b1220)` : fundo,
+  };
+}
 
 export type DadosPagina = {
   nome: string;
@@ -54,7 +68,9 @@ export function PaginaApresentacao({
     return () => clearInterval(t);
   }, []);
 
-  const texto = corDoTextoSobre(fundo);
+  const fundos = fundosPorTema(fundo);
+  // As cores dependem do tema (classe "dark" no <html>, definida antes da pintura): ficam em variáveis CSS.
+  const texto = "var(--pg-fg)";
   const textoBotao = corDoTextoSobre(primaria);
   const cartao: CSSProperties = {
     backgroundColor: `color-mix(in srgb, ${texto} 7%, transparent)`,
@@ -69,7 +85,12 @@ export function PaginaApresentacao({
   const enderecoLinhas = (dados.endereco ?? "").split("\n").filter((l) => l.trim() !== "");
 
   return (
-    <div className="min-h-screen pb-32" style={{ backgroundColor: fundo, color: texto }}>
+    <div
+      className="pagina-apresentacao relative min-h-screen pb-32"
+      style={{ backgroundColor: "var(--pg-bg)", color: texto }}
+    >
+      <style>{`.pagina-apresentacao{--pg-bg:${fundos.claro};--pg-fg:#0f172a}.dark .pagina-apresentacao{--pg-bg:${fundos.escuro};--pg-fg:#ffffff}`}</style>
+      <ThemeToggle className="absolute right-4 top-4 border-transparent bg-transparent text-[color:var(--pg-fg)] shadow-none hover:bg-black/5 hover:text-[color:var(--pg-fg)] dark:hover:bg-white/10" />
       <main className="mx-auto max-w-md space-y-4 px-4 pt-10">
         <header className="text-center">
           {dados.logoUrl ? (
@@ -211,7 +232,7 @@ export function PaginaApresentacao({
 
       <div
         className="fixed inset-x-0 bottom-0 border-t px-4 py-4"
-        style={{ backgroundColor: fundo, borderColor: cartao.borderColor }}
+        style={{ backgroundColor: "var(--pg-bg)", borderColor: cartao.borderColor }}
       >
         <div className="mx-auto max-w-md">{acao}</div>
       </div>
