@@ -30,6 +30,8 @@ import {
   linkWhatsapp,
   statusAgora,
   textoDaJanela,
+  textoDoIntervalo,
+  intervaloValido,
   textoDoStatus,
 } from "@/lib/empresa/horarios";
 import { chaveApresentacao, obterApresentacao } from "@/lib/empresa/publico";
@@ -101,7 +103,8 @@ function Apresentacao() {
   const suave: CSSProperties = { color: `color-mix(in srgb, ${texto} 68%, transparent)` };
 
   const horarios = horariosValidos(empresa.horarios) ? empresa.horarios : null;
-  const status = horarios ? statusAgora(horarios, agora) : null;
+  const intervalo = intervaloValido(empresa.intervalo) ? empresa.intervalo : null;
+  const status = horarios ? statusAgora(horarios, agora, undefined, intervalo) : null;
   const diaHoje = agoraNoFuso(agora).dia;
   const livres = mesas.filter((m) => m.disponivel);
   const enderecoLinhas = (empresa.endereco ?? "").split("\n").filter((l) => l.trim() !== "");
@@ -132,7 +135,13 @@ function Apresentacao() {
             >
               <span
                 className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: status.aberto ? "#4ade80" : "#f87171" }}
+                style={{
+                  backgroundColor: !status.aberto
+                    ? "#f87171"
+                    : status.intervaloAte
+                      ? "#fbbf24"
+                      : "#4ade80",
+                }}
                 aria-hidden
               />
               {textoDoStatus(status)}
@@ -199,6 +208,12 @@ function Apresentacao() {
                 </li>
               ))}
             </ul>
+            <p
+              className="mt-2 border-t pt-2.5 text-sm"
+              style={{ ...suave, borderColor: cartao.borderColor }}
+            >
+              {textoDoIntervalo(intervalo)}
+            </p>
           </section>
         ) : null}
 

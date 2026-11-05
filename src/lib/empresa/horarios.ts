@@ -1,8 +1,10 @@
 // Horário de funcionamento por dia. `horarios[0]` = domingo ... `[6]` = sábado (igual a Date#getDay).
 // Um dia é `null` (fechado) ou { abre, fecha } em "HH:MM". Se `fecha` <= `abre`, o expediente vira a madrugada.
-// Espelha docs/sql/12_apresentacao_v2.sql.
+// Espelha docs/sql/12_apresentacao_v2.sql e 13_apresentacao_no_admin.sql.
 export type JanelaDia = { abre: string; fecha: string };
 export type Horarios = (JanelaDia | null)[];
+/** Intervalo único, vale para todos os dias abertos (ex.: 12:00–14:00). `null` = sem intervalo. */
+export type Intervalo = { inicio: string; fim: string };
 
 export const FUSO = "America/Sao_Paulo";
 export const HORA_REGEX = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
@@ -33,6 +35,16 @@ export function horariosValidos(h: unknown): h is Horarios {
   );
 }
 
+export function intervaloValido(i: unknown): i is Intervalo {
+  return (
+    typeof i === "object" &&
+    i !== null &&
+    HORA_REGEX.test((i as Intervalo).inicio) &&
+    HORA_REGEX.test((i as Intervalo).fim) &&
+    (i as Intervalo).inicio !== (i as Intervalo).fim
+  );
+}
+
 /** Dia da semana (0 = domingo) e minutos desde 00:00, no fuso do estabelecimento. */
 export function agoraNoFuso(agora: Date, fuso: string = FUSO): { dia: number; minuto: number } {
   const partes = new Intl.DateTimeFormat("en-US", {
@@ -48,13 +60,31 @@ export function agoraNoFuso(agora: Date, fuso: string = FUSO): { dia: number; mi
 }
 
 export type StatusAgora =
-  | { aberto: true; fechaAs: string }
+  | { aberto: true; fechaAs: string; intervaloAte?: string }
   | {
       aberto: false;
       abreEm: { quando: "hoje" | "amanha" | "dia"; dia: number; abre: string } | null;
     };
 
-export function statusAgora(horarios: Horarios, agora: Date, fuso: string = FUSO): StatusAgora {
+/** Se está aberto e dentro do intervalo, avisa até que horas dura. */
+export function statusAgora(
+  horarios: Horarios,
+  agora: Date,
+  fuso: string = FUSO,
+  intervalo: Intervalo | null = null,
+): StatusAgora {
+  const s = statusSemIntervalo(horarios, agora, fuso);
+  if (s.aberto && intervalo) {
+    const { minuto } = agoraNoFuso(agora, fuso);
+    const ini = minutos(intervalo.inicio);
+    const fim = minutos(intervalo.fim);
+    const dentro = ini < fim ? minuto >= ini && minuto < fim : minuto >= ini || minuto < fim;
+    if (dentro) return { ...s, intervaloAte: intervalo.fim };
+  }
+  return s;
+}
+
+function statusSemIntervalo(horarios: Horarios, agora: Date, fuso: string): StatusAgora {
   const { dia, minuto } = agoraNoFuso(agora, fuso);
   const hoje = horarios[dia] ?? null;
   const ontem = horarios[(dia + 6) % 7] ?? null;
@@ -84,6 +114,7 @@ export function statusAgora(horarios: Horarios, agora: Date, fuso: string = FUSO
 }
 
 export function textoDoStatus(s: StatusAgora): string {
+  if (s.aberto && s.intervaloAte) return `Em intervalo · volta às ${s.intervaloAte}`;
   if (s.aberto) return `Aberto agora · fecha às ${s.fechaAs}`;
   if (!s.abreEm) return "Fechado";
   const { quando, dia, abre } = s.abreEm;
@@ -121,6 +152,9 @@ export function agruparDias(horarios: Horarios): GrupoHorario[] {
 
 export const textoDaJanela = (j: JanelaDia | null): string =>
   j ? `${j.abre} – ${j.fecha}` : "Fechado";
+
+export const textoDoIntervalo = (i: Intervalo | null): string =>
+  i ? `Intervalo: ${i.inicio} – ${i.fim}` : "Sem intervalo";
 
 // ---------- Contatos ----------
 /** Só dígitos; aceita "(51) 93500-1383" e "+55 51 93500-1383". */
@@ -189,4 +223,23 @@ export function validarLinhas(linhas: readonly LinhaHorario[]): Record<number, s
     else if (l.abre === l.fecha) erros[i] = "Abertura e fechamento não podem ser iguais.";
   });
   return erros;
+}
+
+// ---------- Formulário do intervalo ----------
+export type IntervaloForm = { possui: boolean; inicio: string; fim: string };
+
+export function intervaloParaForm(i: Intervalo | null): IntervaloForm {
+  return i
+    ? { possui: true, inicio: i.inicio, fim: i.fim }
+    : { possui: false, inicio: "12:00", fim: "14:00" };
+}
+
+export const formParaIntervalo = (f: IntervaloForm): Intervalo | null =>
+  f.possui ? { inicio: f.inicio, fim: f.fim } : null;
+
+export function validarIntervalo(f: IntervaloForm): string | null {
+  if (!f.possui) return null;
+  if (!HORA_REGEX.test(f.inicio) || !HORA_REGEX.test(f.fim)) return "Informe os dois horários.";
+  if (f.inicio === f.fim) return "Início e fim do intervalo não podem ser iguais.";
+  return null;
 }

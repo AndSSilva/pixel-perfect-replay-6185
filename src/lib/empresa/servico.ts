@@ -1,10 +1,10 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import type { Horarios } from "./horarios";
+import type { Horarios, Intervalo } from "./horarios";
 import { ErroEmpresa, type CodigoErroEmpresa, type Empresa } from "./tipos";
 
 const COLUNAS =
-  "id, slug, nome, ativo, cor_primaria, cor_secundaria, logo_url, criado_em, descricao, endereco, horarios, whatsapp, instagram";
+  "id, slug, nome, ativo, cor_primaria, cor_secundaria, logo_url, criado_em, descricao, endereco, horarios, whatsapp, instagram, intervalo";
 
 /** Converte erros do Postgres/PostgREST em códigos nossos. */
 export function codigoDoErroEmpresa(
@@ -18,6 +18,7 @@ export function codigoDoErroEmpresa(
     return "dados_invalidos";
   }
   if (e.code === "42501") return "sem_permissao";
+  if (e.code === "P0002") return "nao_encontrada";
   return "desconhecido";
 }
 
@@ -33,24 +34,30 @@ export async function listarEmpresas(): Promise<Empresa[]> {
   return data;
 }
 
-export async function criarEmpresa(dados: { nome: string; slug: string }): Promise<Empresa> {
+export async function criarEmpresa(dados: {
+  nome: string;
+  slug: string;
+  cor_primaria?: string | null;
+  cor_secundaria?: string | null;
+}): Promise<Empresa> {
   const { data, error } = await supabase
     .from("estabelecimentos")
-    .insert({ nome: dados.nome.trim(), slug: dados.slug })
+    .insert({
+      nome: dados.nome.trim(),
+      slug: dados.slug,
+      cor_primaria: dados.cor_primaria?.trim() || null,
+      cor_secundaria: dados.cor_secundaria?.trim() || null,
+    })
     .select(COLUNAS)
     .single();
   if (error) falhar(error);
   return data;
 }
 
+/** Identidade da empresa: só o master altera. */
 export type DadosEmpresa = {
   nome?: string;
   ativo?: boolean;
-  descricao?: string | null;
-  endereco?: string | null;
-  horarios?: Horarios | null;
-  whatsapp?: string | null;
-  instagram?: string | null;
   cor_primaria?: string | null;
   cor_secundaria?: string | null;
   logo_url?: string | null;
@@ -63,16 +70,7 @@ export async function atualizarEmpresa(id: string, dados: DadosEmpresa): Promise
   const campos: Partial<Omit<DadosEmpresa, "nome">> & { nome?: string } = {};
   if (dados.nome !== undefined) campos.nome = dados.nome.trim();
   if (dados.ativo !== undefined) campos.ativo = dados.ativo;
-  if (dados.horarios !== undefined) campos.horarios = dados.horarios;
-  for (const k of [
-    "descricao",
-    "endereco",
-    "whatsapp",
-    "instagram",
-    "cor_primaria",
-    "cor_secundaria",
-    "logo_url",
-  ] as const) {
+  for (const k of ["cor_primaria", "cor_secundaria", "logo_url"] as const) {
     const v = vazioParaNulo(dados[k]);
     if (v !== undefined) campos[k] = v;
   }
@@ -85,4 +83,30 @@ export async function atualizarEmpresa(id: string, dados: DadosEmpresa): Promise
   if (error) falhar(error);
   if (!data) throw new ErroEmpresa("nao_encontrada"); // sem linha = não existe ou sem permissão
   return data;
+}
+
+/** Textos da página pública: o administrador da empresa (ou o master) salva pela função do banco. */
+export type DadosApresentacao = {
+  descricao: string;
+  whatsapp: string;
+  instagram: string;
+  endereco: string;
+  horarios: Horarios | null;
+  intervalo: Intervalo | null;
+};
+
+export async function atualizarApresentacao(
+  empresaId: string,
+  d: DadosApresentacao,
+): Promise<void> {
+  const { error } = await supabase.rpc("atualizar_apresentacao", {
+    _empresa: empresaId,
+    _descricao: d.descricao,
+    _whatsapp: d.whatsapp,
+    _instagram: d.instagram,
+    _endereco: d.endereco,
+    _horarios: d.horarios,
+    _intervalo: d.intervalo,
+  });
+  if (error) falhar(error);
 }

@@ -199,6 +199,7 @@ export type Database = {
           endereco: string | null
           horarios: Json | null
           instagram: string | null
+          intervalo: Json | null
           id: string
           logo_url: string | null
           nome: string
@@ -215,6 +216,7 @@ export type Database = {
           endereco?: string | null
           horarios?: Json | null
           instagram?: string | null
+          intervalo?: Json | null
           id?: string
           logo_url?: string | null
           nome: string
@@ -231,6 +233,7 @@ export type Database = {
           endereco?: string | null
           horarios?: Json | null
           instagram?: string | null
+          intervalo?: Json | null
           id?: string
           logo_url?: string | null
           nome?: string
@@ -495,6 +498,18 @@ export type Database = {
       }
       rejeitar_pedido: { Args: { _motivo?: string; _pedido: string }; Returns: undefined }
       retomar_atendimento_mesa: { Args: { _mesa: string }; Returns: undefined }
+      atualizar_apresentacao: {
+        Args: {
+          _empresa: string
+          _descricao: string | null
+          _whatsapp: string | null
+          _instagram: string | null
+          _endereco: string | null
+          _horarios: Json | null
+          _intervalo: Json | null
+        }
+        Returns: undefined
+      }
       eh_master: { Args: never; Returns: boolean }
       eh_membro: { Args: { _estabelecimento: string }; Returns: boolean }
       marcar_senha_trocada: { Args: never; Returns: undefined }
