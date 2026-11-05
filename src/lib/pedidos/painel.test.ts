@@ -10,8 +10,10 @@ import {
 
 const item = (o: Partial<Tables<"itens_pedido">>): Tables<"itens_pedido"> => ({
   cancelado_em: null,
+  cancelado_por: null,
   custo_unitario_centavos: null,
   entregue_em: null,
+  entregue_por: null,
   estabelecimento_id: "e",
   id: "i",
   motivo_cancelamento: null,
@@ -27,6 +29,7 @@ const item = (o: Partial<Tables<"itens_pedido">>): Tables<"itens_pedido"> => ({
 const pedido = (o: Partial<PedidoPainel>): PedidoPainel => ({
   comanda_id: "c",
   confirmado_em: null,
+  confirmado_por: null,
   criado_em: "2026-10-30T10:00:00Z",
   estabelecimento_id: "e",
   expira_em: "2026-10-30T10:45:00Z",
@@ -34,6 +37,7 @@ const pedido = (o: Partial<PedidoPainel>): PedidoPainel => ({
   mesa_id: "m",
   motivo_rejeicao: null,
   rejeitado_em: null,
+  rejeitado_por: null,
   sessao_id: "s",
   status: "pendente",
   cliente_nome: "Ana",
