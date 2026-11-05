@@ -1,7 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { TipoAjuste } from "./estoque";
-import { ErroCatalogo, codigoDoErroBanco, type Categoria, type Mesa, type Produto } from "./tipos";
+import type { ComponenteCombo } from "./combo";
+import {
+  ErroCatalogo,
+  codigoDoErroBanco,
+  type Categoria,
+  type ComboItem,
+  type Mesa,
+  type Produto,
+} from "./tipos";
 
 // Acesso aos dados do catálogo (categorias, produtos, mesas e fotos) da empresa em uso.
 // Toda leitura/escrita passa pelas regras de acesso do banco (RLS): master ou administrador vinculado.
@@ -10,6 +18,7 @@ export const BUCKET_FOTOS = "produtos-fotos";
 
 export const chaveCategorias = (empresaId: string) => ["categorias", empresaId] as const;
 export const chaveProdutos = (empresaId: string) => ["produtos", empresaId] as const;
+export const chaveComboItens = (empresaId: string) => ["combo_itens", empresaId] as const;
 export const chaveMesas = (empresaId: string) => ["mesas", empresaId] as const;
 
 function falhar(
@@ -159,6 +168,27 @@ export async function listarProdutos(empresaId: string): Promise<Produto[]> {
   return data;
 }
 
+export async function listarComboItens(empresaId: string): Promise<ComboItem[]> {
+  const { data, error } = await supabase
+    .from("combo_itens")
+    .select("*")
+    .eq("estabelecimento_id", empresaId);
+  if (error) falhar("listarComboItens", error);
+  return data;
+}
+
+/** Liga o combo e define os componentes; lista vazia desmarca o combo. A função do banco valida tudo. */
+export async function definirCombo(
+  produtoId: string,
+  componentes: readonly ComponenteCombo[],
+): Promise<void> {
+  const { error } = await supabase.rpc("definir_combo", {
+    _produto: produtoId,
+    _itens: componentes.map((c) => ({ produto_id: c.produtoId, quantidade: c.quantidade })),
+  });
+  if (error) falhar("definirCombo", error);
+}
+
 export interface DadosProduto {
   id?: string | undefined;
   nome: string;
@@ -171,6 +201,11 @@ export interface DadosProduto {
   /** Se verdadeiro, o produto fica indisponível sozinho quando o estoque zerar (por entrega). */
   inativarAoZerarEstoque: boolean;
   disponivel: boolean;
+  /**
+   * Combo: lista de componentes liga/atualiza o combo; lista vazia desmarca; `undefined` não mexe.
+   * Combo não tem estoque próprio nem custo próprio (vem dos componentes).
+   */
+  combo?: readonly ComponenteCombo[] | undefined;
   /** Foto nova já reduzida (JPEG). `undefined` = não mexe na foto. */
   fotoNova?: Blob | undefined;
   /** Remove a foto atual (sem enviar outra). */
@@ -180,6 +215,8 @@ export interface DadosProduto {
 /** Resultado: na criação com estoque inicial, informa se o saldo inicial foi registrado no histórico. */
 export interface ResultadoSalvarProduto {
   estoqueInicialRegistrado: boolean;
+  /** `false` quando o produto foi salvo mas os itens do combo não puderam ser vinculados. */
+  comboRegistrado: boolean;
 }
 
 export async function salvarProduto(
@@ -208,6 +245,15 @@ export async function salvarProduto(
       await apagarFoto(foto); // não deixa foto órfã se o cadastro falhar
       falhar("criarProduto", error);
     }
+    let comboRegistrado = true;
+    if (dados.combo && dados.combo.length > 0) {
+      try {
+        await definirCombo(id, dados.combo);
+      } catch (e) {
+        console.error("[catalogo] combo", e instanceof ErroCatalogo ? e.codigo : e);
+        comboRegistrado = false;
+      }
+    }
     // O estoque físico só muda por movimento registrado: o inicial entra como "saldo inicial".
     if (dados.estoqueQtd > 0) {
       const r = await supabase.rpc("ajustar_estoque", {
@@ -220,10 +266,10 @@ export async function salvarProduto(
           codigo: r.error.code,
           mensagem: r.error.message,
         });
-        return { estoqueInicialRegistrado: false };
+        return { estoqueInicialRegistrado: false, comboRegistrado };
       }
     }
-    return { estoqueInicialRegistrado: true };
+    return { estoqueInicialRegistrado: true, comboRegistrado };
   }
 
   const novaFoto = dados.fotoNova
@@ -247,7 +293,18 @@ export async function salvarProduto(
     throw new ErroCatalogo("nao_encontrado");
   }
   if (novaFoto !== undefined || dados.removerFoto) await apagarFoto(fotoAtual);
-  return { estoqueInicialRegistrado: true };
+  let comboRegistrado = true;
+  if (dados.combo !== undefined) {
+    try {
+      await definirCombo(dados.id, dados.combo);
+    } catch (e) {
+      console.error("[catalogo] combo", e instanceof ErroCatalogo ? e.codigo : e);
+      // o motivo (ex.: produto com estoque) é mostrado ao usuário no lugar do aviso genérico
+      if (e instanceof ErroCatalogo && e.codigo !== "desconhecido") throw e;
+      comboRegistrado = false;
+    }
+  }
+  return { estoqueInicialRegistrado: true, comboRegistrado };
 }
 
 // ---------- Estoque (histórico de movimentos) ----------

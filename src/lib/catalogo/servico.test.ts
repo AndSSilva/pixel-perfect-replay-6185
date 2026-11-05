@@ -249,7 +249,7 @@ describe("estoque", () => {
   });
   it("estoque inicial vira um movimento de saldo inicial", async () => {
     const r = await salvarProduto(E, { ...dadosProduto, estoqueQtd: 10 });
-    expect(r).toEqual({ estoqueInicialRegistrado: true });
+    expect(r).toEqual({ estoqueInicialRegistrado: true, comboRegistrado: true });
     expect(m.rpc).toHaveBeenCalledWith("ajustar_estoque", {
       _produto: expect.any(String),
       _tipo: "saldo_inicial",
@@ -264,6 +264,7 @@ describe("estoque", () => {
     m.rpc.mockResolvedValue({ data: null, error: { code: "P0001", message: "boom" } });
     expect(await salvarProduto(E, { ...dadosProduto, estoqueQtd: 10 })).toEqual({
       estoqueInicialRegistrado: false,
+      comboRegistrado: true,
     });
     expect(m.chamadas.some((c) => c[1] === "insert")).toBe(true);
   });
@@ -319,5 +320,51 @@ describe("estoque", () => {
     m.resolver = () => ({ data: [{ id: "m1" }] });
     expect(await listarMovimentos("p1")).toEqual([{ id: "m1" }]);
     expect(m.chamadas.at(-1)![3]).toContainEqual(["produto_id", "p1"]);
+  });
+});
+
+describe("combo", () => {
+  const comps = [{ produtoId: "p-cerveja", quantidade: 5 }];
+  it("criar combo grava o produto e depois vincula os itens pela função do banco", async () => {
+    const r = await salvarProduto(E, { ...dadosProduto, combo: comps });
+    expect(r).toEqual({ estoqueInicialRegistrado: true, comboRegistrado: true });
+    expect(m.rpc).toHaveBeenCalledWith("definir_combo", {
+      _produto: expect.any(String),
+      _itens: [{ produto_id: "p-cerveja", quantidade: 5 }],
+    });
+  });
+  it("se vincular falhar na criação, o produto fica salvo e o resultado avisa", async () => {
+    m.rpc.mockResolvedValue({ data: null, error: { code: "P0001", message: "combo_invalido" } });
+    const r = await salvarProduto(E, { ...dadosProduto, combo: comps });
+    expect(r.comboRegistrado).toBe(false);
+  });
+  it("sem 'combo' informado, não chama a função", async () => {
+    await salvarProduto(E, dadosProduto);
+    expect(m.rpc).not.toHaveBeenCalledWith("definir_combo", expect.anything());
+  });
+  it("lista vazia desmarca o combo ao editar", async () => {
+    m.resolver = (t, op) => (op === "update" ? { data: [{ id: "p1" }] } : {});
+    await salvarProduto(E, { ...dadosProduto, id: "p1", combo: [] });
+    expect(m.rpc).toHaveBeenCalledWith("definir_combo", { _produto: "p1", _itens: [] });
+  });
+  it("mensagens de erro do combo e da exclusão de componente", () => {
+    expect(codigoDoErroBanco({ message: "produto_em_combo" })).toBe("produto_em_combo");
+    expect(codigoDoErroBanco({ message: "produto_combo" })).toBe("produto_combo");
+    expect(
+      codigoDoErroBanco({
+        code: "23503",
+        message:
+          'update or delete on table "produtos" violates foreign key constraint "combo_itens_componente_fkey" on table "combo_itens"',
+      }),
+    ).toBe("produto_em_combo_excluir");
+  });
+  it("ao editar, o motivo do banco é repassado (ex.: produto com estoque)", async () => {
+    m.resolver = (t, op) => (op === "update" ? { data: [{ id: "p1" }] } : {});
+    m.rpc.mockResolvedValue({ data: null, error: { code: "P0001", message: "combo_com_estoque" } });
+    await expect(
+      salvarProduto(E, { ...dadosProduto, id: "p1", combo: comps }),
+    ).rejects.toMatchObject({
+      codigo: "combo_com_estoque",
+    });
   });
 });

@@ -67,6 +67,27 @@ export type Database = {
           },
         ]
       }
+      combo_itens: {
+        Row: {
+          combo_id: string
+          componente_id: string
+          estabelecimento_id: string
+          quantidade: number
+        }
+        Insert: {
+          combo_id: string
+          componente_id: string
+          estabelecimento_id: string
+          quantidade: number
+        }
+        Update: {
+          combo_id?: string
+          componente_id?: string
+          estabelecimento_id?: string
+          quantidade?: number
+        }
+        Relationships: []
+      }
       categorias: {
         Row: {
           ativa: boolean
@@ -674,6 +695,7 @@ export type Database = {
           criado_em: string
           descricao: string | null
           disponivel: boolean
+          eh_combo: boolean
           estabelecimento_id: string
           estoque_qtd: number
           foto_path: string | null
@@ -689,6 +711,7 @@ export type Database = {
           criado_em?: string
           descricao?: string | null
           disponivel?: boolean
+          eh_combo?: boolean
           estabelecimento_id: string
           estoque_qtd?: number
           foto_path?: string | null
@@ -704,6 +727,7 @@ export type Database = {
           criado_em?: string
           descricao?: string | null
           disponivel?: boolean
+          eh_combo?: boolean
           estabelecimento_id?: string
           estoque_qtd?: number
           foto_path?: string | null
@@ -825,6 +849,7 @@ export type Database = {
       comanda_devido: { Args: { _comanda: string }; Returns: number }
       comanda_pago: { Args: { _comanda: string }; Returns: number }
       confirmar_pedido: { Args: { _pedido: string }; Returns: undefined }
+      definir_combo: { Args: { _produto: string; _itens: Json | null }; Returns: undefined }
       eh_master: { Args: never; Returns: boolean }
       eh_membro: { Args: { _estabelecimento: string }; Returns: boolean }
       entregar_itens: { Args: { _itens: string[] }; Returns: number }

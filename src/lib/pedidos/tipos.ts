@@ -84,6 +84,8 @@ export type ProdutoCardapio = {
   esgotado: boolean;
   /** null = sem limite (interruptor desligado). */
   qtd_disponivel: number | null;
+  /** Só em combos: o que vem junto (ex.: 5 × Cerveja). */
+  inclui?: { nome: string; quantidade: number }[] | null;
 };
 
 export type CardapioPublico = {
