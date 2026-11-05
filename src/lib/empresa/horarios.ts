@@ -187,43 +187,79 @@ export function normalizarInstagram(entrada: string): string {
 export const instagramValido = (u: string): boolean => /^[A-Za-z0-9._]{1,30}$/.test(u);
 export const linkInstagram = (u: string): string => `https://instagram.com/${u}`;
 
-// ---------- Formulário (uma linha por dia, de segunda a domingo) ----------
-export type LinhaHorario = { aberto: boolean; abre: string; fecha: string };
+// ---------- Formulário de horários: horário padrão + horários personalizados ----------
+// O banco guarda 7 dias (`Horarios`); o formulário trabalha com grupos: cada grupo é "estes dias abrem
+// neste horário". O padrão é o grupo principal; os personalizados cobrem os dias com horário diferente.
+export type GrupoForm = { dias: number[]; abre: string; fecha: string };
+export type HorarioForm = { padrao: GrupoForm; personalizado: boolean; extras: GrupoForm[] };
 
-export const linhasPadrao = (): LinhaHorario[] =>
-  ORDEM_EXIBICAO.map(() => ({ aberto: false, abre: "19:00", fecha: "02:00" }));
+export const grupoVazio = (): GrupoForm => ({ dias: [], abre: "19:00", fecha: "02:00" });
 
-export function horariosParaLinhas(h: Horarios | null): LinhaHorario[] {
-  return ORDEM_EXIBICAO.map((dia) => {
+export function horariosParaForm(h: Horarios | null): HorarioForm {
+  const grupos: GrupoForm[] = [];
+  for (const dia of ORDEM_EXIBICAO) {
     const j = h?.[dia] ?? null;
-    return j
-      ? { aberto: true, abre: j.abre, fecha: j.fecha }
-      : { aberto: false, abre: "19:00", fecha: "02:00" };
+    if (!j) continue;
+    const g = grupos.find((x) => x.abre === j.abre && x.fecha === j.fecha);
+    if (g) g.dias.push(dia);
+    else grupos.push({ dias: [dia], abre: j.abre, fecha: j.fecha });
+  }
+  if (grupos.length === 0) return { padrao: grupoVazio(), personalizado: false, extras: [] };
+  // o grupo com mais dias é o padrão (empate: o que aparece primeiro na semana)
+  let iPadrao = 0;
+  grupos.forEach((g, i) => {
+    if (g.dias.length > (grupos[iPadrao] as GrupoForm).dias.length) iPadrao = i;
   });
+  const padrao = grupos[iPadrao] as GrupoForm;
+  const extras = grupos.filter((_, i) => i !== iPadrao);
+  return { padrao, personalizado: extras.length > 0, extras };
 }
 
-/** Todas fechadas = sem horário cadastrado (a página não mostra o bloco). */
-export function linhasParaHorarios(linhas: readonly LinhaHorario[]): Horarios | null {
-  if (!linhas.some((l) => l.aberto)) return null;
+const gruposAtivos = (f: HorarioForm): GrupoForm[] => [
+  f.padrao,
+  ...(f.personalizado ? f.extras : []),
+];
+
+/** Nenhum dia marcado = sem horário cadastrado (a página não mostra o bloco). */
+export function formParaHorarios(f: HorarioForm): Horarios | null {
   const h = horariosVazios();
-  ORDEM_EXIBICAO.forEach((dia, i) => {
-    const l = linhas[i];
-    if (l?.aberto) h[dia] = { abre: l.abre, fecha: l.fecha };
-  });
-  return h;
+  let algum = false;
+  for (const g of gruposAtivos(f))
+    for (const d of g.dias) {
+      h[d] = { abre: g.abre, fecha: g.fecha };
+      algum = true;
+    }
+  return algum ? h : null;
 }
 
-/** Mensagem de erro por linha (índice) ou null se tudo certo. */
-export function validarLinhas(linhas: readonly LinhaHorario[]): Record<number, string> {
-  const erros: Record<number, string> = {};
-  linhas.forEach((l, i) => {
-    if (!l.aberto) return;
-    if (!HORA_REGEX.test(l.abre) || !HORA_REGEX.test(l.fecha))
-      erros[i] = "Informe os dois horários.";
-    else if (l.abre === l.fecha) erros[i] = "Abertura e fechamento não podem ser iguais.";
-  });
+export type ErrosHorarioForm = { padrao?: string; extras: Record<number, string> };
+
+/** Mensagens por grupo (padrão e índice do personalizado); objeto sem chaves = tudo certo. */
+export function validarHorarioForm(f: HorarioForm): ErrosHorarioForm {
+  const erros: ErrosHorarioForm = { extras: {} };
+  const usados = new Set<number>();
+  const conferir = (g: GrupoForm, extra: boolean): string | undefined => {
+    if (extra && g.dias.length === 0) return "Marque ao menos um dia.";
+    if (g.dias.length === 0) return undefined;
+    if (!HORA_REGEX.test(g.abre) || !HORA_REGEX.test(g.fecha)) return "Informe os dois horários.";
+    if (g.abre === g.fecha) return "Abertura e fechamento não podem ser iguais.";
+    const repetido = g.dias.find((d) => usados.has(d));
+    if (repetido !== undefined) return `${nomeDoDia(repetido)} já está em outro horário.`;
+    g.dias.forEach((d) => usados.add(d));
+    return undefined;
+  };
+  const ep = conferir(f.padrao, false);
+  if (ep) erros.padrao = ep;
+  if (f.personalizado)
+    f.extras.forEach((g, i) => {
+      const e = conferir(g, true);
+      if (e) erros.extras[i] = e;
+    });
   return erros;
 }
+
+export const temErrosHorario = (e: ErrosHorarioForm): boolean =>
+  !!e.padrao || Object.keys(e.extras).length > 0;
 
 // ---------- Formulário do intervalo ----------
 export type IntervaloForm = { possui: boolean; inicio: string; fim: string };
