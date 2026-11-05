@@ -216,7 +216,7 @@ function ContaDetalhe() {
                             {formatBRL(i.preco_unitario_centavos)}
                           </td>
                           <td className="py-2 text-right tabular-nums">
-                            {i.status === "cancelado" ? "—" : formatBRL(i.subtotal_centavos)}
+                            {i.status === "cancelado" ? "—" : formatBRL(i.subtotal_centavos ?? 0)}
                           </td>
                         </tr>
                       )),

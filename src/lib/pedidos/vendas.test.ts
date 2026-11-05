@@ -12,8 +12,10 @@ import {
 
 const item = (o: Partial<Tables<"itens_pedido">>): Tables<"itens_pedido"> => ({
   cancelado_em: null,
+  cancelado_por: null,
   custo_unitario_centavos: 600,
   entregue_em: null,
+  entregue_por: null,
   estabelecimento_id: "e",
   id: "i",
   motivo_cancelamento: null,
@@ -32,6 +34,7 @@ const pedido = (
 ): PedidoPainel => ({
   comanda_id: "c",
   confirmado_em: null,
+  confirmado_por: null,
   criado_em: "",
   estabelecimento_id: "e",
   expira_em: "",
@@ -39,6 +42,7 @@ const pedido = (
   mesa_id: "m",
   motivo_rejeicao: null,
   rejeitado_em: null,
+  rejeitado_por: null,
   sessao_id: "s",
   status,
   cliente_nome: "Ana",
@@ -54,6 +58,7 @@ const pag = (forma: Tables<"pagamentos">["forma"], v: number): Tables<"pagamento
   id: forma + v,
   observacao: null,
   recebido_centavos: null,
+  registrado_por: null,
   troco_centavos: null,
   valor_centavos: v,
 });

@@ -162,7 +162,7 @@ export async function listarSessoesAtivas(empresaId: string): Promise<SessaoPain
 
 async function montarComandas(
   empresaId: string,
-  comandas: Tables<"comandas">[],
+  comandas: Omit<Tables<"comandas">, "token_hash">[],
 ): Promise<ComandaPainel[]> {
   if (comandas.length === 0) return [];
   const pedidos = await emLotes(
