@@ -3,22 +3,23 @@
 Os scripts abaixo foram aplicados **na ordem** (editor de SQL do Cloud ou ferramenta de migração do Lovable).
 Este diretório é o registro do que existe no banco; ao criar uma mudança nova, acrescente o próximo número.
 
-| Script | O que faz |
-|---|---|
-| `01_perfis_acesso.sql` | Papéis `admin`/`master`, marcador de troca de senha (aplicado pelo Lovable) |
-| `02_estabelecimentos.sql` | Empresas, vínculo administrador–empresa, dados públicos mínimos |
-| `03_master_unico_e_acesso.sql` | Um único master e a regra `tem_acesso_estabelecimento()` |
-| `04_catalogo.sql` | Categorias, produtos e mesas por empresa; `eh_membro` exige empresa ativa |
-| `05_fotos_storage.sql` | Espaço público das fotos, escrita só de quem tem acesso à empresa |
-| `06_inativar_ao_zerar.sql` | Coluna `produtos.inativar_ao_zerar_estoque` |
-| `07_estoque.sql` | Histórico de movimentos e `ajustar_estoque()`; o estoque físico deixa de ser editável direto |
-| `08_pedidos.sql` | Sessões de mesa, comandas, pedidos, itens, pagamentos e as funções do cliente e do painel |
-| `09_caixa.sql` | Caixa: abertura, sangria/reforço, fechamento (esperado × contado); pagamento passa a exigir caixa aberto |
-| `10_liberar_mesa_ignora_comandas_vazias.sql` | Liberar mesa encerra comandas sem pedido aprovado (mesa só ocupa após aprovar) |
-| `11_apresentacao_empresa.sql` | Textos, endereço e logo da empresa, e a função pública da página `/{slug}` com mesas disponíveis |
-| `12_apresentacao_v2.sql` | Apresentação num só campo, WhatsApp, Instagram e horário por dia (remove `destaques` e o horário em texto) |
-| `13_apresentacao_no_admin.sql` | Intervalo de atendimento; o administrador edita a apresentação da própria empresa (`atualizar_apresentacao`); corrige a validação do horário |
-| `14_pagina_inov4.sql` | Textos da página da INOV4 (link raiz), editados só pelo master |
+| Script                                       | O que faz                                                                                                                                    |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `01_perfis_acesso.sql`                       | Papéis `admin`/`master`, marcador de troca de senha (aplicado pelo Lovable)                                                                  |
+| `02_estabelecimentos.sql`                    | Empresas, vínculo administrador–empresa, dados públicos mínimos                                                                              |
+| `03_master_unico_e_acesso.sql`               | Um único master e a regra `tem_acesso_estabelecimento()`                                                                                     |
+| `04_catalogo.sql`                            | Categorias, produtos e mesas por empresa; `eh_membro` exige empresa ativa                                                                    |
+| `05_fotos_storage.sql`                       | Espaço público das fotos, escrita só de quem tem acesso à empresa                                                                            |
+| `06_inativar_ao_zerar.sql`                   | Coluna `produtos.inativar_ao_zerar_estoque`                                                                                                  |
+| `07_estoque.sql`                             | Histórico de movimentos e `ajustar_estoque()`; o estoque físico deixa de ser editável direto                                                 |
+| `08_pedidos.sql`                             | Sessões de mesa, comandas, pedidos, itens, pagamentos e as funções do cliente e do painel                                                    |
+| `09_caixa.sql`                               | Caixa: abertura, sangria/reforço, fechamento (esperado × contado); pagamento passa a exigir caixa aberto                                     |
+| `10_liberar_mesa_ignora_comandas_vazias.sql` | Liberar mesa encerra comandas sem pedido aprovado (mesa só ocupa após aprovar)                                                               |
+| `11_apresentacao_empresa.sql`                | Textos, endereço e logo da empresa, e a função pública da página `/{slug}` com mesas disponíveis                                             |
+| `12_apresentacao_v2.sql`                     | Apresentação num só campo, WhatsApp, Instagram e horário por dia (remove `destaques` e o horário em texto)                                   |
+| `13_apresentacao_no_admin.sql`               | Intervalo de atendimento; o administrador edita a apresentação da própria empresa (`atualizar_apresentacao`); corrige a validação do horário |
+| `14_pagina_inov4.sql`                        | Textos da página da INOV4 (link raiz), editados só pelo master                                                                               |
+| `15_combo.sql`                               | Combo: produto composto por outros produtos (sem estoque próprio; baixa dos componentes na entrega)                                          |
 
 ## Testes
 

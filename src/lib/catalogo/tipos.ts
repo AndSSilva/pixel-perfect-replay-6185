@@ -3,6 +3,7 @@ import type { Tables } from "@/integrations/supabase/types";
 export type Categoria = Tables<"categorias">;
 export type Produto = Tables<"produtos">;
 export type Mesa = Tables<"mesas">;
+export type ComboItem = Tables<"combo_itens">;
 
 export type CodigoErroCatalogo =
   | "nome_duplicado"
@@ -16,6 +17,13 @@ export type CodigoErroCatalogo =
   | "estoque_insuficiente"
   | "estoque_invalido"
   | "estoque_nao_registrado"
+  | "combo_invalido"
+  | "componente_invalido"
+  | "produto_em_combo"
+  | "produto_em_combo_excluir"
+  | "combo_com_estoque"
+  | "produto_combo"
+  | "combo_nao_registrado"
   | "desconhecido";
 
 export const MENSAGENS_CATALOGO: Record<CodigoErroCatalogo, string> = {
@@ -32,6 +40,19 @@ export const MENSAGENS_CATALOGO: Record<CodigoErroCatalogo, string> = {
   estoque_invalido: "Ajuste de estoque inválido. Confira o tipo, a quantidade e a observação.",
   estoque_nao_registrado:
     "O produto foi salvo, mas o estoque inicial não pôde ser registrado. Use “Estoque” no cartão do produto.",
+  combo_invalido:
+    "Combo inválido. Escolha de 1 a 20 produtos diferentes, com quantidade de 1 a 99.",
+  componente_invalido:
+    "Um dos produtos vinculados não pode fazer parte do combo (não existe mais ou é outro combo).",
+  produto_em_combo:
+    "Este produto já faz parte de um combo, então não pode virar combo. Remova-o do outro combo antes.",
+  produto_em_combo_excluir:
+    "Este produto faz parte de um combo. Remova-o do combo antes de excluir.",
+  combo_com_estoque:
+    "Este produto ainda tem estoque. Zere o estoque (alteração de quantidade ou baixa) antes de transformá-lo em combo.",
+  produto_combo: "Combo não tem estoque próprio: ele sai do estoque dos produtos vinculados.",
+  combo_nao_registrado:
+    "O produto foi salvo, mas os itens do combo não foram vinculados. Abra Editar e tente de novo.",
   desconhecido: "Não foi possível concluir a operação. Tente novamente.",
 };
 
@@ -63,7 +84,16 @@ export function codigoDoErroBanco(e: {
   )
     return "estoque_invalido";
   if (msg === "produto_nao_encontrado") return "nao_encontrado";
+  if (
+    msg === "combo_invalido" ||
+    msg === "componente_invalido" ||
+    msg === "produto_em_combo" ||
+    msg === "combo_com_estoque" ||
+    msg === "produto_combo"
+  )
+    return msg;
   if (e.code === "23505") return msg.includes("mesas_numero") ? "mesa_duplicada" : "nome_duplicado";
+  if (e.code === "23503" && msg.includes("combo_itens")) return "produto_em_combo_excluir";
   if (e.code === "23503") {
     // Apagar uma categoria que ainda tem produtos vs. apontar para uma categoria que não existe/é de outra empresa.
     return msg.startsWith("update or delete on table")

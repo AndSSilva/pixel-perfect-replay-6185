@@ -5,6 +5,7 @@ import {
   Boxes,
   Camera,
   ImagePlus,
+  Layers,
   Loader2,
   Package,
   Pencil,
@@ -47,14 +48,24 @@ import { useEmpresa } from "@/lib/empresa/contexto";
 import { formatarMargem, lucroCentavos, margemPercentual } from "@/lib/catalogo/calculos";
 import {
   chaveCategorias,
+  chaveComboItens,
   chaveProdutos,
   definirProdutoDisponivel,
   excluirProduto,
   listarCategorias,
+  listarComboItens,
   listarProdutos,
   salvarProduto,
   urlFoto,
 } from "@/lib/catalogo/servico";
+import {
+  COMBO_MAX_COMPONENTES,
+  combosPossiveis,
+  custoDoCombo,
+  textoInclui,
+  validarComponentes,
+  type ComponenteCombo,
+} from "@/lib/catalogo/combo";
 import { ESTOQUE_MAX } from "@/lib/catalogo/estoque";
 import { mensagemDoErro } from "@/lib/catalogo/mensagem";
 import { MENSAGENS_CATALOGO, type Produto } from "@/lib/catalogo/tipos";
@@ -82,13 +93,19 @@ type Form = {
   estoque: string;
   inativarAoZerar: boolean;
   disponivel: boolean;
+  /** Combo: baixa o estoque dos produtos vinculados (sem estoque nem custo próprios). */
+  ehCombo: boolean;
+  eraCombo: boolean;
+  componentes: { produtoId: string; quantidade: string }[];
   /** Caminho da foto já salva (para mostrar e para apagar na troca). */
   fotoPath: string | null;
   /** Foto escolhida agora, já reduzida (data URL), ainda não enviada. */
   fotoNova?: string | undefined;
   removerFoto: boolean;
 };
-type Erros = Partial<Record<"nome" | "categoria" | "venda" | "custo" | "estoque", string>>;
+type Erros = Partial<
+  Record<"nome" | "categoria" | "venda" | "custo" | "estoque" | "combo", string>
+>;
 
 function Produtos() {
   const empresa = useEmpresa();
@@ -101,6 +118,10 @@ function Produtos() {
     queryKey: chaveProdutos(empresa.id),
     queryFn: () => listarProdutos(empresa.id),
   });
+  const comboItens = useQuery({
+    queryKey: chaveComboItens(empresa.id),
+    queryFn: () => listarComboItens(empresa.id),
+  });
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todas");
   const [form, setForm] = useState<Form | null>(null);
@@ -110,7 +131,16 @@ function Produtos() {
 
   const cats = categorias.data ?? [];
   const todos = produtos.data ?? [];
-  const atualizar = () => qc.invalidateQueries({ queryKey: chaveProdutos(empresa.id) });
+  const atualizar = async () => {
+    await qc.invalidateQueries({ queryKey: chaveProdutos(empresa.id) });
+    await qc.invalidateQueries({ queryKey: chaveComboItens(empresa.id) });
+  };
+  const porId = new Map(todos.map((p) => [p.id, p]));
+  const componentesDe = (comboId: string): ComponenteCombo[] =>
+    (comboItens.data ?? [])
+      .filter((c) => c.combo_id === comboId)
+      .map((c) => ({ produtoId: c.componente_id, quantidade: c.quantidade }));
+  const emCombo = new Set((comboItens.data ?? []).map((c) => c.componente_id));
 
   const salvar = useMutation({
     mutationFn: async (v: { form: Form; venda: number; custo: number | null; estoque: number }) => {
@@ -125,8 +155,16 @@ function Produtos() {
           precoVendaCentavos: v.venda,
           precoCustoCentavos: v.custo,
           estoqueQtd: v.estoque,
-          inativarAoZerarEstoque: f.inativarAoZerar,
+          inativarAoZerarEstoque: f.ehCombo ? false : f.inativarAoZerar,
           disponivel: f.disponivel,
+          combo: f.ehCombo
+            ? f.componentes.map((c) => ({
+                produtoId: c.produtoId,
+                quantidade: Number(c.quantidade),
+              }))
+            : f.eraCombo
+              ? []
+              : undefined,
           fotoNova: f.fotoNova ? await dataUrlParaBlob(f.fotoNova) : undefined,
           removerFoto: f.removerFoto && !f.fotoNova,
         },
@@ -135,7 +173,8 @@ function Produtos() {
     },
     onSuccess: async (r, v) => {
       await atualizar();
-      if (r.estoqueInicialRegistrado)
+      if (!r.comboRegistrado) toast.warning(MENSAGENS_CATALOGO.combo_nao_registrado);
+      else if (r.estoqueInicialRegistrado)
         toast.success(v.form.id ? "Produto atualizado." : "Produto cadastrado.");
       else toast.warning(MENSAGENS_CATALOGO.estoque_nao_registrado);
       setForm(null);
@@ -177,6 +216,12 @@ function Produtos() {
             estoque: String(p.estoque_qtd),
             inativarAoZerar: p.inativar_ao_zerar_estoque,
             disponivel: p.disponivel,
+            ehCombo: p.eh_combo,
+            eraCombo: p.eh_combo,
+            componentes: componentesDe(p.id).map((c) => ({
+              produtoId: c.produtoId,
+              quantidade: String(c.quantidade),
+            })),
             fotoPath: p.foto_path,
             removerFoto: false,
           }
@@ -189,6 +234,9 @@ function Produtos() {
             estoque: "0",
             inativarAoZerar: false,
             disponivel: true,
+            ehCombo: false,
+            eraCombo: false,
+            componentes: [],
             fotoPath: null,
             removerFoto: false,
           },
@@ -202,14 +250,20 @@ function Produtos() {
     if (!form.categoriaId) e.categoria = "Selecione uma categoria.";
     const venda = parseMoeda(form.venda);
     if (venda === null) e.venda = "Informe um preço válido (ex.: 12,50).";
-    const custoTexto = form.custo.trim();
+    // Combo não tem custo próprio: é a soma dos componentes (calculada na hora do pedido).
+    const custoTexto = form.ehCombo ? "" : form.custo.trim();
     const custo = custoTexto === "" ? null : parseMoeda(custoTexto);
     if (custoTexto !== "" && custo === null)
       e.custo = "Informe um valor válido (ex.: 7,00) ou deixe em branco.";
     // O estoque só é informado na criação; depois muda apenas por lançamentos com histórico.
     const estoqueTexto = form.estoque.trim();
-    const estoque = form.id ? 0 : /^\d+$/.test(estoqueTexto) ? Number(estoqueTexto) : NaN;
-    if (!form.id && !(estoque >= 0 && estoque <= ESTOQUE_MAX))
+    const estoque =
+      form.id || form.ehCombo ? 0 : /^\d+$/.test(estoqueTexto) ? Number(estoqueTexto) : NaN;
+    if (form.ehCombo) {
+      const msg = validarComponentes(form.componentes);
+      if (msg) e.combo = msg;
+    }
+    if (!form.id && !form.ehCombo && !(estoque >= 0 && estoque <= ESTOQUE_MAX))
       e.estoque = "Informe um número inteiro (0 ou mais).";
     setErros(e);
     if (Object.keys(e).length || venda === null) return;
@@ -219,7 +273,21 @@ function Produtos() {
 
   // Lucro mostrado ao vivo no formulário.
   const vendaForm = form ? parseMoeda(form.venda) : null;
-  const custoForm = form && form.custo.trim() !== "" ? parseMoeda(form.custo) : null;
+  const custoComboForm =
+    form && form.ehCombo
+      ? custoDoCombo(
+          form.componentes
+            .filter((c) => /^\d+$/.test(c.quantidade.trim()) && Number(c.quantidade) > 0)
+            .map((c) => ({ produtoId: c.produtoId, quantidade: Number(c.quantidade) })),
+          porId,
+        )
+      : null;
+  const custoForm =
+    form && form.ehCombo
+      ? custoComboForm
+      : form && form.custo.trim() !== ""
+        ? parseMoeda(form.custo)
+        : null;
   const lucroForm =
     vendaForm !== null && custoForm !== null
       ? { preco_venda_centavos: vendaForm, preco_custo_centavos: custoForm }
@@ -283,7 +351,12 @@ function Produtos() {
                 const cat = cats.find((c) => c.id === p.categoria_id);
                 const Icone = iconeCategoria(cat?.nome);
                 const foto = urlFoto(p.foto_path);
-                const lucro = lucroCentavos(p);
+                const compsCombo = p.eh_combo ? componentesDe(p.id) : [];
+                const custoEfetivo = p.eh_combo
+                  ? custoDoCombo(compsCombo, porId)
+                  : p.preco_custo_centavos;
+                const lucro = lucroCentavos({ ...p, preco_custo_centavos: custoEfetivo });
+                const possiveis = p.eh_combo ? combosPossiveis(compsCombo, porId) : null;
                 return (
                   <article key={p.id} className="flex gap-3 rounded-xl border bg-card p-4">
                     {foto ? (
@@ -300,7 +373,15 @@ function Produtos() {
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="truncate font-medium">{p.nome}</h3>
+                        <h3 className="flex min-w-0 items-center gap-1.5 font-medium">
+                          <span className="truncate">{p.nome}</span>
+                          {p.eh_combo && (
+                            <Selo tom="neutro">
+                              <Layers className="mr-1 inline h-3 w-3" aria-hidden />
+                              Combo
+                            </Selo>
+                          )}
+                        </h3>
                         <span className="tabular font-semibold">
                           {formatBRL(p.preco_venda_centavos)}
                         </span>
@@ -309,12 +390,21 @@ function Produtos() {
                         {cat?.nome ?? "Sem categoria"}
                         {p.descricao && ` · ${p.descricao}`}
                       </p>
+                      {p.eh_combo && compsCombo.length > 0 && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          Inclui: {textoInclui(compsCombo, porId)}
+                        </p>
+                      )}
                       <p className="mt-1 text-xs text-muted-foreground">
                         {lucro === null ? (
-                          "Custo não informado"
+                          p.eh_combo ? (
+                            "Custo parcial (falta custo em algum item)"
+                          ) : (
+                            "Custo não informado"
+                          )
                         ) : (
                           <>
-                            Custo {formatBRL(p.preco_custo_centavos ?? 0)} · Lucro{" "}
+                            Custo {formatBRL(custoEfetivo ?? 0)} · Lucro{" "}
                             <span
                               className={cn(
                                 "tabular font-medium",
@@ -327,9 +417,17 @@ function Produtos() {
                         )}
                       </p>
                       <div className="mt-1.5">
-                        <Selo tom={p.estoque_qtd === 0 ? "alerta" : "neutro"}>
-                          {p.estoque_qtd === 0 ? "Sem estoque" : `Estoque: ${p.estoque_qtd}`}
-                        </Selo>
+                        {p.eh_combo ? (
+                          <Selo tom={possiveis === 0 ? "alerta" : "neutro"}>
+                            {possiveis === 0
+                              ? "Sem estoque dos itens"
+                              : `Dá para ${possiveis ?? 0} (pelo estoque dos itens)`}
+                          </Selo>
+                        ) : (
+                          <Selo tom={p.estoque_qtd === 0 ? "alerta" : "neutro"}>
+                            {p.estoque_qtd === 0 ? "Sem estoque" : `Estoque: ${p.estoque_qtd}`}
+                          </Selo>
+                        )}
                       </div>
                       <div className="mt-3 flex items-center justify-between">
                         <label className="flex items-center gap-2 text-xs">
@@ -346,14 +444,16 @@ function Produtos() {
                           )}
                         </label>
                         <div className="flex">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            aria-label={`Estoque de ${p.nome}`}
-                            onClick={() => setEstoqueDeId(p.id)}
-                          >
-                            <Boxes className="h-4 w-4" />
-                          </Button>
+                          {!p.eh_combo && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label={`Estoque de ${p.nome}`}
+                              onClick={() => setEstoqueDeId(p.id)}
+                            >
+                              <Boxes className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             size="icon"
                             variant="ghost"
@@ -446,6 +546,21 @@ function Produtos() {
                   </SelectContent>
                 </Select>
               </Campo>
+              <ComboEditor
+                form={form}
+                onChange={setForm}
+                erro={erros.combo}
+                candidatos={todos.filter((x) => !x.eh_combo && x.id !== form.id)}
+                bloqueio={
+                  form.eraCombo
+                    ? null
+                    : form.id && emCombo.has(form.id)
+                      ? "Este produto já faz parte de um combo, então não pode virar combo."
+                      : (porId.get(form.id ?? "")?.estoque_qtd ?? 0) > 0
+                        ? "Este produto tem estoque. Zere o estoque antes de transformá-lo em combo."
+                        : null
+                }
+              />
               <div className="grid gap-4 sm:grid-cols-2">
                 <Campo id="venda" rotulo="Preço de venda (R$) *" erro={erros.venda}>
                   <Input
@@ -456,20 +571,38 @@ function Produtos() {
                     onChange={(e) => setForm({ ...form, venda: e.target.value })}
                   />
                 </Campo>
-                <Campo
-                  id="custo"
-                  rotulo="Preço de custo (R$)"
-                  erro={erros.custo}
-                  dica="Opcional. Com ele, o lucro é calculado."
-                >
-                  <Input
+                {form.ehCombo ? (
+                  <div className="space-y-1.5">
+                    <Label>Preço de custo (R$)</Label>
+                    <p className="rounded-md border bg-muted px-3 py-2 text-sm">
+                      {custoComboForm === null ? (
+                        <span className="text-muted-foreground">
+                          Automático — falta custo em algum item
+                        </span>
+                      ) : (
+                        <span className="tabular">{formatBRL(custoComboForm)}</span>
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Soma do custo dos produtos vinculados.
+                    </p>
+                  </div>
+                ) : (
+                  <Campo
                     id="custo"
-                    inputMode="decimal"
-                    placeholder="0,00"
-                    value={form.custo}
-                    onChange={(e) => setForm({ ...form, custo: e.target.value })}
-                  />
-                </Campo>
+                    rotulo="Preço de custo (R$)"
+                    erro={erros.custo}
+                    dica="Opcional. Com ele, o lucro é calculado."
+                  >
+                    <Input
+                      id="custo"
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      value={form.custo}
+                      onChange={(e) => setForm({ ...form, custo: e.target.value })}
+                    />
+                  </Campo>
+                )}
               </div>
               <p className="rounded-md bg-muted px-3 py-2 text-sm" aria-live="polite">
                 {lucroForm ? (
@@ -491,7 +624,12 @@ function Produtos() {
                   </span>
                 )}
               </p>
-              {form.id ? (
+              {form.ehCombo ? (
+                <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+                  Combo não tem estoque próprio: ao ser entregue, baixa o estoque dos produtos
+                  vinculados, e o cardápio só oferece quantos combos o estoque deles permitir.
+                </p>
+              ) : form.id ? (
                 <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
                   O estoque só muda por lançamentos com histórico. Para repor, corrigir ou dar
                   baixa, use o botão “Estoque” no cartão do produto.
@@ -512,21 +650,23 @@ function Produtos() {
                   />
                 </Campo>
               )}
-              <div className="flex items-start gap-2">
-                <Switch
-                  id="zerar"
-                  className="mt-0.5"
-                  checked={form.inativarAoZerar}
-                  onCheckedChange={(v) => setForm({ ...form, inativarAoZerar: v })}
-                />
-                <Label htmlFor="zerar" className="leading-snug">
-                  Inativar automaticamente quando o estoque zerar
-                  <span className="block text-xs font-normal text-muted-foreground">
-                    Ligado: depois da entrega que zerar o estoque, o produto fica indisponível
-                    sozinho. Desligado: ele continua ativo e você decide quando inativar.
-                  </span>
-                </Label>
-              </div>
+              {!form.ehCombo && (
+                <div className="flex items-start gap-2">
+                  <Switch
+                    id="zerar"
+                    className="mt-0.5"
+                    checked={form.inativarAoZerar}
+                    onCheckedChange={(v) => setForm({ ...form, inativarAoZerar: v })}
+                  />
+                  <Label htmlFor="zerar" className="leading-snug">
+                    Inativar automaticamente quando o estoque zerar
+                    <span className="block text-xs font-normal text-muted-foreground">
+                      Ligado: depois da entrega que zerar o estoque, o produto fica indisponível
+                      sozinho. Desligado: ele continua ativo e você decide quando inativar.
+                    </span>
+                  </Label>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Switch
                   id="disp"
@@ -567,6 +707,125 @@ function Produtos() {
         onFechar={() => setEstoqueDeId(null)}
       />
     </>
+  );
+}
+
+function ComboEditor({
+  form,
+  onChange,
+  erro,
+  candidatos,
+  bloqueio,
+}: {
+  form: Form;
+  onChange: (f: Form) => void;
+  erro: string | undefined;
+  candidatos: Produto[];
+  /** Motivo pelo qual este produto não pode virar combo (só vale enquanto ainda não é combo). */
+  bloqueio: string | null;
+}) {
+  const usados = new Set(form.componentes.map((c) => c.produtoId));
+  const livres = candidatos.filter((c) => !usados.has(c.id));
+  const trocar = (i: number, parte: Partial<{ produtoId: string; quantidade: string }>) =>
+    onChange({
+      ...form,
+      componentes: form.componentes.map((c, j) => (j === i ? { ...c, ...parte } : c)),
+    });
+  return (
+    <div className="space-y-3 rounded-lg border p-3">
+      <div className="flex items-start gap-2">
+        <Switch
+          id="combo"
+          className="mt-0.5"
+          checked={form.ehCombo}
+          disabled={bloqueio !== null}
+          onCheckedChange={(v) =>
+            onChange({
+              ...form,
+              ehCombo: v,
+              componentes:
+                v && form.componentes.length === 0
+                  ? [{ produtoId: "", quantidade: "1" }]
+                  : form.componentes,
+            })
+          }
+        />
+        <Label htmlFor="combo" className="leading-snug">
+          Combo
+          <span className="block text-xs font-normal text-muted-foreground">
+            {bloqueio ??
+              "Ao entregar este produto, o estoque dos produtos vinculados abaixo é baixado."}
+          </span>
+        </Label>
+      </div>
+      {form.ehCombo && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Produtos do combo</p>
+          {form.componentes.map((c, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Select value={c.produtoId} onValueChange={(v) => trocar(i, { produtoId: v })}>
+                <SelectTrigger className="flex-1" aria-label={`Produto ${i + 1} do combo`}>
+                  <SelectValue placeholder="Escolha o produto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {candidatos
+                    .filter((x) => x.id === c.produtoId || !usados.has(x.id))
+                    .map((x) => (
+                      <SelectItem key={x.id} value={x.id}>
+                        {x.nome}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">×</span>
+              <Input
+                aria-label={`Quantidade do produto ${i + 1}`}
+                inputMode="numeric"
+                className="w-20"
+                maxLength={2}
+                value={c.quantidade}
+                onChange={(e) => trocar(i, { quantidade: e.target.value })}
+              />
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                aria-label={`Remover produto ${i + 1} do combo`}
+                onClick={() =>
+                  onChange({ ...form, componentes: form.componentes.filter((_, j) => j !== i) })
+                }
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={livres.length === 0 || form.componentes.length >= COMBO_MAX_COMPONENTES}
+            onClick={() =>
+              onChange({
+                ...form,
+                componentes: [...form.componentes, { produtoId: "", quantidade: "1" }],
+              })
+            }
+          >
+            <Plus className="h-4 w-4" /> Adicionar produto
+          </Button>
+          {livres.length === 0 && form.componentes.every((c) => c.produtoId) && (
+            <p className="text-xs text-muted-foreground">
+              Cadastre antes os produtos que fazem parte do combo (ex.: a cerveja).
+            </p>
+          )}
+          {erro && (
+            <p role="alert" className="text-xs text-destructive">
+              {erro}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

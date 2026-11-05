@@ -417,6 +417,11 @@ function Atendimento({
                               {p.descricao}
                             </p>
                           ) : null}
+                          {p.inclui && p.inclui.length > 0 ? (
+                            <p className="text-xs text-muted-foreground">
+                              Inclui: {p.inclui.map((i) => `${i.quantidade}× ${i.nome}`).join(", ")}
+                            </p>
+                          ) : null}
                           <p className="mt-1 text-sm font-semibold">
                             {formatBRL(p.preco_venda_centavos)}
                           </p>
