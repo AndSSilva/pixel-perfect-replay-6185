@@ -1,43 +1,53 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, LayoutDashboard } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { PaginaApresentacao } from "@/components/empresa/PaginaApresentacao";
+import { INOV4, chavePlataforma, obterPlataforma } from "@/lib/empresa/plataforma";
+import { corDoTextoSobre } from "@/lib/pedidos/rotulos";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Mesa Digital — Mesas, pedidos e contas" },
+      { title: "INOV4 HUB" },
       {
         name: "description",
         content:
-          "Cardápio por QR Code, pedidos com confirmação e contas individuais para bares e restaurantes.",
+          "INOV4 HUB — cardápio digital por mesa, pedidos e contas para bares e restaurantes.",
       },
     ],
   }),
   component: Inicio,
 });
 
+/** Link principal (sem o nome de uma empresa): a página da INOV4 com o botão "Acessar" para o painel. */
 function Inicio() {
+  // Se os textos não carregarem (ex.: script 14 ainda não rodou), a página abre só com logo, nome e "Acessar".
+  const consulta = useQuery({ queryKey: chavePlataforma, queryFn: obterPlataforma });
+  const t = consulta.data;
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-5 py-12">
-      <p className="text-sm font-medium uppercase tracking-widest text-link">Mesa Digital</p>
-      <h1 className="mt-3 text-4xl font-semibold sm:text-5xl">Mesas, pedidos e contas</h1>
-      <p className="mt-4 max-w-xl text-muted-foreground">
-        Cardápio por QR Code, pedidos com confirmação do atendente e contas individuais por cliente.
-      </p>
-      <div className="mt-8">
-        <Link
-          to="/admin"
-          className="group inline-flex items-center gap-3 rounded-xl border bg-card p-5 transition-colors hover:border-primary/50"
+    <PaginaApresentacao
+      dados={{
+        nome: INOV4.nome,
+        logoUrl: INOV4.logo,
+        descricao: t?.descricao ?? null,
+        whatsapp: t?.whatsapp ?? null,
+        instagram: t?.instagram ?? null,
+        endereco: t?.endereco ?? null,
+        horarios: t?.horarios ?? null,
+        intervalo: t?.intervalo ?? null,
+      }}
+      fundo={INOV4.fundo}
+      primaria={INOV4.primaria}
+      logoAlt="Logo INOV4 HUB"
+      acao={
+        <Button
+          asChild
+          className="h-12 w-full rounded-full text-base font-semibold"
+          style={{ backgroundColor: INOV4.primaria, color: corDoTextoSobre(INOV4.primaria) }}
         >
-          <LayoutDashboard className="h-6 w-6 text-link" />
-          <span>
-            <span className="block text-lg font-semibold">Painel administrativo</span>
-            <span className="block text-sm text-muted-foreground">
-              Acesso restrito a administradores.
-            </span>
-          </span>
-          <ArrowRight className="h-4 w-4 text-link transition-transform group-hover:translate-x-0.5" />
-        </Link>
-      </div>
-    </main>
+          <Link to="/admin/login">Acessar</Link>
+        </Button>
+      }
+    />
   );
 }

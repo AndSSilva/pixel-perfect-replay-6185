@@ -26,6 +26,7 @@ import { Route as AdminPrimeiroAcessoRouteImport } from './routes/admin_.primeir
 import { Route as AdminRedefinirSenhaRouteImport } from './routes/admin_.redefinir-senha'
 import { Route as MasterIndexRouteImport } from './routes/master.index'
 import { Route as MasterAdministradoresRouteImport } from './routes/master.administradores'
+import { Route as MasterConfiguracoesRouteImport } from './routes/master.configuracoes'
 import { Route as MasterLoginRouteImport } from './routes/master_.login'
 import { Route as AdminContasIndexRouteImport } from './routes/admin.contas.index'
 import { Route as AdminContasContaIdRouteImport } from './routes/admin.contas.$contaId'
@@ -119,6 +120,11 @@ const MasterAdministradoresRoute = MasterAdministradoresRouteImport.update({
   path: '/administradores',
   getParentRoute: () => MasterRoute,
 } as any)
+const MasterConfiguracoesRoute = MasterConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => MasterRoute,
+} as any)
 const MasterLoginRoute = MasterLoginRouteImport.update({
   id: '/master_/login',
   path: '/master/login',
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/admin/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/master/administradores': typeof MasterAdministradoresRoute
+  '/master/configuracoes': typeof MasterConfiguracoesRoute
   '/master/login': typeof MasterLoginRoute
   '/$slug/': typeof SlugIndexRoute
   '/admin/': typeof AdminIndexRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/admin/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/master/administradores': typeof MasterAdministradoresRoute
+  '/master/configuracoes': typeof MasterConfiguracoesRoute
   '/master/login': typeof MasterLoginRoute
   '/$slug': typeof SlugIndexRoute
   '/admin': typeof AdminIndexRoute
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/admin_/primeiro-acesso': typeof AdminPrimeiroAcessoRoute
   '/admin_/redefinir-senha': typeof AdminRedefinirSenhaRoute
   '/master/administradores': typeof MasterAdministradoresRoute
+  '/master/configuracoes': typeof MasterConfiguracoesRoute
   '/master_/login': typeof MasterLoginRoute
   '/$slug/': typeof SlugIndexRoute
   '/admin/': typeof AdminIndexRoute
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/admin/primeiro-acesso'
     | '/admin/redefinir-senha'
     | '/master/administradores'
+    | '/master/configuracoes'
     | '/master/login'
     | '/$slug/'
     | '/admin/'
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/admin/primeiro-acesso'
     | '/admin/redefinir-senha'
     | '/master/administradores'
+    | '/master/configuracoes'
     | '/master/login'
     | '/$slug'
     | '/admin'
@@ -299,6 +310,7 @@ export interface FileRouteTypes {
     | '/admin_/primeiro-acesso'
     | '/admin_/redefinir-senha'
     | '/master/administradores'
+    | '/master/configuracoes'
     | '/master_/login'
     | '/$slug/'
     | '/admin/'
@@ -446,6 +458,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MasterAdministradoresRouteImport
       parentRoute: typeof MasterRoute
     }
+    '/master/configuracoes': {
+      id: '/master/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/master/configuracoes'
+      preLoaderRoute: typeof MasterConfiguracoesRouteImport
+      parentRoute: typeof MasterRoute
+    }
     '/master_/login': {
       id: '/master_/login'
       path: '/master/login'
@@ -530,11 +549,13 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface MasterRouteChildren {
   MasterAdministradoresRoute: typeof MasterAdministradoresRoute
+  MasterConfiguracoesRoute: typeof MasterConfiguracoesRoute
   MasterIndexRoute: typeof MasterIndexRoute
 }
 
 const MasterRouteChildren: MasterRouteChildren = {
   MasterAdministradoresRoute: MasterAdministradoresRoute,
+  MasterConfiguracoesRoute: MasterConfiguracoesRoute,
   MasterIndexRoute: MasterIndexRoute,
 }
 

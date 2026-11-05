@@ -52,6 +52,7 @@ function MasterLayout() {
           {[
             { to: "/master", rotulo: "Empresas", exato: true },
             { to: "/master/administradores", rotulo: "Administradores", exato: false },
+            { to: "/master/configuracoes", rotulo: "Configurações", exato: false },
           ].map((i) => (
             <li key={i.to}>
               <Link

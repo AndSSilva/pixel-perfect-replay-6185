@@ -510,6 +510,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      atualizar_apresentacao_plataforma: {
+        Args: {
+          _descricao: string | null
+          _whatsapp: string | null
+          _instagram: string | null
+          _endereco: string | null
+          _horarios: Json | null
+          _intervalo: Json | null
+        }
+        Returns: undefined
+      }
+      obter_apresentacao_plataforma: { Args: never; Returns: Json }
       eh_master: { Args: never; Returns: boolean }
       eh_membro: { Args: { _estabelecimento: string }; Returns: boolean }
       marcar_senha_trocada: { Args: never; Returns: undefined }

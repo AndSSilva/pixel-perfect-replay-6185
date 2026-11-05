@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Campo } from "@/components/app/common";
 import { LIMITE_DESCRICAO, LIMITE_ENDERECO } from "@/lib/empresa/apresentacao";
-import { CHAVE_EMPRESAS } from "@/lib/empresa/atual";
 import {
   ORDEM_EXIBICAO,
   formParaIntervalo,
@@ -27,9 +26,7 @@ import {
   type Horarios,
   type Intervalo,
 } from "@/lib/empresa/horarios";
-import { chaveApresentacao } from "@/lib/empresa/publico";
-import { atualizarApresentacao } from "@/lib/empresa/servico";
-import { ErroEmpresa, MENSAGENS_EMPRESA, type Empresa } from "@/lib/empresa/tipos";
+import { ErroEmpresa, MENSAGENS_EMPRESA } from "@/lib/empresa/tipos";
 
 const esquema = z.object({
   descricao: z.string().max(LIMITE_DESCRICAO, `Use no máximo ${LIMITE_DESCRICAO} caracteres.`),
@@ -62,18 +59,48 @@ const esquema = z.object({
 });
 type Dados = z.infer<typeof esquema>;
 
-const valoresIniciais = (e: Empresa): Dados => ({
+export type TextosApresentacao = {
+  descricao: string | null;
+  whatsapp: string | null;
+  instagram: string | null;
+  endereco: string | null;
+  horarios: Horarios | null;
+  intervalo: Intervalo | null;
+};
+
+type DadosSalvar = {
+  descricao: string;
+  whatsapp: string;
+  instagram: string;
+  endereco: string;
+  horarios: Horarios | null;
+  intervalo: Intervalo | null;
+};
+
+const valoresIniciais = (e: TextosApresentacao): Dados => ({
   descricao: e.descricao ?? "",
   whatsapp: e.whatsapp ?? "",
   instagram: e.instagram ?? "",
   endereco: e.endereco ?? "",
-  horarios: horariosParaLinhas((e.horarios as Horarios | null) ?? null),
-  intervalo: intervaloParaForm((e.intervalo as Intervalo | null) ?? null),
+  horarios: horariosParaLinhas(e.horarios),
+  intervalo: intervaloParaForm(e.intervalo),
 });
 
-/** O que o cliente vê na página `/{empresa}`: o administrador da empresa edita aqui. */
-export function FormApresentacao({ empresa }: { empresa: Empresa }) {
-  const qc = useQueryClient();
+/**
+ * Formulário da página de apresentação (textos, contatos, endereço, horário e intervalo). Serve à página
+ * de uma empresa (editado pelo admin) e à da INOV4 (editado pelo master): quem usa informa como salvar.
+ */
+export function FormApresentacao({
+  inicial,
+  salvar: salvarDados,
+  aposSalvar,
+  linkDaPagina,
+}: {
+  inicial: TextosApresentacao;
+  salvar: (d: DadosSalvar) => Promise<void>;
+  aposSalvar: () => Promise<unknown>;
+  linkDaPagina: string;
+}) {
   const [erroGeral, setErroGeral] = useState<string>();
   const {
     register,
@@ -82,13 +109,13 @@ export function FormApresentacao({ empresa }: { empresa: Empresa }) {
     setValue,
     watch,
     formState: { errors, isDirty },
-  } = useForm<Dados>({ resolver: zodResolver(esquema), defaultValues: valoresIniciais(empresa) });
+  } = useForm<Dados>({ resolver: zodResolver(esquema), defaultValues: valoresIniciais(inicial) });
 
-  useEffect(() => reset(valoresIniciais(empresa)), [empresa, reset]);
+  useEffect(() => reset(valoresIniciais(inicial)), [inicial, reset]);
 
   const mutacao = useMutation({
     mutationFn: (d: Dados) =>
-      atualizarApresentacao(empresa.id, {
+      salvarDados({
         descricao: d.descricao,
         whatsapp: normalizarWhatsapp(d.whatsapp),
         instagram: normalizarInstagram(d.instagram),
@@ -97,9 +124,8 @@ export function FormApresentacao({ empresa }: { empresa: Empresa }) {
         intervalo: formParaIntervalo(d.intervalo),
       }),
     onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: CHAVE_EMPRESAS });
-      await qc.invalidateQueries({ queryKey: chaveApresentacao(empresa.slug) });
-      toast.success("Página da empresa atualizada.");
+      await aposSalvar();
+      toast.success("Página atualizada.");
     },
     onError: (e) =>
       setErroGeral(e instanceof ErroEmpresa ? e.message : MENSAGENS_EMPRESA.desconhecido),
@@ -277,7 +303,7 @@ export function FormApresentacao({ empresa }: { empresa: Empresa }) {
           Salvar
         </Button>
         <Button type="button" variant="outline" asChild>
-          <a href={`/${empresa.slug}`} target="_blank" rel="noreferrer noopener">
+          <a href={linkDaPagina} target="_blank" rel="noreferrer noopener">
             <ExternalLink aria-hidden /> Ver a página
           </a>
         </Button>

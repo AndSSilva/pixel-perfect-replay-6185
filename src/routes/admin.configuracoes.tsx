@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, Painel, Selo } from "@/components/app/common";
-import { FormApresentacao } from "@/components/empresa/FormApresentacao";
+import { FormApresentacaoEmpresa } from "@/components/empresa/FormApresentacaoEmpresa";
 import { useEmpresa } from "@/lib/empresa/contexto";
 import { corSegura } from "@/lib/pedidos/rotulos";
 
@@ -30,7 +30,7 @@ function Configuracoes() {
           <p className="mb-4 text-sm text-muted-foreground">
             É o que o cliente vê ao abrir {endereco}, antes de escolher a mesa.
           </p>
-          <FormApresentacao empresa={empresa} />
+          <FormApresentacaoEmpresa empresa={empresa} />
         </Painel>
         <Painel titulo="Estabelecimento">
           <dl className="space-y-3 text-sm">
