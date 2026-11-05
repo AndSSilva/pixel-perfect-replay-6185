@@ -65,7 +65,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin/produtos")({
   head: () => ({
     meta: [
-      { title: "Produtos — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Cadastro, preços, estoque e disponibilidade dos produtos." },
     ],
   }),

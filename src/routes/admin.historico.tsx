@@ -30,7 +30,7 @@ import {
 export const Route = createFileRoute("/admin/historico")({
   head: () => ({
     meta: [
-      { title: "Histórico de vendas — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Contas fechadas, itens consumidos e pagamentos." },
     ],
   }),

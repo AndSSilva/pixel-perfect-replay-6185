@@ -39,7 +39,7 @@ import type { Categoria } from "@/lib/catalogo/tipos";
 export const Route = createFileRoute("/admin/categorias")({
   head: () => ({
     meta: [
-      { title: "Categorias — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Organize as categorias do cardápio." },
     ],
   }),

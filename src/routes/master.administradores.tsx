@@ -18,7 +18,7 @@ import { useEmpresaAtual } from "@/lib/empresa/atual";
 
 export const Route = createFileRoute("/master/administradores")({
   head: () => ({
-    meta: [{ title: "Administradores — Mesa Digital" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Comanda Fácil - Master" }, { name: "robots", content: "noindex" }],
   }),
   component: Administradores,
 });

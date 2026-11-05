@@ -40,7 +40,7 @@ import { chaveSessoes, listarSessoesAtivas } from "@/lib/pedidos/servico-painel"
 export const Route = createFileRoute("/admin/mesas/")({
   head: () => ({
     meta: [
-      { title: "Mesas — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Mesas da empresa e QR Codes do cardápio." },
     ],
   }),

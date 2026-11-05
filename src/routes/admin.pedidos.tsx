@@ -24,7 +24,7 @@ import { ErroPedido, mensagemDoErroPedido } from "@/lib/pedidos/tipos";
 export const Route = createFileRoute("/admin/pedidos")({
   head: () => ({
     meta: [
-      { title: "Pedidos — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Fila de pedidos: confirmar, entregar e cancelar itens." },
     ],
   }),

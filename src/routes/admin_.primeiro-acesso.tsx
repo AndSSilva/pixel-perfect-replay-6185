@@ -10,7 +10,7 @@ import type { ResultadoAuth } from "@/lib/auth/tipos";
 export const Route = createFileRoute("/admin_/primeiro-acesso")({
   head: () => ({
     meta: [
-      { title: "Primeiro acesso — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Crie sua senha pessoal para continuar." },
       { name: "robots", content: "noindex" },
     ],
@@ -30,7 +30,11 @@ function PrimeiroAcesso() {
 
   const enviar = async (senha: string, senhaAtual?: string): Promise<ResultadoAuth> => {
     const r = await authService.definirNovaSenha(senha, senhaAtual);
-    if (r.ok) nav({ to: sessao ? destinoInicial({ ...sessao, deveTrocarSenha: false }) : "/admin", replace: true });
+    if (r.ok)
+      nav({
+        to: sessao ? destinoInicial({ ...sessao, deveTrocarSenha: false }) : "/admin",
+        replace: true,
+      });
     return r;
   };
 

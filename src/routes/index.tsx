@@ -8,7 +8,7 @@ import { corDoTextoSobre } from "@/lib/pedidos/rotulos";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "INOV4 HUB" },
+      { title: "Comanda Fácil" },
       {
         name: "description",
         content:
