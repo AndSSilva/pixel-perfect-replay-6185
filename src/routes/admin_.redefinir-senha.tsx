@@ -9,7 +9,7 @@ import type { ResultadoAuth } from "@/lib/auth/tipos";
 export const Route = createFileRoute("/admin_/redefinir-senha")({
   head: () => ({
     meta: [
-      { title: "Criar nova senha — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Crie uma nova senha para acessar o painel." },
       { name: "robots", content: "noindex" },
     ],

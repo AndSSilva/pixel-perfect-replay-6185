@@ -43,7 +43,7 @@ import { numeroDaMesa } from "@/lib/pedidos/mesa-url";
 export const Route = createFileRoute("/$slug/$mesa")({
   head: () => ({
     meta: [
-      { title: "Cardápio digital" },
+      { title: "Comanda Fácil" },
       { name: "description", content: "Escolha seus itens e envie o pedido direto da mesa." },
       { name: "robots", content: "noindex" },
     ],

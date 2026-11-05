@@ -41,7 +41,7 @@ import { ErroPedido, mensagemDoErroPedido } from "@/lib/pedidos/tipos";
 export const Route = createFileRoute("/admin/contas/caixa")({
   head: () => ({
     meta: [
-      { title: "Caixa — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Abertura, movimentos e fechamento do caixa." },
     ],
   }),

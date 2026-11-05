@@ -7,7 +7,7 @@ import { corSegura } from "@/lib/pedidos/rotulos";
 export const Route = createFileRoute("/admin/configuracoes")({
   head: () => ({
     meta: [
-      { title: "Configurações — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Dados do estabelecimento." },
     ],
   }),

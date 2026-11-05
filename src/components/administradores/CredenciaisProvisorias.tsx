@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 /** Mostra uma única vez o e-mail e a senha provisória para o master repassar ao administrador. */
 export function CredenciaisProvisorias({ email, senha }: { email: string; senha: string }) {
   const [copiado, setCopiado] = useState(false);
-  const texto = `Acesso ao painel Mesa Digital\nE-mail: ${email}\nSenha provisória: ${senha}\nNo primeiro acesso você vai criar a sua própria senha.`;
+  const texto = `Acesso ao painel Comanda Fácil\nE-mail: ${email}\nSenha provisória: ${senha}\nNo primeiro acesso você vai criar a sua própria senha.`;
 
   const copiar = async () => {
     try {

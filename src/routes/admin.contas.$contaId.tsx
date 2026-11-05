@@ -44,7 +44,7 @@ import type { Tables } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/admin/contas/$contaId")({
   head: () => ({
     meta: [
-      { title: "Conta individual — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Conferência de itens, pagamentos e fechamento da conta." },
     ],
   }),

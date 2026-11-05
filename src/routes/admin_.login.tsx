@@ -18,8 +18,8 @@ export const Route = createFileRoute("/admin_/login")({
     s["aviso"] === "senha-redefinida" ? { aviso: "senha-redefinida" } : {},
   head: () => ({
     meta: [
-      { title: "Entrar — Mesa Digital" },
-      { name: "description", content: "Acesse o painel administrativo da Mesa Digital." },
+      { title: "Comanda Fácil - Administrador" },
+      { name: "description", content: "Acesse o painel administrativo da Comanda Fácil." },
       { name: "robots", content: "noindex" },
     ],
   }),

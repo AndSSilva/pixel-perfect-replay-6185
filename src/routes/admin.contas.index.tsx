@@ -32,7 +32,7 @@ import {
 export const Route = createFileRoute("/admin/contas/")({
   head: () => ({
     meta: [
-      { title: "Contas e pagamentos — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Contas individuais abertas e registro de pagamentos." },
     ],
   }),

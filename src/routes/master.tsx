@@ -9,7 +9,7 @@ import { useGuardaMaster } from "@/lib/auth/use-sessao";
 
 export const Route = createFileRoute("/master")({
   head: () => ({
-    meta: [{ title: "Plataforma — Mesa Digital" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Comanda Fácil - Master" }, { name: "robots", content: "noindex" }],
   }),
   component: MasterLayout,
 });

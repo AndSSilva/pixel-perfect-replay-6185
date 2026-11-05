@@ -12,7 +12,7 @@ import { rotuloMesa, urlMesa } from "@/lib/catalogo/mesas";
 export const Route = createFileRoute("/admin_/imprimir/$mesaId")({
   head: () => ({
     meta: [
-      { title: "Imprimir QR Code — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "QR Code da mesa pronto para impressão." },
       { name: "robots", content: "noindex" },
     ],

@@ -14,7 +14,7 @@ import { esquemaEmail, type DadosEmail } from "@/lib/auth/validacao";
 export const Route = createFileRoute("/admin_/esqueci-senha")({
   head: () => ({
     meta: [
-      { title: "Recuperar senha — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Receba por e-mail um link para criar uma nova senha." },
       { name: "robots", content: "noindex" },
     ],

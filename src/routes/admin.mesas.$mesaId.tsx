@@ -34,7 +34,7 @@ import { MENSAGENS_PEDIDO, mensagemDoErroPedido } from "@/lib/pedidos/tipos";
 export const Route = createFileRoute("/admin/mesas/$mesaId")({
   head: () => ({
     meta: [
-      { title: "Atendimento da mesa — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Contas individuais, consumo e fechamento da mesa." },
     ],
   }),

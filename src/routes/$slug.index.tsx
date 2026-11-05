@@ -19,7 +19,7 @@ import { corDoTextoSobre, corSegura } from "@/lib/pedidos/rotulos";
 export const Route = createFileRoute("/$slug/")({
   head: () => ({
     meta: [
-      { title: "Cardápio por mesa" },
+      { title: "Comanda Fácil" },
       {
         name: "description",
         content: "Conheça o lugar, veja o horário e escolha uma mesa para pedir.",

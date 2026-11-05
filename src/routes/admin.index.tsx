@@ -40,7 +40,7 @@ import { diaLocal, lucroDaComanda, totaisDasVendas } from "@/lib/pedidos/vendas"
 export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Mesa Digital" },
+      { title: "Comanda Fácil - Administrador" },
       { name: "description", content: "Visão geral de mesas, pedidos e vendas do dia." },
     ],
   }),

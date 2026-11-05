@@ -9,7 +9,7 @@ import { atualizarPlataforma, chavePlataforma, obterPlataforma } from "@/lib/emp
 export const Route = createFileRoute("/master/configuracoes")({
   head: () => ({
     meta: [
-      { title: "Configurações da plataforma — Mesa Digital" },
+      { title: "Comanda Fácil - Master" },
       { name: "description", content: "Página da INOV4 (link principal)." },
     ],
   }),
