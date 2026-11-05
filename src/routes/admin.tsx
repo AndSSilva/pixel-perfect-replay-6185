@@ -1,21 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-  ArrowLeftRight,
-  History,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  Package,
-  ReceiptText,
-  Settings,
-  Tags,
-  UtensilsCrossed,
-  ClipboardList,
-} from "lucide-react";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ArrowLeftRight, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/app/BrandLogo";
 import { Carregando, EmptyState } from "@/components/app/common";
 import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { EscolherEmpresa } from "@/components/empresa/EscolherEmpresa";
@@ -32,79 +20,38 @@ export const Route = createFileRoute("/admin")({
 });
 
 const itens = [
-  { to: "/admin", rotulo: "Dashboard", icone: LayoutDashboard, exato: true },
-  { to: "/admin/mesas", rotulo: "Mesas", icone: UtensilsCrossed },
-  { to: "/admin/pedidos", rotulo: "Pedidos", icone: ClipboardList },
-  { to: "/admin/contas", rotulo: "Contas e pagamentos", icone: ReceiptText },
-  { to: "/admin/produtos", rotulo: "Produtos", icone: Package },
-  { to: "/admin/categorias", rotulo: "Categorias", icone: Tags },
-  { to: "/admin/historico", rotulo: "Histórico de vendas", icone: History },
-  { to: "/admin/configuracoes", rotulo: "Configurações", icone: Settings },
+  { to: "/admin", rotulo: "Dashboard", exato: true },
+  { to: "/admin/mesas", rotulo: "Mesas", exato: false },
+  { to: "/admin/pedidos", rotulo: "Pedidos", exato: false },
+  { to: "/admin/contas", rotulo: "Contas e pagamentos", exato: false },
+  { to: "/admin/produtos", rotulo: "Produtos", exato: false },
+  { to: "/admin/categorias", rotulo: "Categorias", exato: false },
+  { to: "/admin/historico", rotulo: "Histórico de vendas", exato: false },
+  { to: "/admin/configuracoes", rotulo: "Configurações", exato: false },
 ] as const;
 
-function Navegacao({
-  pendentes,
-  onNavegar,
-  trocarEmpresa,
-}: {
-  pendentes: number;
-  onNavegar?: () => void;
-  trocarEmpresa?: { rotulo: string; aoClicar: () => void } | undefined;
-}) {
-  const caminho = useRouterState({ select: (s) => s.location.pathname });
-  const nav = useNavigate();
+/** Menu em abas, no mesmo padrão do painel do master (rola para o lado em telas estreitas). */
+function Abas({ pendentes }: { pendentes: number }) {
   return (
-    <nav className="flex h-full flex-col gap-1 p-3" aria-label="Menu do painel">
-      {itens.map((i) => {
-        const ativo =
-          "exato" in i ? caminho === i.to || caminho === i.to + "/" : caminho.startsWith(i.to);
-        return (
-          <Link
-            key={i.to}
-            to={i.to}
-            onClick={onNavegar}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-              ativo
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
-            )}
-          >
-            <i.icone className={cn("h-4 w-4", ativo && "text-link")} />
-            <span className="flex-1">{i.rotulo}</span>
-            {i.to === "/admin/pedidos" && pendentes > 0 && (
-              <span className="rounded-full bg-warning px-2 text-xs font-semibold text-warning-foreground">
-                {pendentes}
-              </span>
-            )}
-          </Link>
-        );
-      })}
-      <div className="mt-auto space-y-1">
-        {trocarEmpresa && (
-          <button
-            onClick={() => {
-              onNavegar?.();
-              trocarEmpresa.aoClicar();
-            }}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
-          >
-            <ArrowLeftRight className="h-4 w-4" /> {trocarEmpresa.rotulo}
-          </button>
-        )}
-        <div className="px-3 py-1">
-          <ThemeToggle />
-        </div>
-        <button
-          onClick={async () => {
-            await authService.sair();
-            nav({ to: "/admin/login" });
-          }}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
-        >
-          <LogOut className="h-4 w-4" /> Sair do painel
-        </button>
-      </div>
+    <nav aria-label="Menu do painel" className="no-print border-b bg-card px-4 sm:px-8">
+      <ul className="mx-auto flex max-w-6xl gap-1 overflow-x-auto">
+        {itens.map((i) => (
+          <li key={i.to} className="shrink-0">
+            <Link
+              to={i.to}
+              activeOptions={{ exact: i.exato }}
+              className="inline-flex items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground data-[status=active]:border-primary data-[status=active]:text-foreground"
+            >
+              {i.rotulo}
+              {i.to === "/admin/pedidos" && pendentes > 0 && (
+                <span className="rounded-full bg-warning px-2 text-xs font-semibold text-warning-foreground">
+                  {pendentes}
+                </span>
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </nav>
   );
 }
@@ -119,7 +66,6 @@ function AdminLayout() {
 function AdminComEmpresa({ sessao }: { sessao: SessaoAdmin }) {
   const nav = useNavigate();
   const caminho = useRouterState({ select: (s) => s.location.pathname });
-  const [menuAberto, setMenuAberto] = useState(false);
   const ctx = useEmpresaAtual(sessao.usuarioId, sessao.papel);
   const ehMaster = sessao.papel === "master";
   const empresaId = ctx.atual?.id ?? null;
@@ -189,44 +135,33 @@ function AdminComEmpresa({ sessao }: { sessao: SessaoAdmin }) {
       : undefined;
 
   const pendentes = pendentesQuery.data ?? 0;
-  const marca = (
-    <div className="flex items-center gap-2 px-6 py-5">
-      <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-      <span className="truncate font-display font-semibold">{empresa.nome}</span>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className="no-print sticky top-0 hidden h-screen flex-col border-r bg-sidebar lg:flex">
-        {marca}
-        <Navegacao pendentes={pendentes} trocarEmpresa={trocarEmpresa} />
-      </aside>
-      <header className="no-print sticky top-0 z-30 flex items-center justify-between border-b bg-sidebar/95 px-3 py-2 backdrop-blur lg:hidden">
-        <Sheet open={menuAberto} onOpenChange={setMenuAberto}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Abrir menu">
-              <Menu className="h-5 w-5" />
+    <div className="min-h-screen bg-background">
+      <header className="no-print flex items-center justify-between gap-3 border-b bg-card px-4 py-3 sm:px-8">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <BrandLogo largura={130} className="shrink-0" />
+          <span className="flex min-w-0 items-center gap-2 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden />
+            <span className="max-w-[9rem] truncate sm:max-w-[16rem]">{empresa.nome}</span>
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          {trocarEmpresa && (
+            <Button variant="ghost" size="sm" onClick={trocarEmpresa.aoClicar}>
+              <ArrowLeftRight className="h-4 w-4" aria-hidden />
+              <span className="hidden md:inline">{trocarEmpresa.rotulo}</span>
+              <span className="sr-only md:hidden">{trocarEmpresa.rotulo}</span>
             </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-72 bg-sidebar p-0">
-            <SheetTitle className="sr-only">Menu</SheetTitle>
-            {marca}
-            <Navegacao
-              pendentes={pendentes}
-              onNavegar={() => setMenuAberto(false)}
-              trocarEmpresa={trocarEmpresa}
-            />
-          </SheetContent>
-        </Sheet>
-        <span className="truncate font-display font-semibold">{empresa.nome}</span>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/admin/pedidos">
-            <ClipboardList className="h-4 w-4" />
-            {pendentes > 0 && <span className="text-warning">{pendentes}</span>}
-          </Link>
-        </Button>
+          )}
+          <ThemeToggle />
+          <Button variant="ghost" size="sm" onClick={sair}>
+            <LogOut className="h-4 w-4" aria-hidden />
+            <span className="hidden sm:inline">Sair</span>
+            <span className="sr-only sm:hidden">Sair</span>
+          </Button>
+        </div>
       </header>
+      <Abas pendentes={pendentes} />
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8">
         <EmpresaProvider empresa={empresa}>
           <Outlet />
