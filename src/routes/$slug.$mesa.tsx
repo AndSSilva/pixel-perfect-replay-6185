@@ -1,3 +1,4 @@
+import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -137,6 +138,7 @@ function Cliente({ slug, numero }: { slug: string; numero: number }) {
             <h1 className="text-lg font-semibold leading-tight">{dados.empresa.nome}</h1>
             <p className="text-sm opacity-80">Mesa {dados.mesa.numero}</p>
           </div>
+          <ThemeToggle className="ml-auto border-white/25 bg-white/10 text-white shadow-none hover:bg-white/20 hover:text-white" />
         </div>
       </header>
       <main className="mx-auto max-w-xl px-4 pb-32 pt-4">
