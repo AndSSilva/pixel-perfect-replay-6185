@@ -3,10 +3,11 @@ import {
   agoraNoFuso,
   agruparDias,
   formatarWhatsapp,
-  horariosParaLinhas,
+  formParaHorarios,
+  horariosParaForm,
   horariosValidos,
-  linhasParaHorarios,
-  validarLinhas,
+  temErrosHorario,
+  validarHorarioForm,
   horariosVazios,
   instagramValido,
   linkWhatsapp,
@@ -140,27 +141,58 @@ describe("validação e contatos", () => {
   });
 });
 
-describe("formulário de horários", () => {
-  it("vai e volta sem perder nada", () => {
-    const linhas = horariosParaLinhas(nevoa);
-    expect(linhas.map((l) => l.aberto)).toEqual([false, false, true, true, true, true, true]); // seg..dom
-    expect(linhas[2]).toEqual({ aberto: true, abre: "19:00", fecha: "02:00" });
-    expect(linhasParaHorarios(linhas)).toEqual(nevoa);
+describe("formulário de horários (padrão + personalizados)", () => {
+  it("o grupo com mais dias vira o padrão e os outros, personalizados", () => {
+    const f = horariosParaForm(nevoa);
+    expect(f.padrao).toEqual({ dias: [5, 6, 0], abre: "19:00", fecha: "03:00" });
+    expect(f.personalizado).toBe(true);
+    expect(f.extras).toEqual([{ dias: [3, 4], abre: "19:00", fecha: "02:00" }]);
+    expect(formParaHorarios(f)).toEqual(nevoa);
   });
-  it("sem horário: tudo fechado e salva como vazio", () => {
-    const linhas = horariosParaLinhas(null);
-    expect(linhas.every((l) => !l.aberto)).toBe(true);
-    expect(linhasParaHorarios(linhas)).toBeNull();
+  it("horário único: sem personalizado", () => {
+    const h: Horarios = Array.from({ length: 7 }, (_, d) =>
+      d === 0 ? null : { abre: "10:00", fecha: "22:00" },
+    );
+    const f = horariosParaForm(h);
+    expect(f.personalizado).toBe(false);
+    expect(f.extras).toEqual([]);
+    expect(f.padrao.dias).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(formParaHorarios(f)).toEqual(h);
   });
-  it("valida linhas abertas", () => {
-    const linhas = horariosParaLinhas(null).map((l) => ({ ...l }));
-    linhas[0] = { aberto: true, abre: "10:00", fecha: "10:00" };
-    linhas[1] = { aberto: true, abre: "", fecha: "10:00" };
-    linhas[2] = { aberto: false, abre: "", fecha: "" };
-    expect(validarLinhas(linhas)).toEqual({
-      0: "Abertura e fechamento não podem ser iguais.",
-      1: "Informe os dois horários.",
+  it("sem horário: vazio e salva como vazio", () => {
+    const f = horariosParaForm(null);
+    expect(f.padrao.dias).toEqual([]);
+    expect(formParaHorarios(f)).toBeNull();
+    expect(validarHorarioForm(f)).toEqual({ extras: {} });
+  });
+  it("personalizado desligado ignora os extras", () => {
+    const f = horariosParaForm(nevoa);
+    expect(formParaHorarios({ ...f, personalizado: false })?.[3]).toBeNull();
+  });
+  it("valida horários, dias vazios e dias repetidos", () => {
+    const base = horariosParaForm(null);
+    const f = {
+      padrao: { dias: [1, 2], abre: "10:00", fecha: "10:00" },
+      personalizado: true,
+      extras: [
+        { dias: [], abre: "10:00", fecha: "12:00" },
+        { dias: [2, 3], abre: "09:00", fecha: "18:00" },
+        { dias: [4], abre: "", fecha: "18:00" },
+      ],
+    };
+    expect(validarHorarioForm(f)).toEqual({
+      padrao: "Abertura e fechamento não podem ser iguais.",
+      extras: { 0: "Marque ao menos um dia.", 2: "Informe os dois horários." },
     });
+    const ok = { ...base, padrao: { dias: [1, 2], abre: "10:00", fecha: "18:00" } };
+    expect(
+      validarHorarioForm({
+        ...ok,
+        personalizado: true,
+        extras: [{ dias: [2, 3], abre: "09:00", fecha: "18:00" }],
+      }),
+    ).toEqual({ extras: { 0: "Terça já está em outro horário." } });
+    expect(temErrosHorario({ extras: {} })).toBe(false);
   });
 });
 

@@ -39,7 +39,7 @@ export function AuthShell({
         </div>
       </main>
       <footer className="relative z-10 px-4 pb-6 text-center text-xs text-muted-foreground">
-        Mesa Digital · uma solução INOV4 HUB
+        Comanda Fácil · uma solução INOV4 HUB
       </footer>
     </div>
   );

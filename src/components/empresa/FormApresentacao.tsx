@@ -8,21 +8,22 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { HorarioEditor } from "@/components/empresa/HorarioEditor";
 import { Campo } from "@/components/app/common";
 import { LIMITE_DESCRICAO, LIMITE_ENDERECO } from "@/lib/empresa/apresentacao";
 import {
-  ORDEM_EXIBICAO,
+  formParaHorarios,
   formParaIntervalo,
-  horariosParaLinhas,
+  horariosParaForm,
   instagramValido,
   intervaloParaForm,
-  linhasParaHorarios,
-  nomeDoDia,
   normalizarInstagram,
   normalizarWhatsapp,
+  temErrosHorario,
+  validarHorarioForm,
   validarIntervalo,
-  validarLinhas,
   whatsappValido,
+  type ErrosHorarioForm,
   type Horarios,
   type Intervalo,
 } from "@/lib/empresa/horarios";
@@ -43,12 +44,18 @@ const esquema = z.object({
       "Use só o nome de usuário, ex.: nevoa.lounge.",
     ),
   endereco: z.string().max(LIMITE_ENDERECO, `Use no máximo ${LIMITE_ENDERECO} caracteres.`),
-  horarios: z
-    .array(z.object({ aberto: z.boolean(), abre: z.string(), fecha: z.string() }))
-    .length(7)
-    .superRefine((linhas, ctx) => {
-      for (const [i, msg] of Object.entries(validarLinhas(linhas)))
-        ctx.addIssue({ code: "custom", message: msg, path: [Number(i), "abre"] });
+  horario: z
+    .object({
+      padrao: z.object({ dias: z.array(z.number()), abre: z.string(), fecha: z.string() }),
+      personalizado: z.boolean(),
+      extras: z.array(z.object({ dias: z.array(z.number()), abre: z.string(), fecha: z.string() })),
+    })
+    .superRefine((f, ctx) => {
+      const e = validarHorarioForm(f);
+      if (!temErrosHorario(e)) return;
+      if (e.padrao) ctx.addIssue({ code: "custom", message: e.padrao, path: ["padrao"] });
+      for (const [i, msg] of Object.entries(e.extras))
+        ctx.addIssue({ code: "custom", message: msg, path: ["extras", Number(i)] });
     }),
   intervalo: z
     .object({ possui: z.boolean(), inicio: z.string(), fim: z.string() })
@@ -77,12 +84,24 @@ type DadosSalvar = {
   intervalo: Intervalo | null;
 };
 
+/** Traduz os erros do react-hook-form do bloco de horário para o formato do editor. */
+function errosDoHorario(e: unknown): ErrosHorarioForm | undefined {
+  const h = e as
+    { padrao?: { message?: string }; extras?: ({ message?: string } | undefined)[] } | undefined;
+  if (!h) return undefined;
+  const extras: Record<number, string> = {};
+  h.extras?.forEach((x, i) => {
+    if (x?.message) extras[i] = x.message;
+  });
+  return { ...(h.padrao?.message ? { padrao: h.padrao.message } : {}), extras };
+}
+
 const valoresIniciais = (e: TextosApresentacao): Dados => ({
   descricao: e.descricao ?? "",
   whatsapp: e.whatsapp ?? "",
   instagram: e.instagram ?? "",
   endereco: e.endereco ?? "",
-  horarios: horariosParaLinhas(e.horarios),
+  horario: horariosParaForm(e.horarios),
   intervalo: intervaloParaForm(e.intervalo),
 });
 
@@ -108,7 +127,7 @@ export function FormApresentacao({
     reset,
     setValue,
     watch,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty, isSubmitted },
   } = useForm<Dados>({ resolver: zodResolver(esquema), defaultValues: valoresIniciais(inicial) });
 
   useEffect(() => reset(valoresIniciais(inicial)), [inicial, reset]);
@@ -120,7 +139,7 @@ export function FormApresentacao({
         whatsapp: normalizarWhatsapp(d.whatsapp),
         instagram: normalizarInstagram(d.instagram),
         endereco: d.endereco,
-        horarios: linhasParaHorarios(d.horarios),
+        horarios: formParaHorarios(d.horario),
         intervalo: formParaIntervalo(d.intervalo),
       }),
     onSuccess: async () => {
@@ -196,70 +215,11 @@ export function FormApresentacao({
         />
       </Campo>
 
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Horário de atendimento</legend>
-        <p className="text-xs text-muted-foreground">
-          Marque os dias em que abre. Se fechar depois da meia-noite, informe o horário do dia
-          seguinte (ex.: abre 19:00, fecha 02:00). Sem nenhum dia marcado, o horário não aparece.
-        </p>
-        {ORDEM_EXIBICAO.map((dia, i) => {
-          const aberto = watch(`horarios.${i}.aberto`);
-          const msg = errors.horarios?.[i]?.abre?.message;
-          return (
-            <div key={dia} className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <label className="flex w-28 items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4"
-                    {...register(`horarios.${i}.aberto`)}
-                  />
-                  {nomeDoDia(dia)}
-                </label>
-                {aberto ? (
-                  <>
-                    <Input
-                      type="time"
-                      aria-label={`${nomeDoDia(dia)}: abre`}
-                      className="w-28"
-                      {...register(`horarios.${i}.abre`)}
-                    />
-                    <span className="text-sm text-muted-foreground">às</span>
-                    <Input
-                      type="time"
-                      aria-label={`${nomeDoDia(dia)}: fecha`}
-                      className="w-28"
-                      {...register(`horarios.${i}.fecha`)}
-                    />
-                    {i > 0 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setValue(`horarios.${i}.abre`, watch(`horarios.${i - 1}.abre`), {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                          });
-                          setValue(`horarios.${i}.fecha`, watch(`horarios.${i - 1}.fecha`), {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                          });
-                        }}
-                      >
-                        Copiar do dia anterior
-                      </Button>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-sm text-muted-foreground">Fechado</span>
-                )}
-              </div>
-              {msg ? <p className="text-xs text-destructive">{msg}</p> : null}
-            </div>
-          );
-        })}
-      </fieldset>
+      <HorarioEditor
+        valor={watch("horario")}
+        erros={errosDoHorario(errors.horario)}
+        onChange={(v) => setValue("horario", v, { shouldDirty: true, shouldValidate: isSubmitted })}
+      />
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Intervalo</legend>
