@@ -390,3 +390,28 @@ export async function fecharCaixa(
   if (error) falhar("fecharCaixa", error);
   return data;
 }
+
+/** Composição dos combos dos itens (para o cupom): id do item → componentes por unidade do combo. */
+export async function listarComposicaoItens(
+  empresaId: string,
+  itemIds: string[],
+): Promise<Map<string, { nome: string; quantidade: number }[]>> {
+  const mapa = new Map<string, { nome: string; quantidade: number }[]>();
+  if (itemIds.length === 0) return mapa;
+  const linhas = await emLotes(itemIds, async (lote) => {
+    const { data, error } = await supabase
+      .from("itens_pedido_combo")
+      .select("item_id, nome_produto, quantidade")
+      .eq("estabelecimento_id", empresaId)
+      .in("item_id", lote);
+    // Sem o script 15 a tabela não existe: o cupom sai sem a linha "Inclui" em vez de falhar.
+    if (error) return [];
+    return data;
+  });
+  for (const l of linhas) {
+    const atual = mapa.get(l.item_id) ?? [];
+    atual.push({ nome: l.nome_produto, quantidade: l.quantidade });
+    mapa.set(l.item_id, atual);
+  }
+  return mapa;
+}

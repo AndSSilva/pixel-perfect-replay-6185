@@ -1,3 +1,4 @@
+import { LarguraDoCupom } from "@/components/pedidos/BotoesImpressao";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader, Painel, Selo } from "@/components/app/common";
 import { FormApresentacaoEmpresa } from "@/components/empresa/FormApresentacaoEmpresa";
@@ -31,6 +32,9 @@ function Configuracoes() {
             É o que o cliente vê ao abrir {endereco}, antes de escolher a mesa.
           </p>
           <FormApresentacaoEmpresa empresa={empresa} />
+        </Painel>
+        <Painel titulo="Impressão de cupom">
+          <LarguraDoCupom />
         </Painel>
         <Painel titulo="Estabelecimento">
           <dl className="space-y-3 text-sm">

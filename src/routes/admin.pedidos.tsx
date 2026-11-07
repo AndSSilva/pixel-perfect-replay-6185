@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Inbox } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { imprimirPedido } from "@/components/pedidos/BotoesImpressao";
 import { EmptyState, PageHeader } from "@/components/app/common";
 import { estadoDaConsulta } from "@/components/app/Consulta";
 import { PedidoPainelCard, type AcoesPedido } from "@/components/pedidos/PedidoPainelCard";
@@ -47,9 +48,12 @@ function Pedidos() {
 
   const atualizar = () => atualizarAtendimento(qc, empresa.id);
   const rodar = useMutation({
-    mutationFn: ({ fn }: { fn: () => Promise<unknown>; ok: string }) => fn(),
+    mutationFn: ({ fn }: { fn: () => Promise<unknown>; ok: string; depois?: () => void }) => fn(),
     onSuccess: (_r, v) => {
-      toast.success(v.ok);
+      toast.success(
+        v.ok,
+        v.depois ? { action: { label: "Imprimir cupom", onClick: v.depois } } : undefined,
+      );
       atualizar();
     },
     onError: (e) => {
@@ -60,11 +64,21 @@ function Pedidos() {
     },
   });
   // mutateAsync rejeita em caso de erro: os botões ignoram (o toast já foi mostrado)
-  const exec = (fn: () => Promise<unknown>, ok: string) => rodar.mutateAsync({ fn, ok });
+  const exec = (fn: () => Promise<unknown>, ok: string, depois?: () => void) =>
+    rodar.mutateAsync({ fn, ok, ...(depois ? { depois } : {}) });
 
   const acoes: AcoesPedido = {
     ocupado: rodar.isPending,
-    confirmar: (p) => exec(() => confirmarPedido(p.id), "Pedido confirmado."),
+    confirmar: (p) =>
+      exec(
+        () => confirmarPedido(p.id),
+        "Pedido confirmado.",
+        () => {
+          void imprimirPedido(empresa, p).catch(() =>
+            toast.error("Não foi possível preparar o cupom."),
+          );
+        },
+      ),
     rejeitar: (p, m) => exec(() => rejeitarPedido(p.id, m), "Pedido rejeitado."),
     entregarPedido: (p) => exec(() => entregarPedido(p.id), "Itens entregues."),
     entregarItem: (id) => exec(() => entregarItens([id]), "Item entregue."),

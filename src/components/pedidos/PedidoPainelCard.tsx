@@ -2,6 +2,7 @@ import { Check, Clock, PackageCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Selo } from "@/components/app/common";
 import { MotivoDialog } from "@/components/pedidos/MotivoDialog";
+import { ImprimirCupomPedido } from "@/components/pedidos/BotoesImpressao";
 import { formatBRL, formatDataHora } from "@/lib/format";
 import {
   minutosParaExpirar,
@@ -141,15 +142,18 @@ export function PedidoPainelCard({
         </div>
       ) : null}
 
-      {emAndamento && aguardando.length > 1 ? (
-        <div className="mt-4">
-          <Button
-            size="sm"
-            disabled={acoes.ocupado}
-            onClick={() => void acoes.entregarPedido(pedido).catch(() => undefined)}
-          >
-            <PackageCheck className="h-4 w-4" /> Entregar tudo
-          </Button>
+      {pedido.status === "confirmado" ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {emAndamento && aguardando.length > 1 ? (
+            <Button
+              size="sm"
+              disabled={acoes.ocupado}
+              onClick={() => void acoes.entregarPedido(pedido).catch(() => undefined)}
+            >
+              <PackageCheck className="h-4 w-4" /> Entregar tudo
+            </Button>
+          ) : null}
+          <ImprimirCupomPedido pedido={pedido} />
         </div>
       ) : null}
     </article>

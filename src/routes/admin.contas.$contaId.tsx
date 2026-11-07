@@ -1,3 +1,4 @@
+import { ImprimirNota, imprimirNotaDaConta } from "@/components/pedidos/BotoesImpressao";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -81,9 +82,12 @@ function ContaDetalhe() {
   const [erros, setErros] = useState<ErrosPagamento>({});
 
   const rodar = useMutation({
-    mutationFn: ({ fn }: { fn: () => Promise<unknown>; ok: string }) => fn(),
+    mutationFn: ({ fn }: { fn: () => Promise<unknown>; ok: string; depois?: () => void }) => fn(),
     onSuccess: (_r, v) => {
-      toast.success(v.ok);
+      toast.success(
+        v.ok,
+        v.depois ? { action: { label: "Imprimir nota", onClick: v.depois } } : undefined,
+      );
       atualizarAtendimento(qc, empresa.id);
     },
     onError: (e) => {
@@ -161,7 +165,12 @@ function ContaDetalhe() {
       <PageHeader
         titulo={conta.cliente_nome}
         descricao={`Mesa ${conta.mesa_numero} · aberta em ${formatDataHora(conta.aberta_em)}${conta.fechada_em ? ` · fechada em ${formatDataHora(conta.fechada_em)}` : ""}`}
-        acoes={aberta ? <Selo tom="info">Aberta</Selo> : <Selo tom="sucesso">Paga</Selo>}
+        acoes={
+          <div className="flex items-center gap-2">
+            <ImprimirNota conta={conta} />
+            {aberta ? <Selo tom="info">Aberta</Selo> : <Selo tom="sucesso">Paga</Selo>}
+          </div>
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
@@ -397,7 +406,15 @@ function ContaDetalhe() {
               rotuloAcao="Fechar conta"
               onConfirmar={() =>
                 void rodar
-                  .mutateAsync({ fn: () => fecharComanda(conta.id), ok: "Conta fechada." })
+                  .mutateAsync({
+                    fn: () => fecharComanda(conta.id),
+                    ok: "Conta fechada.",
+                    depois: () => {
+                      void imprimirNotaDaConta(empresa, conta).catch(() =>
+                        toast.error("Não foi possível preparar a nota."),
+                      );
+                    },
+                  })
                   .catch(() => undefined)
               }
             />

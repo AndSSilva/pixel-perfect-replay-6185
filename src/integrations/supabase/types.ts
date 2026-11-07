@@ -274,6 +274,30 @@ export type Database = {
         }
         Relationships: []
       }
+      itens_pedido_combo: {
+        Row: {
+          estabelecimento_id: string
+          item_id: string
+          nome_produto: string
+          produto_id: string | null
+          quantidade: number
+        }
+        Insert: {
+          estabelecimento_id: string
+          item_id: string
+          nome_produto: string
+          produto_id?: string | null
+          quantidade: number
+        }
+        Update: {
+          estabelecimento_id?: string
+          item_id?: string
+          nome_produto?: string
+          produto_id?: string | null
+          quantidade?: number
+        }
+        Relationships: []
+      }
       itens_pedido: {
         Row: {
           cancelado_em: string | null
