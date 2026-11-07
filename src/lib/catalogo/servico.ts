@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { TipoAjuste } from "./estoque";
 import type { ComponenteCombo } from "./combo";
+import { COMANDAS_MAX, COMANDAS_PADRAO } from "./mesas";
 import {
   ErroCatalogo,
   codigoDoErroBanco,
@@ -101,12 +102,38 @@ export async function listarMesas(empresaId: string): Promise<Mesa[]> {
   return data;
 }
 
-export async function criarMesas(empresaId: string, numeros: readonly number[]): Promise<void> {
+export async function criarMesas(
+  empresaId: string,
+  numeros: readonly number[],
+  maxComandas: number = COMANDAS_PADRAO,
+): Promise<void> {
   if (numeros.length === 0) throw new ErroCatalogo("dados_invalidos");
-  const { error } = await supabase
-    .from("mesas")
-    .insert(numeros.map((numero) => ({ estabelecimento_id: empresaId, numero })));
+  const { error } = await supabase.from("mesas").insert(
+    numeros.map((numero) => ({
+      estabelecimento_id: empresaId,
+      numero,
+      max_comandas: maxComandas,
+    })),
+  );
   if (error) falhar("criarMesas", error);
+}
+
+/** Quantas comandas podem ficar abertas ao mesmo tempo nesta mesa (1 a 20). */
+export async function definirMaxComandas(
+  empresaId: string,
+  id: string,
+  maxComandas: number,
+): Promise<void> {
+  if (!Number.isInteger(maxComandas) || maxComandas < 1 || maxComandas > COMANDAS_MAX)
+    throw new ErroCatalogo("dados_invalidos");
+  const { data, error } = await supabase
+    .from("mesas")
+    .update({ max_comandas: maxComandas })
+    .eq("id", id)
+    .eq("estabelecimento_id", empresaId)
+    .select("id");
+  if (error) falhar("definirMaxComandas", error);
+  if (data.length === 0) throw new ErroCatalogo("nao_encontrado");
 }
 
 export async function definirMesaAtiva(

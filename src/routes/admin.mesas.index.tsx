@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Armchair, Loader2, Plus, QrCode, Trash2 } from "lucide-react";
+import { Armchair, Loader2, Pencil, Plus, QrCode, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,13 +20,17 @@ import { useEmpresa } from "@/lib/empresa/contexto";
 import {
   chaveMesas,
   criarMesas,
+  definirMaxComandas,
   definirMesaAtiva,
   excluirMesa,
   listarMesas,
 } from "@/lib/catalogo/servico";
 import { mensagemDoErro } from "@/lib/catalogo/mensagem";
 import {
+  COMANDAS_MAX,
+  COMANDAS_PADRAO,
   MAX_MESAS_POR_VEZ,
+  lerComandasPorMesa,
   NUMERO_MESA_MAX,
   caminhoMesa,
   numerosParaCriar,
@@ -74,15 +78,21 @@ function Mesas() {
   const [aberto, setAberto] = useState(false);
   const [inicio, setInicio] = useState("1");
   const [quantidade, setQuantidade] = useState("1");
+  const [comandas, setComandas] = useState(String(COMANDAS_PADRAO));
   const [erro, setErro] = useState<string>();
+  // Edição do limite de comandas de uma mesa já criada
+  const [editando, setEditando] = useState<{ id: string; numero: number } | null>(null);
+  const [limite, setLimite] = useState("");
+  const [erroLimite, setErroLimite] = useState<string>();
 
   const mesas = consulta.data ?? [];
   const usados = mesas.map((m) => m.numero);
   const atualizar = () => qc.invalidateQueries({ queryKey: chaveMesas(empresa.id) });
 
   const criar = useMutation({
-    mutationFn: (numeros: number[]) => criarMesas(empresa.id, numeros),
-    onSuccess: async (_d, numeros) => {
+    mutationFn: (v: { numeros: number[]; comandas: number }) =>
+      criarMesas(empresa.id, v.numeros, v.comandas),
+    onSuccess: async (_d, { numeros }) => {
       await atualizar();
       toast.success(numeros.length === 1 ? "Mesa criada." : `${numeros.length} mesas criadas.`);
       setAberto(false);
@@ -93,6 +103,15 @@ function Mesas() {
     mutationFn: (v: { id: string; ativa: boolean }) => definirMesaAtiva(empresa.id, v.id, v.ativa),
     onSuccess: atualizar,
     onError: (e) => toast.error(mensagemDoErro(e)),
+  });
+  const salvarLimite = useMutation({
+    mutationFn: (v: { id: string; n: number }) => definirMaxComandas(empresa.id, v.id, v.n),
+    onSuccess: async () => {
+      await atualizar();
+      toast.success("Limite de comandas atualizado.");
+      setEditando(null);
+    },
+    onError: (e) => setErroLimite(mensagemDoErro(e)),
   });
   const excluir = useMutation({
     mutationFn: (id: string) => excluirMesa(empresa.id, id),
@@ -112,6 +131,7 @@ function Mesas() {
     setErro(undefined);
     setInicio(String(proximoNumeroMesa(usados)));
     setQuantidade("1");
+    setComandas(String(COMANDAS_PADRAO));
     setAberto(true);
   };
 
@@ -162,6 +182,19 @@ function Mesas() {
               <p className="mt-1 truncate text-xs text-muted-foreground">
                 {caminhoMesa(empresa.slug, m.numero)}
               </p>
+              <button
+                type="button"
+                className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setErroLimite(undefined);
+                  setLimite(String(m.max_comandas));
+                  setEditando({ id: m.id, numero: m.numero });
+                }}
+                aria-label={`Alterar o limite de comandas da ${rotuloMesa(m.numero)}`}
+              >
+                <Users className="h-3.5 w-3.5" aria-hidden /> Até {m.max_comandas} comandas
+                <Pencil className="h-3 w-3" aria-hidden />
+              </button>
               <div className="mt-4 flex items-center gap-1">
                 <Button asChild size="sm" className="flex-1">
                   <Link to="/admin/mesas/$mesaId" params={{ mesaId: m.id }}>
@@ -214,8 +247,11 @@ function Mesas() {
                   `Use um número de 1 a ${NUMERO_MESA_MAX} e de 1 a ${MAX_MESAS_POR_VEZ} mesas por vez.`,
                 );
               if (previa.length === 0) return setErro("Esses números já estão em uso.");
+              const max = lerComandasPorMesa(comandas);
+              if (max === null)
+                return setErro(`Comandas por mesa: use um número de 1 a ${COMANDAS_MAX}.`);
               setErro(undefined);
-              criar.mutate(previa);
+              criar.mutate({ numeros: previa, comandas: max });
             }}
           >
             <DialogHeader>
@@ -246,6 +282,19 @@ function Mesas() {
                 />
               </Campo>
             </div>
+            <Campo
+              id="mcomandas"
+              rotulo="Comandas por mesa"
+              dica={`Quantas comandas podem ficar abertas ao mesmo tempo (1 a ${COMANDAS_MAX}).`}
+            >
+              <Input
+                id="mcomandas"
+                inputMode="numeric"
+                value={comandas}
+                maxLength={2}
+                onChange={(e) => setComandas(e.target.value)}
+              />
+            </Campo>
             {previa.length > 0 && (
               <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
                 Serão criadas:{" "}
@@ -276,6 +325,59 @@ function Mesas() {
               <Button type="submit" disabled={criar.isPending}>
                 {criar.isPending && <Loader2 className="animate-spin" aria-hidden />}
                 Criar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={editando !== null}
+        onOpenChange={(o) => !o && !salvarLimite.isPending && setEditando(null)}
+      >
+        <DialogContent>
+          <form
+            className="space-y-4"
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              const n = lerComandasPorMesa(limite);
+              if (n === null || !editando)
+                return setErroLimite(`Use um número de 1 a ${COMANDAS_MAX}.`);
+              setErroLimite(undefined);
+              salvarLimite.mutate({ id: editando.id, n });
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>
+                Comandas da {editando ? rotuloMesa(editando.numero) : "mesa"}
+              </DialogTitle>
+              <DialogDescription>
+                Quantas comandas podem ficar abertas ao mesmo tempo nesta mesa. Comandas que já
+                estão abertas não são fechadas se você diminuir o limite; só não entram novas.
+              </DialogDescription>
+            </DialogHeader>
+            <Campo id="mlimite" rotulo="Comandas abertas ao mesmo tempo">
+              <Input
+                id="mlimite"
+                autoFocus
+                inputMode="numeric"
+                value={limite}
+                maxLength={2}
+                onChange={(e) => setLimite(e.target.value)}
+              />
+            </Campo>
+            {erroLimite && (
+              <p role="alert" className="text-sm text-destructive">
+                {erroLimite}
+              </p>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setEditando(null)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={salvarLimite.isPending}>
+                {salvarLimite.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
               </Button>
             </DialogFooter>
           </form>

@@ -44,3 +44,13 @@ describe("mesas: número e endereço", () => {
     expect(numerosParaCriar(9998, 5, [])).toEqual([9998, 9999]);
   });
 });
+
+describe("comandas por mesa", () => {
+  it("aceita de 1 a 20 e recusa o resto", async () => {
+    const { lerComandasPorMesa } = await import("./mesas");
+    expect(lerComandasPorMesa("1")).toBe(1);
+    expect(lerComandasPorMesa(" 20 ")).toBe(20);
+    for (const v of ["", "0", "21", "-1", "1.5", "abc", "100", "1e1"])
+      expect(lerComandasPorMesa(v)).toBeNull();
+  });
+});

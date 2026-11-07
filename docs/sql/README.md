@@ -20,6 +20,7 @@ Este diretório é o registro do que existe no banco; ao criar uma mudança nova
 | `13_apresentacao_no_admin.sql`               | Intervalo de atendimento; o administrador edita a apresentação da própria empresa (`atualizar_apresentacao`); corrige a validação do horário |
 | `14_pagina_inov4.sql`                        | Textos da página da INOV4 (link raiz), editados só pelo master                                                                               |
 | `15_combo.sql`                               | Combo: produto composto por outros produtos (sem estoque próprio; baixa dos componentes na entrega)                                          |
+| `16_comandas_por_mesa.sql`                   | Limite de comandas abertas por mesa (1 a 20, padrão 10), editável no cadastro da mesa                                                        |
 
 ## Testes
 

@@ -1,6 +1,17 @@
 // Mesas: só o número. O endereço do QR é /{slug}/mesa_{numero}.
 export const NUMERO_MESA_MAX = 9999;
 export const MAX_MESAS_POR_VEZ = 50;
+/** Comandas abertas ao mesmo tempo em uma mesa: padrão e limites (iguais aos do banco). */
+export const COMANDAS_PADRAO = 10;
+export const COMANDAS_MAX = 20;
+
+/** Lê o campo "comandas por mesa" (1 a 20); devolve null se for inválido. */
+export function lerComandasPorMesa(valor: string): number | null {
+  const v = valor.trim();
+  if (!/^\d{1,2}$/.test(v)) return null;
+  const n = Number(v);
+  return n >= 1 && n <= COMANDAS_MAX ? n : null;
+}
 
 /** Trecho do endereço que identifica a mesa (ex.: "mesa_3"). */
 export const codigoMesa = (numero: number) => `mesa_${numero}`;

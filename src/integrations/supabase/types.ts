@@ -381,6 +381,7 @@ export type Database = {
           criado_em: string
           estabelecimento_id: string
           id: string
+          max_comandas: number
           numero: number
         }
         Insert: {
@@ -389,6 +390,7 @@ export type Database = {
           criado_em?: string
           estabelecimento_id: string
           id?: string
+          max_comandas?: number
           numero: number
         }
         Update: {
@@ -397,6 +399,7 @@ export type Database = {
           criado_em?: string
           estabelecimento_id?: string
           id?: string
+          max_comandas?: number
           numero?: number
         }
         Relationships: [
