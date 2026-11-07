@@ -5,7 +5,7 @@ import type { CodigoErroAuth, ResultadoAuth, ServicoAuth, SessaoAdmin } from "./
 
 /** Converte um erro do Supabase Auth em um código nosso (sem expor detalhes ao usuário). */
 export function codigoDoErro(
-  erro: Pick<AuthError, "message"> & Partial<AuthError>,
+  erro: Pick<AuthError, "message"> & Partial<AuthError> & { reasons?: string[] },
 ): CodigoErroAuth {
   const codigo = erro.code ?? "";
   const status = erro.status ?? 0;
@@ -17,7 +17,9 @@ export function codigoDoErro(
     codigo === "over_email_send_rate_limit"
   )
     return "muitas_tentativas";
-  if (codigo === "weak_password") return "senha_fraca";
+  if (codigo === "weak_password")
+    // "pwned": a senha aparece em vazamentos conhecidos (proteção do servidor).
+    return erro.reasons?.includes("pwned") ? "senha_vazada" : "senha_fraca";
   if (codigo === "same_password") return "senha_repetida";
   if (codigo === "current_password_required") return "senha_atual_exigida";
   if (codigo === "current_password_mismatch") return "senha_atual_incorreta";

@@ -56,6 +56,9 @@ describe("codigoDoErro", () => {
     expect(codigoDoErro(erroAuth("x", 429))).toBe("muitas_tentativas");
     expect(codigoDoErro(erroAuth("over_email_send_rate_limit", 429))).toBe("muitas_tentativas");
     expect(codigoDoErro(erroAuth("weak_password"))).toBe("senha_fraca");
+    expect(codigoDoErro({ ...erroAuth("weak_password", 422), reasons: ["pwned"] })).toBe(
+      "senha_vazada",
+    );
     expect(codigoDoErro(erroAuth("same_password"))).toBe("senha_repetida");
     expect(codigoDoErro(erroAuth("current_password_required"))).toBe("senha_atual_exigida");
     expect(codigoDoErro(erroAuth("current_password_mismatch"))).toBe("senha_atual_incorreta");

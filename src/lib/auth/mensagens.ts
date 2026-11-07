@@ -5,7 +5,10 @@ export const MENSAGENS_AUTH: Record<CodigoErroAuth, string> = {
   credenciais_invalidas: "E-mail ou senha incorretos.",
   muitas_tentativas: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
   link_invalido: "Este link é inválido ou expirou. Solicite um novo.",
-  senha_fraca: "Esta senha não atende aos requisitos de segurança. Escolha outra.",
+  senha_fraca:
+    "O servidor recusou esta senha por ser fraca. Use 10 ou mais caracteres, misturando letras maiúsculas e minúsculas, números e símbolos, e evite sequências ou palavras comuns.",
+  senha_vazada:
+    "Esta senha aparece em vazamentos de dados conhecidos e não pode ser usada. Escolha uma senha única, que você não use em outros lugares.",
   senha_repetida: "A nova senha deve ser diferente da senha atual.",
   falha_marcador:
     "Sua senha foi alterada, mas não foi possível concluir o primeiro acesso. Clique em salvar novamente (você pode repetir a mesma senha).",

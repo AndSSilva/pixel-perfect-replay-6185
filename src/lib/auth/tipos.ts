@@ -6,6 +6,7 @@ export type CodigoErroAuth =
   | "muitas_tentativas"
   | "link_invalido"
   | "senha_fraca"
+  | "senha_vazada"
   | "senha_repetida"
   | "sem_permissao"
   | "falha_marcador"

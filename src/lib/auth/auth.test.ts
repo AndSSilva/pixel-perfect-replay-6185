@@ -53,6 +53,7 @@ describe("mensagens de erro", () => {
       "muitas_tentativas",
       "link_invalido",
       "senha_fraca",
+      "senha_vazada",
       "senha_repetida",
       "sem_permissao",
       "sem_sessao",
