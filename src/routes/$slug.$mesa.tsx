@@ -127,7 +127,7 @@ function Cliente({ slug, numero }: { slug: string; numero: number }) {
   } as React.CSSProperties;
 
   return (
-    <div className="min-h-screen bg-background text-foreground" style={tema}>
+    <div className="min-h-dvh bg-background text-foreground" style={tema}>
       <header className="px-4 py-4 text-white" style={{ backgroundColor: secundaria }}>
         <div className="mx-auto flex max-w-xl items-center gap-3">
           {dados.empresa.logo_url ? (
@@ -219,10 +219,11 @@ function Identificar({
         placeholder="Seu nome"
         autoComplete="given-name"
         aria-label="Seu nome"
+        className="h-11"
       />
       <Button
         type="submit"
-        className="w-full text-white"
+        className="h-11 w-full text-white"
         style={{ backgroundColor: cor }}
         disabled={!nome.trim() || m.isPending}
       >
@@ -320,7 +321,7 @@ function Atendimento({
             role="tab"
             aria-selected={aba === a}
             onClick={() => setAba(a)}
-            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${aba === a ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+            className={`min-h-11 rounded-md px-3 py-2 text-sm font-medium transition-colors ${aba === a ? "bg-background shadow-sm" : "text-muted-foreground"}`}
           >
             {a === "cardapio" ? "Cardápio" : "Minha comanda"}
           </button>
@@ -339,8 +340,8 @@ function Atendimento({
             </div>
           ) : null}
           {cardapio.categorias.length > 0 ? (
-            <div className="mb-4 space-y-3">
-              <div className="relative">
+            <div className="mb-2">
+              <div className="relative mb-1">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="search"
@@ -348,11 +349,11 @@ function Atendimento({
                   onChange={(e) => setBusca(e.target.value)}
                   placeholder="Buscar item pelo nome"
                   aria-label="Buscar item pelo nome"
-                  className="pl-9"
+                  className="h-11 pl-9"
                 />
               </div>
               <div
-                className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="sticky top-0 z-10 -mx-4 flex gap-2 overflow-x-auto bg-background/95 px-4 py-2 backdrop-blur [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 role="group"
                 aria-label="Filtrar por categoria"
               >
@@ -367,7 +368,7 @@ function Atendimento({
                       type="button"
                       aria-pressed={ativa}
                       onClick={() => setCategoriaFiltro(c.id)}
-                      className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${ativa ? "border-transparent text-white" : "bg-card text-muted-foreground"}`}
+                      className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${ativa ? "border-transparent text-white" : "bg-card text-muted-foreground"}`}
                       style={ativa ? { backgroundColor: cor } : undefined}
                     >
                       {c.nome}
@@ -421,7 +422,7 @@ function Atendimento({
                             src={foto}
                             alt=""
                             loading="lazy"
-                            className="h-16 w-16 shrink-0 rounded-md object-cover"
+                            className="h-20 w-20 shrink-0 rounded-md object-cover"
                           />
                         ) : null}
                         <div className="min-w-0 flex-1">
@@ -457,7 +458,7 @@ function Atendimento({
                                 ) : null}
                                 <Button
                                   size="icon"
-                                  className="h-8 w-8 text-white"
+                                  className="h-11 w-11 text-white"
                                   style={{ backgroundColor: cor }}
                                   aria-label={`Escolher opção de ${p.nome}`}
                                   disabled={qtd >= lim}
@@ -466,7 +467,7 @@ function Atendimento({
                                     setEscolhendo(p);
                                   }}
                                 >
-                                  <Plus className="h-4 w-4" />
+                                  <Plus className="h-5 w-5" />
                                 </Button>
                               </>
                             ) : null}
@@ -475,21 +476,23 @@ function Atendimento({
                                 <Button
                                   size="icon"
                                   variant="outline"
-                                  className="h-8 w-8"
+                                  className="h-11 w-11"
                                   aria-label={`Remover ${p.nome}`}
                                   onClick={() =>
                                     setCarrinho((c0) => alterarQuantidade(c0, p.id, -1, lim))
                                   }
                                 >
-                                  <Minus className="h-4 w-4" />
+                                  <Minus className="h-5 w-5" />
                                 </Button>
-                                <span className="w-6 text-center text-sm tabular-nums">{qtd}</span>
+                                <span className="w-7 text-center text-base font-medium tabular-nums">
+                                  {qtd}
+                                </span>
                               </>
                             ) : null}
                             {!comOpcoes ? (
                               <Button
                                 size="icon"
-                                className="h-8 w-8 text-white"
+                                className="h-11 w-11 text-white"
                                 style={{ backgroundColor: cor }}
                                 aria-label={`Adicionar ${p.nome}`}
                                 disabled={qtd >= lim}
@@ -497,7 +500,7 @@ function Atendimento({
                                   setCarrinho((c0) => alterarQuantidade(c0, p.id, 1, lim))
                                 }
                               >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-5 w-5" />
                               </Button>
                             ) : null}
                           </div>
@@ -513,10 +516,10 @@ function Atendimento({
       )}
 
       {aba === "cardapio" && qtdTotal > 0 ? (
-        <div className="fixed inset-x-0 bottom-0 border-t bg-background p-3">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
           <div className="mx-auto max-w-xl">
             <Button
-              className="w-full justify-between text-white"
+              className="h-12 w-full justify-between text-base text-white"
               style={{ backgroundColor: cor }}
               onClick={() => setRevisando(true)}
             >
@@ -536,7 +539,7 @@ function Atendimento({
           aria-modal="true"
           aria-label={`Escolha a opção de ${escolhendo.nome}`}
         >
-          <div className="max-h-[85vh] w-full overflow-auto rounded-t-xl bg-background p-4 sm:max-w-md sm:rounded-xl">
+          <div className="max-h-[85dvh] w-full overflow-auto overscroll-contain rounded-t-xl bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:max-w-md sm:rounded-xl">
             <h2 className="text-lg font-semibold">{escolhendo.nome}</h2>
             <p className="text-sm text-muted-foreground">Escolha uma opção:</p>
             <ul className="mt-3 space-y-2" role="radiogroup" aria-label="Opções">
@@ -553,7 +556,7 @@ function Atendimento({
                       role="radio"
                       aria-checked={opcaoEscolhida === o.id}
                       onClick={() => setOpcaoEscolhida(o.id)}
-                      className={`w-full rounded-lg border px-3 py-2.5 text-left text-sm ${
+                      className={`w-full min-h-12 rounded-lg border px-3 py-3 text-left text-base ${
                         opcaoEscolhida === o.id ? "border-2 font-medium" : ""
                       }`}
                       style={opcaoEscolhida === o.id ? { borderColor: cor } : undefined}
@@ -563,7 +566,7 @@ function Atendimento({
                   </li>
                 ))}
             </ul>
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-2 [&>button]:h-11">
               <Button variant="outline" onClick={() => setEscolhendo(null)}>
                 Cancelar
               </Button>
@@ -594,7 +597,7 @@ function Atendimento({
           aria-modal="true"
           aria-label="Revisar pedido"
         >
-          <div className="max-h-[85vh] w-full overflow-auto rounded-t-xl bg-background p-4 sm:max-w-md sm:rounded-xl">
+          <div className="max-h-[85dvh] w-full overflow-auto overscroll-contain rounded-t-xl bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:max-w-md sm:rounded-xl">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
               <ReceiptText className="h-5 w-5" /> Seu pedido
             </h2>
@@ -606,7 +609,10 @@ function Atendimento({
                 const opcao = opcaoId ? p.opcoes?.find((o) => o.id === opcaoId) : null;
                 const nome = opcao ? `${p.nome} (${opcao.nome})` : p.nome;
                 return (
-                  <li key={chave} className="flex items-center justify-between gap-2 py-2 text-sm">
+                  <li
+                    key={chave}
+                    className="flex items-center justify-between gap-2 py-2 text-base"
+                  >
                     <span className="min-w-0 flex-1">
                       {q}× {nome}
                     </span>
@@ -614,11 +620,11 @@ function Atendimento({
                     <Button
                       size="icon"
                       variant="outline"
-                      className="h-7 w-7"
+                      className="h-10 w-10"
                       aria-label={`Remover uma unidade de ${nome}`}
                       onClick={() => setCarrinho((c0) => alterarQuantidade(c0, chave, -1, 99))}
                     >
-                      <Minus className="h-3.5 w-3.5" />
+                      <Minus className="h-4 w-4" />
                     </Button>
                   </li>
                 );
@@ -632,7 +638,7 @@ function Atendimento({
               O pedido só vale depois que o atendente confirmar. Se não for confirmado em 45
               minutos, ele expira.
             </p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-2 [&>button]:h-11">
               <Button
                 variant="outline"
                 onClick={() => setRevisando(false)}
