@@ -11,6 +11,9 @@ export const MENSAGENS_PEDIDO = {
   comanda_fechada: "Esta comanda já foi encerrada.",
   itens_invalidos: "Confira os itens do pedido.",
   produto_indisponivel: "Um dos itens não está mais disponível.",
+  opcao_obrigatoria: "Escolha uma opção para o item.",
+  opcao_invalida: "A opção escolhida não existe mais. Atualize o cardápio e escolha de novo.",
+  opcao_indisponivel: "A opção escolhida não está mais disponível.",
   quantidade_indisponivel: "A quantidade pedida não está mais disponível.",
   muitos_pedidos_pendentes: "Há pedidos demais aguardando confirmação. Aguarde o atendente.",
   pedido_nao_encontrado: "Pedido não encontrado. Atualize a tela.",
@@ -86,6 +89,8 @@ export type ProdutoCardapio = {
   qtd_disponivel: number | null;
   /** Só em combos: o que vem junto (ex.: 5 × Cerveja). */
   inclui?: { nome: string; quantidade: number }[] | null;
+  /** Só em produtos com opções de escolha: as opções disponíveis agora (o cliente escolhe 1 por unidade). */
+  opcoes?: { id: string; nome: string; qtd_disponivel: number | null }[] | null;
 };
 
 export type CardapioPublico = {
@@ -145,4 +150,4 @@ export type ComandaCliente = {
   }[];
 };
 
-export type LinhaPedido = { produto_id: string; quantidade: number };
+export type LinhaPedido = { produto_id: string; quantidade: number; opcao_id?: string };

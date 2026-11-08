@@ -1,3 +1,4 @@
+import { validarOpcoes, textoOpcoes, unidadesPossiveis, OPCOES_MAX } from "@/lib/catalogo/opcoes";
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,6 +7,7 @@ import {
   Camera,
   ImagePlus,
   Layers,
+  ListChecks,
   Loader2,
   Package,
   Pencil,
@@ -49,6 +51,8 @@ import { formatarMargem, lucroCentavos, margemPercentual } from "@/lib/catalogo/
 import {
   chaveCategorias,
   chaveComboItens,
+  chaveProdutoOpcoes,
+  listarProdutoOpcoes,
   chaveProdutos,
   definirProdutoDisponivel,
   excluirProduto,
@@ -97,6 +101,10 @@ type Form = {
   ehCombo: boolean;
   eraCombo: boolean;
   componentes: { produtoId: string; quantidade: string }[];
+  /** Opções de escolha: o cliente escolhe 1 destes produtos (ex.: a essência do narguilé). */
+  temOpcoes: boolean;
+  eraOpcoes: boolean;
+  opcoes: string[];
   /** Caminho da foto já salva (para mostrar e para apagar na troca). */
   fotoPath: string | null;
   /** Foto escolhida agora, já reduzida (data URL), ainda não enviada. */
@@ -104,7 +112,7 @@ type Form = {
   removerFoto: boolean;
 };
 type Erros = Partial<
-  Record<"nome" | "categoria" | "venda" | "custo" | "estoque" | "combo", string>
+  Record<"nome" | "categoria" | "venda" | "custo" | "estoque" | "combo" | "opcoes", string>
 >;
 
 function Produtos() {
@@ -122,6 +130,10 @@ function Produtos() {
     queryKey: chaveComboItens(empresa.id),
     queryFn: () => listarComboItens(empresa.id),
   });
+  const produtoOpcoes = useQuery({
+    queryKey: chaveProdutoOpcoes(empresa.id),
+    queryFn: () => listarProdutoOpcoes(empresa.id),
+  });
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todas");
   const [form, setForm] = useState<Form | null>(null);
@@ -134,6 +146,7 @@ function Produtos() {
   const atualizar = async () => {
     await qc.invalidateQueries({ queryKey: chaveProdutos(empresa.id) });
     await qc.invalidateQueries({ queryKey: chaveComboItens(empresa.id) });
+    await qc.invalidateQueries({ queryKey: chaveProdutoOpcoes(empresa.id) });
   };
   const porId = new Map(todos.map((p) => [p.id, p]));
   const componentesDe = (comboId: string): ComponenteCombo[] =>
@@ -141,6 +154,9 @@ function Produtos() {
       .filter((c) => c.combo_id === comboId)
       .map((c) => ({ produtoId: c.componente_id, quantidade: c.quantidade }));
   const emCombo = new Set((comboItens.data ?? []).map((c) => c.componente_id));
+  const opcoesDe = (produtoId: string): string[] =>
+    (produtoOpcoes.data ?? []).filter((o) => o.produto_id === produtoId).map((o) => o.opcao_id);
+  const ehOpcao = new Set((produtoOpcoes.data ?? []).map((o) => o.opcao_id));
 
   const salvar = useMutation({
     mutationFn: async (v: { form: Form; venda: number; custo: number | null; estoque: number }) => {
@@ -155,7 +171,7 @@ function Produtos() {
           precoVendaCentavos: v.venda,
           precoCustoCentavos: v.custo,
           estoqueQtd: v.estoque,
-          inativarAoZerarEstoque: f.ehCombo ? false : f.inativarAoZerar,
+          inativarAoZerarEstoque: f.ehCombo || f.temOpcoes ? false : f.inativarAoZerar,
           disponivel: f.disponivel,
           combo: f.ehCombo
             ? f.componentes.map((c) => ({
@@ -165,6 +181,7 @@ function Produtos() {
             : f.eraCombo
               ? []
               : undefined,
+          opcoes: f.temOpcoes ? f.opcoes : f.eraOpcoes ? [] : undefined,
           fotoNova: f.fotoNova ? await dataUrlParaBlob(f.fotoNova) : undefined,
           removerFoto: f.removerFoto && !f.fotoNova,
         },
@@ -222,6 +239,9 @@ function Produtos() {
               produtoId: c.produtoId,
               quantidade: String(c.quantidade),
             })),
+            temOpcoes: p.tem_opcoes,
+            eraOpcoes: p.tem_opcoes,
+            opcoes: opcoesDe(p.id),
             fotoPath: p.foto_path,
             removerFoto: false,
           }
@@ -237,6 +257,9 @@ function Produtos() {
             ehCombo: false,
             eraCombo: false,
             componentes: [],
+            temOpcoes: false,
+            eraOpcoes: false,
+            opcoes: [],
             fotoPath: null,
             removerFoto: false,
           },
@@ -258,12 +281,20 @@ function Produtos() {
     // O estoque só é informado na criação; depois muda apenas por lançamentos com histórico.
     const estoqueTexto = form.estoque.trim();
     const estoque =
-      form.id || form.ehCombo ? 0 : /^\d+$/.test(estoqueTexto) ? Number(estoqueTexto) : NaN;
+      form.id || form.ehCombo || form.temOpcoes
+        ? 0
+        : /^\d+$/.test(estoqueTexto)
+          ? Number(estoqueTexto)
+          : NaN;
     if (form.ehCombo) {
       const msg = validarComponentes(form.componentes);
       if (msg) e.combo = msg;
     }
-    if (!form.id && !form.ehCombo && !(estoque >= 0 && estoque <= ESTOQUE_MAX))
+    if (form.temOpcoes) {
+      const msg = validarOpcoes(form.opcoes);
+      if (msg) e.opcoes = msg;
+    }
+    if (!form.id && !form.ehCombo && !form.temOpcoes && !(estoque >= 0 && estoque <= ESTOQUE_MAX))
       e.estoque = "Informe um número inteiro (0 ou mais).";
     setErros(e);
     if (Object.keys(e).length || venda === null) return;
@@ -357,6 +388,8 @@ function Produtos() {
                   : p.preco_custo_centavos;
                 const lucro = lucroCentavos({ ...p, preco_custo_centavos: custoEfetivo });
                 const possiveis = p.eh_combo ? combosPossiveis(compsCombo, porId) : null;
+                const idsOpcoes = p.tem_opcoes ? opcoesDe(p.id) : [];
+                const possiveisOpcoes = p.tem_opcoes ? unidadesPossiveis(idsOpcoes, porId) : null;
                 return (
                   <article key={p.id} className="flex gap-3 rounded-xl border bg-card p-4">
                     {foto ? (
@@ -381,6 +414,12 @@ function Produtos() {
                               Combo
                             </Selo>
                           )}
+                          {p.tem_opcoes && (
+                            <Selo tom="neutro">
+                              <ListChecks className="mr-1 inline h-3 w-3" aria-hidden />
+                              Opções
+                            </Selo>
+                          )}
                         </h3>
                         <span className="tabular font-semibold">
                           {formatBRL(p.preco_venda_centavos)}
@@ -395,8 +434,15 @@ function Produtos() {
                           Inclui: {textoInclui(compsCombo, porId)}
                         </p>
                       )}
+                      {p.tem_opcoes && idsOpcoes.length > 0 && (
+                        <p className="truncate text-xs text-muted-foreground">
+                          Escolha: {textoOpcoes(idsOpcoes, porId)}
+                        </p>
+                      )}
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {lucro === null ? (
+                        {p.tem_opcoes ? (
+                          "Custo = custo do produto + custo da opção escolhida (calculado no pedido)"
+                        ) : lucro === null ? (
                           p.eh_combo ? (
                             "Custo parcial (falta custo em algum item)"
                           ) : (
@@ -423,6 +469,14 @@ function Produtos() {
                               ? "Sem estoque dos itens"
                               : `Dá para ${possiveis ?? 0} (pelo estoque dos itens)`}
                           </Selo>
+                        ) : p.tem_opcoes ? (
+                          <Selo tom={possiveisOpcoes === 0 ? "alerta" : "neutro"}>
+                            {possiveisOpcoes === null
+                              ? "Sem limite pelas opções"
+                              : possiveisOpcoes === 0
+                                ? "Sem estoque nas opções"
+                                : `Dá para ${possiveisOpcoes} (pelo estoque das opções)`}
+                          </Selo>
                         ) : (
                           <Selo tom={p.estoque_qtd === 0 ? "alerta" : "neutro"}>
                             {p.estoque_qtd === 0 ? "Sem estoque" : `Estoque: ${p.estoque_qtd}`}
@@ -444,7 +498,7 @@ function Produtos() {
                           )}
                         </label>
                         <div className="flex">
-                          {!p.eh_combo && (
+                          {!p.eh_combo && !p.tem_opcoes && (
                             <Button
                               size="icon"
                               variant="ghost"
@@ -550,15 +604,38 @@ function Produtos() {
                 form={form}
                 onChange={setForm}
                 erro={erros.combo}
-                candidatos={todos.filter((x) => !x.eh_combo && x.id !== form.id)}
+                candidatos={todos.filter((x) => !x.eh_combo && !x.tem_opcoes && x.id !== form.id)}
                 bloqueio={
                   form.eraCombo
                     ? null
-                    : form.id && emCombo.has(form.id)
-                      ? "Este produto já faz parte de um combo, então não pode virar combo."
-                      : (porId.get(form.id ?? "")?.estoque_qtd ?? 0) > 0
-                        ? "Este produto tem estoque. Zere o estoque antes de transformá-lo em combo."
-                        : null
+                    : form.temOpcoes
+                      ? "Este produto tem opções de escolha. Desligue as opções para virar combo."
+                      : form.id && ehOpcao.has(form.id)
+                        ? "Este produto é opção de outro produto, então não pode virar combo."
+                        : form.id && emCombo.has(form.id)
+                          ? "Este produto já faz parte de um combo, então não pode virar combo."
+                          : (porId.get(form.id ?? "")?.estoque_qtd ?? 0) > 0
+                            ? "Este produto tem estoque. Zere o estoque antes de transformá-lo em combo."
+                            : null
+                }
+              />
+              <OpcoesEditor
+                form={form}
+                onChange={setForm}
+                erro={erros.opcoes}
+                candidatos={todos.filter((x) => !x.eh_combo && !x.tem_opcoes && x.id !== form.id)}
+                bloqueio={
+                  form.eraOpcoes
+                    ? null
+                    : form.ehCombo
+                      ? "Este produto é um combo. Desligue o combo para dar opções de escolha."
+                      : form.id && emCombo.has(form.id)
+                        ? "Este produto faz parte de um combo, então não pode ter opções."
+                        : form.id && ehOpcao.has(form.id)
+                          ? "Este produto é opção de outro produto, então não pode ter opções."
+                          : (porId.get(form.id ?? "")?.estoque_qtd ?? 0) > 0
+                            ? "Este produto tem estoque. Zere o estoque antes de dar opções a ele."
+                            : null
                 }
               />
               <div className="grid gap-4 sm:grid-cols-2">
@@ -629,6 +706,12 @@ function Produtos() {
                   Combo não tem estoque próprio: ao ser entregue, baixa o estoque dos produtos
                   vinculados, e o cardápio só oferece quantos combos o estoque deles permitir.
                 </p>
+              ) : form.temOpcoes ? (
+                <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+                  Produto com opções não tem estoque próprio: o cliente escolhe uma opção, e a
+                  entrega baixa o estoque da opção escolhida. O cardápio só mostra as opções que
+                  ainda têm estoque.
+                </p>
               ) : form.id ? (
                 <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
                   O estoque só muda por lançamentos com histórico. Para repor, corrigir ou dar
@@ -650,7 +733,7 @@ function Produtos() {
                   />
                 </Campo>
               )}
-              {!form.ehCombo && (
+              {!form.ehCombo && !form.temOpcoes && (
                 <div className="flex items-start gap-2">
                   <Switch
                     id="zerar"
@@ -816,6 +899,107 @@ function ComboEditor({
           {livres.length === 0 && form.componentes.every((c) => c.produtoId) && (
             <p className="text-xs text-muted-foreground">
               Cadastre antes os produtos que fazem parte do combo (ex.: a cerveja).
+            </p>
+          )}
+          {erro && (
+            <p role="alert" className="text-xs text-destructive">
+              {erro}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OpcoesEditor({
+  form,
+  onChange,
+  erro,
+  candidatos,
+  bloqueio,
+}: {
+  form: Form;
+  onChange: (f: Form) => void;
+  erro: string | undefined;
+  candidatos: Produto[];
+  /** Motivo pelo qual este produto não pode ter opções (só vale enquanto ainda não tem). */
+  bloqueio: string | null;
+}) {
+  const usados = new Set(form.opcoes);
+  const livres = candidatos.filter((c) => !usados.has(c.id));
+  return (
+    <div className="space-y-3 rounded-lg border p-3">
+      <div className="flex items-start gap-2">
+        <Switch
+          id="opcoes"
+          className="mt-0.5"
+          checked={form.temOpcoes}
+          disabled={bloqueio !== null}
+          onCheckedChange={(v) =>
+            onChange({
+              ...form,
+              temOpcoes: v,
+              opcoes: v && form.opcoes.length === 0 ? [""] : form.opcoes,
+            })
+          }
+        />
+        <Label htmlFor="opcoes" className="leading-snug">
+          Opções de escolha
+          <span className="block text-xs font-normal text-muted-foreground">
+            {bloqueio ??
+              "O cliente escolhe 1 dos produtos abaixo ao pedir (ex.: a essência do narguilé). O preço continua o deste produto."}
+          </span>
+        </Label>
+      </div>
+      {form.temOpcoes && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Opções que o cliente pode escolher</p>
+          {form.opcoes.map((id, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Select
+                value={id}
+                onValueChange={(v) =>
+                  onChange({ ...form, opcoes: form.opcoes.map((o, j) => (j === i ? v : o)) })
+                }
+              >
+                <SelectTrigger className="flex-1" aria-label={`Opção ${i + 1}`}>
+                  <SelectValue placeholder="Escolha o produto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {candidatos
+                    .filter((x) => x.id === id || !usados.has(x.id))
+                    .map((x) => (
+                      <SelectItem key={x.id} value={x.id}>
+                        {x.nome}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                aria-label={`Remover opção ${i + 1}`}
+                onClick={() => onChange({ ...form, opcoes: form.opcoes.filter((_, j) => j !== i) })}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={livres.length === 0 || form.opcoes.length >= OPCOES_MAX}
+            onClick={() => onChange({ ...form, opcoes: [...form.opcoes, ""] })}
+          >
+            <Plus className="h-4 w-4" /> Adicionar opção
+          </Button>
+          {livres.length === 0 && form.opcoes.every((o) => o) && (
+            <p className="text-xs text-muted-foreground">
+              Cadastre antes os produtos que serão as opções (ex.: cada essência), com o estoque de
+              cada uma.
             </p>
           )}
           {erro && (

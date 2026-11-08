@@ -4,6 +4,7 @@ export type Categoria = Tables<"categorias">;
 export type Produto = Tables<"produtos">;
 export type Mesa = Tables<"mesas">;
 export type ComboItem = Tables<"combo_itens">;
+export type ProdutoOpcao = Tables<"produto_opcoes">;
 
 export type CodigoErroCatalogo =
   | "nome_duplicado"
@@ -24,6 +25,13 @@ export type CodigoErroCatalogo =
   | "combo_com_estoque"
   | "produto_combo"
   | "combo_nao_registrado"
+  | "opcoes_invalidas"
+  | "opcao_nao_permitida"
+  | "produto_em_opcao"
+  | "produto_em_opcao_excluir"
+  | "opcoes_com_estoque"
+  | "produto_com_opcoes"
+  | "produto_combo_com_opcoes"
   | "desconhecido";
 
 export const MENSAGENS_CATALOGO: Record<CodigoErroCatalogo, string> = {
@@ -45,14 +53,27 @@ export const MENSAGENS_CATALOGO: Record<CodigoErroCatalogo, string> = {
   componente_invalido:
     "Um dos produtos vinculados não pode fazer parte do combo (não existe mais ou é outro combo).",
   produto_em_combo:
-    "Este produto já faz parte de um combo, então não pode virar combo. Remova-o do outro combo antes.",
+    "Este produto já faz parte de um combo, então não pode virar combo nem ter opções. Remova-o do combo antes.",
   produto_em_combo_excluir:
     "Este produto faz parte de um combo. Remova-o do combo antes de excluir.",
   combo_com_estoque:
     "Este produto ainda tem estoque. Zere o estoque (alteração de quantidade ou baixa) antes de transformá-lo em combo.",
   produto_combo: "Combo não tem estoque próprio: ele sai do estoque dos produtos vinculados.",
   combo_nao_registrado:
-    "O produto foi salvo, mas os itens do combo não foram vinculados. Abra Editar e tente de novo.",
+    "O produto foi salvo, mas os produtos vinculados (combo ou opções) não foram registrados. Abra Editar e tente de novo.",
+  opcoes_invalidas:
+    "Opções inválidas. Escolha de 1 a 30 produtos diferentes, sem repetir e sem o próprio produto.",
+  opcao_nao_permitida:
+    "Um dos produtos escolhidos como opção não pode ser usado (não existe mais, é um combo ou também tem opções).",
+  produto_em_opcao:
+    "Este produto é opção de outro produto, então não pode virar combo nem ter opções. Remova-o das opções antes.",
+  produto_em_opcao_excluir:
+    "Este produto é opção de outro produto. Remova-o das opções antes de excluir.",
+  opcoes_com_estoque:
+    "Este produto ainda tem estoque. Zere o estoque (alteração de quantidade ou baixa) antes de dar opções a ele.",
+  produto_com_opcoes:
+    "Produto com opções não tem estoque próprio: o estoque sai da opção que o cliente escolher.",
+  produto_combo_com_opcoes: "Um produto não pode ser combo e ter opções ao mesmo tempo.",
   desconhecido: "Não foi possível concluir a operação. Tente novamente.",
 };
 
@@ -89,11 +110,18 @@ export function codigoDoErroBanco(e: {
     msg === "componente_invalido" ||
     msg === "produto_em_combo" ||
     msg === "combo_com_estoque" ||
-    msg === "produto_combo"
+    msg === "produto_combo" ||
+    msg === "opcoes_invalidas" ||
+    msg === "opcao_nao_permitida" ||
+    msg === "produto_em_opcao" ||
+    msg === "opcoes_com_estoque" ||
+    msg === "produto_com_opcoes" ||
+    msg === "produto_combo_com_opcoes"
   )
     return msg;
   if (e.code === "23505") return msg.includes("mesas_numero") ? "mesa_duplicada" : "nome_duplicado";
   if (e.code === "23503" && msg.includes("combo_itens")) return "produto_em_combo_excluir";
+  if (e.code === "23503" && msg.includes("produto_opcoes")) return "produto_em_opcao_excluir";
   if (e.code === "23503") {
     // Apagar uma categoria que ainda tem produtos vs. apontar para uma categoria que não existe/é de outra empresa.
     return msg.startsWith("update or delete on table")

@@ -401,7 +401,7 @@ export async function listarComposicaoItens(
   const linhas = await emLotes(itemIds, async (lote) => {
     const { data, error } = await supabase
       .from("itens_pedido_combo")
-      .select("item_id, nome_produto, quantidade")
+      .select("*")
       .eq("estabelecimento_id", empresaId)
       .in("item_id", lote);
     // Sem o script 15 a tabela não existe: o cupom sai sem a linha "Inclui" em vez de falhar.
@@ -409,6 +409,8 @@ export async function listarComposicaoItens(
     return data;
   });
   for (const l of linhas) {
+    // A opção escolhida (produto com opções) já aparece no nome do item; só combos mostram "Inclui".
+    if ((l as { escolha?: boolean }).escolha === true) continue;
     const atual = mapa.get(l.item_id) ?? [];
     atual.push({ nome: l.nome_produto, quantidade: l.quantidade });
     mapa.set(l.item_id, atual);

@@ -276,6 +276,7 @@ export type Database = {
       }
       itens_pedido_combo: {
         Row: {
+          escolha: boolean
           estabelecimento_id: string
           item_id: string
           nome_produto: string
@@ -283,6 +284,7 @@ export type Database = {
           quantidade: number
         }
         Insert: {
+          escolha?: boolean
           estabelecimento_id: string
           item_id: string
           nome_produto: string
@@ -290,6 +292,7 @@ export type Database = {
           quantidade: number
         }
         Update: {
+          escolha?: boolean
           estabelecimento_id?: string
           item_id?: string
           nome_produto?: string
@@ -715,6 +718,24 @@ export type Database = {
         }
         Relationships: []
       }
+      produto_opcoes: {
+        Row: {
+          estabelecimento_id: string
+          opcao_id: string
+          produto_id: string
+        }
+        Insert: {
+          estabelecimento_id: string
+          opcao_id: string
+          produto_id: string
+        }
+        Update: {
+          estabelecimento_id?: string
+          opcao_id?: string
+          produto_id?: string
+        }
+        Relationships: []
+      }
       produtos: {
         Row: {
           atualizado_em: string
@@ -723,6 +744,7 @@ export type Database = {
           descricao: string | null
           disponivel: boolean
           eh_combo: boolean
+          tem_opcoes: boolean
           estabelecimento_id: string
           estoque_qtd: number
           foto_path: string | null
@@ -739,6 +761,7 @@ export type Database = {
           descricao?: string | null
           disponivel?: boolean
           eh_combo?: boolean
+          tem_opcoes?: boolean
           estabelecimento_id: string
           estoque_qtd?: number
           foto_path?: string | null
@@ -755,6 +778,7 @@ export type Database = {
           descricao?: string | null
           disponivel?: boolean
           eh_combo?: boolean
+          tem_opcoes?: boolean
           estabelecimento_id?: string
           estoque_qtd?: number
           foto_path?: string | null
@@ -877,6 +901,7 @@ export type Database = {
       comanda_pago: { Args: { _comanda: string }; Returns: number }
       confirmar_pedido: { Args: { _pedido: string }; Returns: undefined }
       definir_combo: { Args: { _produto: string; _itens: Json | null }; Returns: undefined }
+      definir_opcoes: { Args: { _produto: string; _opcoes: string[] | null }; Returns: undefined }
       eh_master: { Args: never; Returns: boolean }
       eh_membro: { Args: { _estabelecimento: string }; Returns: boolean }
       entregar_itens: { Args: { _itens: string[] }; Returns: number }

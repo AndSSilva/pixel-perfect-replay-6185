@@ -367,4 +367,48 @@ describe("combo", () => {
       codigo: "combo_com_estoque",
     });
   });
+
+  describe("opções de escolha", () => {
+    it("lista de opções liga o recurso ao editar", async () => {
+      m.resolver = (t, op) => (op === "update" ? { data: [{ id: "p1" }] } : {});
+      await salvarProduto(E, { ...dadosProduto, id: "p1", opcoes: ["o1", "o2"] });
+      expect(m.rpc).toHaveBeenCalledWith("definir_opcoes", {
+        _produto: "p1",
+        _opcoes: ["o1", "o2"],
+      });
+    });
+    it("lista vazia desmarca as opções", async () => {
+      m.resolver = (t, op) => (op === "update" ? { data: [{ id: "p1" }] } : {});
+      await salvarProduto(E, { ...dadosProduto, id: "p1", opcoes: [] });
+      expect(m.rpc).toHaveBeenCalledWith("definir_opcoes", { _produto: "p1", _opcoes: [] });
+    });
+    it("ao trocar de combo para opções, desmarca o combo antes de ligar as opções", async () => {
+      m.resolver = (t, op) => (op === "update" ? { data: [{ id: "p1" }] } : {});
+      await salvarProduto(E, { ...dadosProduto, id: "p1", combo: [], opcoes: ["o1"] });
+      const chamadas = m.rpc.mock.calls.map((c) => c[0]);
+      expect(chamadas.indexOf("definir_combo")).toBeLessThan(chamadas.indexOf("definir_opcoes"));
+    });
+    it("ao trocar de opções para combo, desmarca as opções antes de ligar o combo", async () => {
+      m.resolver = (t, op) => (op === "update" ? { data: [{ id: "p1" }] } : {});
+      await salvarProduto(E, { ...dadosProduto, id: "p1", opcoes: [], combo: comps });
+      const chamadas = m.rpc.mock.calls.map((c) => c[0]);
+      expect(chamadas.indexOf("definir_opcoes")).toBeLessThan(chamadas.indexOf("definir_combo"));
+    });
+    it("sem 'opcoes' informado, não chama a função", async () => {
+      await salvarProduto(E, dadosProduto);
+      expect(m.rpc).not.toHaveBeenCalledWith("definir_opcoes", expect.anything());
+    });
+    it("mensagens de erro das opções e da exclusão de uma opção", () => {
+      expect(codigoDoErroBanco({ message: "opcoes_com_estoque" })).toBe("opcoes_com_estoque");
+      expect(codigoDoErroBanco({ message: "produto_em_opcao" })).toBe("produto_em_opcao");
+      expect(codigoDoErroBanco({ message: "produto_com_opcoes" })).toBe("produto_com_opcoes");
+      expect(
+        codigoDoErroBanco({
+          code: "23503",
+          message:
+            'update or delete on table "produtos" violates foreign key constraint "produto_opcoes_opcao_fkey" on table "produto_opcoes"',
+        }),
+      ).toBe("produto_em_opcao_excluir");
+    });
+  });
 });

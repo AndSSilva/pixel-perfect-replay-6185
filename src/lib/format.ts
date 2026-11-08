@@ -32,4 +32,6 @@ export const centavosParaInput = (c: number) => (c / 100).toFixed(2).replace("."
 export const idCurto = (id: string) => "#" + id.replace(/-/g, "").slice(-6).toUpperCase();
 
 export const mesmoDia = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();

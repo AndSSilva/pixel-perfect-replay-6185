@@ -27,7 +27,9 @@ export const pedidoExpirado = (expiraEm: string, agora: number): boolean =>
 
 /** Total do pedido sem itens cancelados. */
 export const totalDoPedido = (p: Pick<PedidoPainel, "itens">): number =>
-  p.itens.filter((i) => i.status !== "cancelado").reduce((s, i) => s + (i.subtotal_centavos ?? 0), 0);
+  p.itens
+    .filter((i) => i.status !== "cancelado")
+    .reduce((s, i) => s + (i.subtotal_centavos ?? 0), 0);
 
 export function agruparPedidos(
   pedidos: readonly PedidoPainel[],

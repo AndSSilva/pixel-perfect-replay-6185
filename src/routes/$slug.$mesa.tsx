@@ -22,6 +22,9 @@ import { urlFoto } from "@/lib/catalogo/servico";
 import {
   ajustarAoCardapio,
   alterarQuantidade,
+  chaveLinha,
+  lerChave,
+  limiteDaLinha,
   limiteDoProduto,
   linhasDoCarrinho,
   totalDoCarrinho,
@@ -249,6 +252,9 @@ function Atendimento({
   const [revisando, setRevisando] = useState(false);
   const [categoriaFiltro, setCategoriaFiltro] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  // Produto com opções de escolha: janela para o cliente escolher qual opção quer
+  const [escolhendo, setEscolhendo] = useState<ProdutoCardapio | null>(null);
+  const [opcaoEscolhida, setOpcaoEscolhida] = useState<string | null>(null);
 
   const produtos = useMemo(() => {
     const mapa = new Map<string, ProdutoCardapio>();
@@ -399,8 +405,14 @@ function Atendimento({
                 ) : null}
                 <ul className="mt-2 space-y-2">
                   {c.produtos.map((p) => {
+                    const comOpcoes = p.opcoes != null;
                     const lim = limiteDoProduto(p);
-                    const qtd = carrinho[p.id] ?? 0;
+                    // Em produto com opções, cada opção escolhida é uma linha: soma todas.
+                    const qtd = comOpcoes
+                      ? Object.entries(carrinho)
+                          .filter(([k]) => lerChave(k).produtoId === p.id)
+                          .reduce((a, [, q]) => a + q, 0)
+                      : (carrinho[p.id] ?? 0);
                     const foto = urlFoto(p.foto_path);
                     return (
                       <li key={p.id} className="flex gap-3 rounded-lg border bg-card p-3">
@@ -419,6 +431,11 @@ function Atendimento({
                               {p.descricao}
                             </p>
                           ) : null}
+                          {comOpcoes && p.opcoes && p.opcoes.length > 0 ? (
+                            <p className="text-xs text-muted-foreground">
+                              Escolha: {p.opcoes.map((o) => o.nome).join(", ")}
+                            </p>
+                          ) : null}
                           {p.inclui && p.inclui.length > 0 ? (
                             <p className="text-xs text-muted-foreground">
                               Inclui: {p.inclui.map((i) => `${i.quantidade}× ${i.nome}`).join(", ")}
@@ -431,7 +448,29 @@ function Atendimento({
                         </div>
                         {aceitaPedido && lim > 0 ? (
                           <div className="flex items-center gap-1 self-center">
-                            {qtd > 0 ? (
+                            {comOpcoes ? (
+                              <>
+                                {qtd > 0 ? (
+                                  <span className="mr-1 text-xs text-muted-foreground">
+                                    {qtd} no pedido
+                                  </span>
+                                ) : null}
+                                <Button
+                                  size="icon"
+                                  className="h-8 w-8 text-white"
+                                  style={{ backgroundColor: cor }}
+                                  aria-label={`Escolher opção de ${p.nome}`}
+                                  disabled={qtd >= lim}
+                                  onClick={() => {
+                                    setOpcaoEscolhida(null);
+                                    setEscolhendo(p);
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : null}
+                            {!comOpcoes && qtd > 0 ? (
                               <>
                                 <Button
                                   size="icon"
@@ -447,18 +486,20 @@ function Atendimento({
                                 <span className="w-6 text-center text-sm tabular-nums">{qtd}</span>
                               </>
                             ) : null}
-                            <Button
-                              size="icon"
-                              className="h-8 w-8 text-white"
-                              style={{ backgroundColor: cor }}
-                              aria-label={`Adicionar ${p.nome}`}
-                              disabled={qtd >= lim}
-                              onClick={() =>
-                                setCarrinho((c0) => alterarQuantidade(c0, p.id, 1, lim))
-                              }
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
+                            {!comOpcoes ? (
+                              <Button
+                                size="icon"
+                                className="h-8 w-8 text-white"
+                                style={{ backgroundColor: cor }}
+                                aria-label={`Adicionar ${p.nome}`}
+                                disabled={qtd >= lim}
+                                onClick={() =>
+                                  setCarrinho((c0) => alterarQuantidade(c0, p.id, 1, lim))
+                                }
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            ) : null}
                           </div>
                         ) : null}
                       </li>
@@ -488,6 +529,64 @@ function Atendimento({
         </div>
       ) : null}
 
+      {escolhendo ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/50 sm:items-center sm:justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Escolha a opção de ${escolhendo.nome}`}
+        >
+          <div className="max-h-[85vh] w-full overflow-auto rounded-t-xl bg-background p-4 sm:max-w-md sm:rounded-xl">
+            <h2 className="text-lg font-semibold">{escolhendo.nome}</h2>
+            <p className="text-sm text-muted-foreground">Escolha uma opção:</p>
+            <ul className="mt-3 space-y-2" role="radiogroup" aria-label="Opções">
+              {(produtos.get(escolhendo.id)?.opcoes ?? [])
+                .filter((o) => {
+                  const chave = chaveLinha(escolhendo.id, o.id);
+                  // ainda cabe mais uma unidade desta opção?
+                  return limiteDaLinha(carrinho, chave, produtos) > (carrinho[chave] ?? 0);
+                })
+                .map((o) => (
+                  <li key={o.id}>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={opcaoEscolhida === o.id}
+                      onClick={() => setOpcaoEscolhida(o.id)}
+                      className={`w-full rounded-lg border px-3 py-2.5 text-left text-sm ${
+                        opcaoEscolhida === o.id ? "border-2 font-medium" : ""
+                      }`}
+                      style={opcaoEscolhida === o.id ? { borderColor: cor } : undefined}
+                    >
+                      {o.nome}
+                    </button>
+                  </li>
+                ))}
+            </ul>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Button variant="outline" onClick={() => setEscolhendo(null)}>
+                Cancelar
+              </Button>
+              <Button
+                className="text-white"
+                style={{ backgroundColor: cor }}
+                disabled={opcaoEscolhida === null}
+                onClick={() => {
+                  if (opcaoEscolhida === null) return;
+                  const chave = chaveLinha(escolhendo.id, opcaoEscolhida);
+                  setCarrinho((c0) =>
+                    alterarQuantidade(c0, chave, 1, limiteDaLinha(c0, chave, produtos)),
+                  );
+                  setEscolhendo(null);
+                }}
+              >
+                Adicionar
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {revisando ? (
         <div
           className="fixed inset-0 z-50 flex items-end bg-black/50 sm:items-center sm:justify-center"
@@ -500,15 +599,27 @@ function Atendimento({
               <ReceiptText className="h-5 w-5" /> Seu pedido
             </h2>
             <ul className="mt-3 divide-y">
-              {Object.entries(carrinho).map(([id, q]) => {
-                const p = produtos.get(id);
+              {Object.entries(carrinho).map(([chave, q]) => {
+                const { produtoId, opcaoId } = lerChave(chave);
+                const p = produtos.get(produtoId);
                 if (!p) return null;
+                const opcao = opcaoId ? p.opcoes?.find((o) => o.id === opcaoId) : null;
+                const nome = opcao ? `${p.nome} (${opcao.nome})` : p.nome;
                 return (
-                  <li key={id} className="flex justify-between py-2 text-sm">
-                    <span>
-                      {q}× {p.nome}
+                  <li key={chave} className="flex items-center justify-between gap-2 py-2 text-sm">
+                    <span className="min-w-0 flex-1">
+                      {q}× {nome}
                     </span>
                     <span className="tabular-nums">{formatBRL(p.preco_venda_centavos * q)}</span>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-7 w-7"
+                      aria-label={`Remover uma unidade de ${nome}`}
+                      onClick={() => setCarrinho((c0) => alterarQuantidade(c0, chave, -1, 99))}
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </Button>
                   </li>
                 );
               })}

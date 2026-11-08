@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   ajustarAoCardapio,
   alterarQuantidade,
+  chaveLinha,
+  lerChave,
+  limiteDaLinha,
   limiteDoProduto,
   linhasDoCarrinho,
   totalDoCarrinho,
@@ -58,5 +61,50 @@ describe("carrinho", () => {
       ["b", prod({ id: "b", esgotado: true, qtd_disponivel: 0 })],
     ]);
     expect(ajustarAoCardapio({ a: 3, b: 1, c: 2 }, m)).toEqual({ a: 1 });
+  });
+});
+
+describe("carrinho com opções de escolha", () => {
+  const narguile = prod({
+    id: "ng",
+    esgotado: false,
+    qtd_disponivel: 3,
+    opcoes: [
+      { id: "menta", nome: "Menta", qtd_disponivel: 2 },
+      { id: "uva", nome: "Uva", qtd_disponivel: null },
+    ],
+  });
+  const mapa = new Map([["ng", narguile]]);
+
+  it("chave: produto e opção", () => {
+    expect(chaveLinha("ng")).toBe("ng");
+    expect(chaveLinha("ng", "menta")).toBe("ng:menta");
+    expect(lerChave("ng:menta")).toEqual({ produtoId: "ng", opcaoId: "menta" });
+    expect(lerChave("ng")).toEqual({ produtoId: "ng", opcaoId: null });
+  });
+
+  it("linhas levam opcao_id e o total soma o preço do produto", () => {
+    const c = { "ng:menta": 2, "ng:uva": 1 };
+    expect(linhasDoCarrinho(c)).toEqual([
+      { produto_id: "ng", opcao_id: "menta", quantidade: 2 },
+      { produto_id: "ng", opcao_id: "uva", quantidade: 1 },
+    ]);
+    expect(totalDoCarrinho(c, new Map([["ng", 6000]]))).toBe(18000);
+  });
+
+  it("limite da linha: saldo da opção, descontando outras linhas da mesma opção", () => {
+    expect(limiteDaLinha({}, "ng:menta", mapa)).toBe(2);
+    expect(limiteDaLinha({}, "ng:uva", mapa)).toBe(99);
+    expect(limiteDaLinha({}, "ng:inexistente", mapa)).toBe(0);
+    const outro = new Map([...mapa, ["ng2", { ...narguile, id: "ng2" }]]);
+    expect(limiteDaLinha({ "ng2:menta": 1 }, "ng:menta", outro)).toBe(1);
+  });
+
+  it("ajusta ao cardápio: reduz ao saldo e remove opção que saiu", () => {
+    expect(ajustarAoCardapio({ "ng:menta": 5, "ng:uva": 2 }, mapa)).toEqual({
+      "ng:menta": 2,
+      "ng:uva": 2,
+    });
+    expect(ajustarAoCardapio({ "ng:sumiu": 1 }, mapa)).toEqual({});
   });
 });

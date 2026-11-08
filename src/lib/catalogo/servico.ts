@@ -8,6 +8,7 @@ import {
   codigoDoErroBanco,
   type Categoria,
   type ComboItem,
+  type ProdutoOpcao,
   type Mesa,
   type Produto,
 } from "./tipos";
@@ -20,6 +21,7 @@ export const BUCKET_FOTOS = "produtos-fotos";
 export const chaveCategorias = (empresaId: string) => ["categorias", empresaId] as const;
 export const chaveProdutos = (empresaId: string) => ["produtos", empresaId] as const;
 export const chaveComboItens = (empresaId: string) => ["combo_itens", empresaId] as const;
+export const chaveProdutoOpcoes = (empresaId: string) => ["produto_opcoes", empresaId] as const;
 export const chaveMesas = (empresaId: string) => ["mesas", empresaId] as const;
 
 function falhar(
@@ -216,6 +218,41 @@ export async function definirCombo(
   if (error) falhar("definirCombo", error);
 }
 
+export async function listarProdutoOpcoes(empresaId: string): Promise<ProdutoOpcao[]> {
+  const { data, error } = await supabase
+    .from("produto_opcoes")
+    .select("*")
+    .eq("estabelecimento_id", empresaId);
+  if (error) falhar("listarProdutoOpcoes", error);
+  return data;
+}
+
+/** Liga as opções de escolha e define quais produtos são as opções; lista vazia desmarca. */
+export async function definirOpcoes(produtoId: string, opcoes: readonly string[]): Promise<void> {
+  const { error } = await supabase.rpc("definir_opcoes", {
+    _produto: produtoId,
+    _opcoes: [...opcoes],
+  });
+  if (error) falhar("definirOpcoes", error);
+}
+
+/**
+ * Aplica combo e/ou opções. Um produto é comum, combo OU com opções: quando troca de um para o outro,
+ * o que está sendo desmarcado (lista vazia) é aplicado primeiro.
+ */
+async function aplicarVinculos(id: string, dados: DadosProduto): Promise<void> {
+  const passos: { vazio: boolean; fn: () => Promise<void> }[] = [];
+  if (dados.combo !== undefined) {
+    const c = dados.combo;
+    passos.push({ vazio: c.length === 0, fn: () => definirCombo(id, c) });
+  }
+  if (dados.opcoes !== undefined) {
+    const o = dados.opcoes;
+    passos.push({ vazio: o.length === 0, fn: () => definirOpcoes(id, o) });
+  }
+  for (const passo of passos.sort((a, b) => Number(b.vazio) - Number(a.vazio))) await passo.fn();
+}
+
 export interface DadosProduto {
   id?: string | undefined;
   nome: string;
@@ -233,6 +270,11 @@ export interface DadosProduto {
    * Combo não tem estoque próprio nem custo próprio (vem dos componentes).
    */
   combo?: readonly ComponenteCombo[] | undefined;
+  /**
+   * Opções de escolha (ids dos produtos): lista liga/atualiza; lista vazia desmarca; `undefined` não mexe.
+   * Produto com opções também não tem estoque próprio.
+   */
+  opcoes?: readonly string[] | undefined;
   /** Foto nova já reduzida (JPEG). `undefined` = não mexe na foto. */
   fotoNova?: Blob | undefined;
   /** Remove a foto atual (sem enviar outra). */
@@ -242,7 +284,7 @@ export interface DadosProduto {
 /** Resultado: na criação com estoque inicial, informa se o saldo inicial foi registrado no histórico. */
 export interface ResultadoSalvarProduto {
   estoqueInicialRegistrado: boolean;
-  /** `false` quando o produto foi salvo mas os itens do combo não puderam ser vinculados. */
+  /** `false` quando o produto foi salvo mas os vínculos (combo ou opções) não puderam ser registrados. */
   comboRegistrado: boolean;
 }
 
@@ -273,9 +315,9 @@ export async function salvarProduto(
       falhar("criarProduto", error);
     }
     let comboRegistrado = true;
-    if (dados.combo && dados.combo.length > 0) {
+    if ((dados.combo && dados.combo.length > 0) || (dados.opcoes && dados.opcoes.length > 0)) {
       try {
-        await definirCombo(id, dados.combo);
+        await aplicarVinculos(id, dados);
       } catch (e) {
         console.error("[catalogo] combo", e instanceof ErroCatalogo ? e.codigo : e);
         comboRegistrado = false;
@@ -321,9 +363,9 @@ export async function salvarProduto(
   }
   if (novaFoto !== undefined || dados.removerFoto) await apagarFoto(fotoAtual);
   let comboRegistrado = true;
-  if (dados.combo !== undefined) {
+  if (dados.combo !== undefined || dados.opcoes !== undefined) {
     try {
-      await definirCombo(dados.id, dados.combo);
+      await aplicarVinculos(dados.id, dados);
     } catch (e) {
       console.error("[catalogo] combo", e instanceof ErroCatalogo ? e.codigo : e);
       // o motivo (ex.: produto com estoque) é mostrado ao usuário no lugar do aviso genérico

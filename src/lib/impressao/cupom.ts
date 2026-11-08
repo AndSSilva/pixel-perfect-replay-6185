@@ -135,7 +135,7 @@ export function itensDaNota(
     if (p.status !== "confirmado") continue;
     for (const i of p.itens) {
       if (i.status === "cancelado") continue;
-      const chave = `${i.produto_id ?? i.nome_produto}|${i.preco_unitario_centavos}`;
+      const chave = `${i.produto_id ?? i.nome_produto}|${i.nome_produto}|${i.preco_unitario_centavos}`;
       const atual = mapa.get(chave);
       const inclui = composicao.get(i.id);
       if (atual) {
