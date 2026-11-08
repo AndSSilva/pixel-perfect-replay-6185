@@ -750,6 +750,8 @@ export type Database = {
           foto_path: string | null
           id: string
           inativar_ao_zerar_estoque: boolean
+          usos_por_unidade: number
+          usos_restantes: number
           nome: string
           preco_custo_centavos: number | null
           preco_venda_centavos: number
@@ -767,6 +769,8 @@ export type Database = {
           foto_path?: string | null
           id?: string
           inativar_ao_zerar_estoque?: boolean
+          usos_por_unidade?: number
+          usos_restantes?: number
           nome: string
           preco_custo_centavos?: number | null
           preco_venda_centavos: number
@@ -784,6 +788,8 @@ export type Database = {
           foto_path?: string | null
           id?: string
           inativar_ao_zerar_estoque?: boolean
+          usos_por_unidade?: number
+          usos_restantes?: number
           nome?: string
           preco_custo_centavos?: number | null
           preco_venda_centavos?: number

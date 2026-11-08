@@ -96,6 +96,8 @@ type Form = {
   custo: string;
   estoque: string;
   inativarAoZerar: boolean;
+  /** Escolhas por unidade (só vale quando o produto é opção de outro). */
+  rende: string;
   disponivel: boolean;
   /** Combo: baixa o estoque dos produtos vinculados (sem estoque nem custo próprios). */
   ehCombo: boolean;
@@ -112,7 +114,10 @@ type Form = {
   removerFoto: boolean;
 };
 type Erros = Partial<
-  Record<"nome" | "categoria" | "venda" | "custo" | "estoque" | "combo" | "opcoes", string>
+  Record<
+    "nome" | "categoria" | "venda" | "custo" | "estoque" | "rende" | "combo" | "opcoes",
+    string
+  >
 >;
 
 function Produtos() {
@@ -172,6 +177,7 @@ function Produtos() {
           precoCustoCentavos: v.custo,
           estoqueQtd: v.estoque,
           inativarAoZerarEstoque: f.ehCombo || f.temOpcoes ? false : f.inativarAoZerar,
+          usosPorUnidade: f.ehCombo || f.temOpcoes ? 1 : Number(f.rende),
           disponivel: f.disponivel,
           combo: f.ehCombo
             ? f.componentes.map((c) => ({
@@ -232,6 +238,7 @@ function Produtos() {
             custo: p.preco_custo_centavos === null ? "" : centavosParaInput(p.preco_custo_centavos),
             estoque: String(p.estoque_qtd),
             inativarAoZerar: p.inativar_ao_zerar_estoque,
+            rende: String(p.usos_por_unidade),
             disponivel: p.disponivel,
             ehCombo: p.eh_combo,
             eraCombo: p.eh_combo,
@@ -253,6 +260,7 @@ function Produtos() {
             custo: "",
             estoque: "0",
             inativarAoZerar: false,
+            rende: "1",
             disponivel: true,
             ehCombo: false,
             eraCombo: false,
@@ -286,6 +294,10 @@ function Produtos() {
         : /^\d+$/.test(estoqueTexto)
           ? Number(estoqueTexto)
           : NaN;
+    if (!form.ehCombo && !form.temOpcoes && !/^\d{1,2}$/.test(form.rende.trim()))
+      e.rende = "Informe de 1 a 99.";
+    else if (!form.ehCombo && !form.temOpcoes && Number(form.rende) < 1)
+      e.rende = "Informe de 1 a 99.";
     if (form.ehCombo) {
       const msg = validarComponentes(form.componentes);
       if (msg) e.combo = msg;
@@ -730,6 +742,22 @@ function Produtos() {
                     value={form.estoque}
                     maxLength={7}
                     onChange={(e) => setForm({ ...form, estoque: e.target.value })}
+                  />
+                </Campo>
+              )}
+              {!form.ehCombo && !form.temOpcoes && (
+                <Campo
+                  id="rende"
+                  rotulo="Rende para quantas escolhas"
+                  erro={erros.rende}
+                  dica="Só vale se este produto for opção de outro (ex.: essência do narguilé). 1 = baixa 1 do estoque a cada escolha; 3 = a unidade é aberta na 1ª escolha e serve 3, sem nova baixa nas 2 seguintes."
+                >
+                  <Input
+                    id="rende"
+                    inputMode="numeric"
+                    value={form.rende}
+                    maxLength={2}
+                    onChange={(e) => setForm({ ...form, rende: e.target.value })}
                   />
                 </Campo>
               )}

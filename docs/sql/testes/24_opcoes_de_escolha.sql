@@ -11,6 +11,7 @@ declare
   CB uuid := '52000000-0000-4000-8000-000000000005';  -- um combo
   OUT uuid := '52000000-0000-4000-8000-000000000006'; -- produto da E2
   NG2 uuid := '52000000-0000-4000-8000-000000000007'; -- outro com opções
+  CP uuid := '52000000-0000-4000-8000-000000000008';  -- componente de combo
   tok text; r jsonb; x jsonb; p1 uuid; p2 uuid; it uuid; n int;
 begin
   perform t.dono();
@@ -21,7 +22,8 @@ begin
   insert into public.produtos (id, estabelecimento_id, categoria_id, nome, preco_venda_centavos, preco_custo_centavos, inativar_ao_zerar_estoque) values
     (NG, E1, CAT, 'Narguilé', 6000, 1000, false), (ME, E1, CAT, 'Essência Menta', 0, 400, true),
     (UV, E1, CAT, 'Essência Uva', 0, null, true), (MA, E1, CAT, 'Essência Maçã', 0, 300, false),
-    (CB, E1, CAT, 'Combo de teste opções', 1000, null, false), (NG2, E1, CAT, 'Narguilé 2', 5000, null, false);
+    (CB, E1, CAT, 'Combo de teste opções', 1000, null, false), (NG2, E1, CAT, 'Narguilé 2', 5000, null, false),
+    (CP, E1, CAT, 'Componente de combo', 100, null, false);
   perform public.ajustar_estoque(ME, 'saldo_inicial', 3);
   perform public.ajustar_estoque(UV, 'saldo_inicial', 1);
   perform public.ajustar_estoque(MA, 'saldo_inicial', 1);
@@ -31,16 +33,18 @@ begin
   perform t.erro(format('select public.definir_opcoes(%L, %L::uuid[])', NG, array[ME, ME]), 'opcoes_invalidas');
   perform t.erro(format('select public.definir_opcoes(%L, %L::uuid[])', NG, array[OUT]), 'opcao_nao_permitida');
   perform t.erro(format('select public.definir_opcoes(%L, %L::uuid[])', ME, array[UV]), 'opcoes_com_estoque');
-  perform public.definir_combo(CB, jsonb_build_array(jsonb_build_object('produto_id', MA, 'quantidade', 1)));
+  perform public.definir_combo(CB, jsonb_build_array(jsonb_build_object('produto_id', CP, 'quantidade', 1)));
   perform t.erro(format('select public.definir_opcoes(%L, %L::uuid[])', NG, array[CB]), 'opcao_nao_permitida');
   perform t.erro(format('select public.definir_opcoes(%L, %L::uuid[])', CB, array[ME]), 'produto_combo_com_opcoes');
-  perform t.erro(format('select public.definir_opcoes(%L, %L::uuid[])', MA, array[ME]), 'produto_em_combo');
+  perform t.erro(format('select public.definir_opcoes(%L, %L::uuid[])', CP, array[ME]), 'produto_em_combo');
+  perform t.erro(format('select public.definir_opcoes(%L, %L::uuid[])', NG, array[CP]), 'opcao_nao_permitida');   -- componente de combo não vira opção
   perform public.definir_opcoes(NG, array[ME, UV, MA]);
   perform public.definir_opcoes(NG2, array[ME]);   -- uma opção pode servir a mais de um produto
   perform t.erro(format('select public.definir_opcoes(%L, %L::uuid[])', NG, array[NG2]), 'opcao_nao_permitida');
   perform t.erro(format('select public.definir_combo(%L, %L::jsonb)', ME, jsonb_build_array(jsonb_build_object('produto_id', MA, 'quantidade', 1))), 'produto_em_opcao');
   perform t.erro(format('select public.definir_combo(%L, %L::jsonb)', NG, jsonb_build_array(jsonb_build_object('produto_id', MA, 'quantidade', 1))), 'produto_com_opcoes');
   perform t.erro(format('select public.definir_combo(%L, %L::jsonb)', CB, jsonb_build_array(jsonb_build_object('produto_id', NG, 'quantidade', 1))), 'componente_invalido');
+  perform t.erro(format('select public.definir_combo(%L, %L::jsonb)', CB, jsonb_build_array(jsonb_build_object('produto_id', ME, 'quantidade', 1))), 'componente_invalido');   -- opção não vira componente
   perform t.erro(format('select public.ajustar_estoque(%L, ''reposicao'', 1, null)', NG), 'produto_com_opcoes');
   begin
     delete from public.produtos where id = ME;
@@ -59,8 +63,8 @@ begin
   perform t.igual(jsonb_array_length(x -> 'opcoes'), 3, 'cardápio lista as 3 opções');
   perform t.igual((x ->> 'esgotado')::boolean, false, 'tem opção disponível');
   perform t.igual(x -> 'qtd_disponivel', 'null'::jsonb, 'uma opção sem limite: sem limite no total');
-  select e into x from jsonb_array_elements(r -> 'categorias') c, jsonb_array_elements(c -> 'produtos') e where e ->> 'nome' = 'Essência Menta';
-  perform t.igual(x -> 'opcoes', 'null'::jsonb, 'produto comum não tem "opcoes"');
+  perform t.igual((select count(*) from jsonb_array_elements(r -> 'categorias') c, jsonb_array_elements(c -> 'produtos') e where e ->> 'nome' like 'Essência%')::int, 0, 'a opção não aparece como produto avulso');
+  perform t.erro(format('select public.enviar_pedido(%L, %L::jsonb)', public.identificar_cliente('loja_um', 40, 'Avulso') ->> 'token', jsonb_build_array(jsonb_build_object('produto_id', ME, 'quantidade', 1))), 'produto_indisponivel');
 
   -- ===== pedido
   tok := public.identificar_cliente('loja_um', 40, 'Cliente Opções') ->> 'token';

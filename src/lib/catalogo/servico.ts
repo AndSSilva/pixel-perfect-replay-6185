@@ -264,6 +264,8 @@ export interface DadosProduto {
   estoqueQtd: number;
   /** Se verdadeiro, o produto fica indisponível sozinho quando o estoque zerar (por entrega). */
   inativarAoZerarEstoque: boolean;
+  /** Quantas escolhas 1 unidade deste produto rende quando ele é opção de outro (1 = baixa 1 por escolha). */
+  usosPorUnidade?: number | undefined;
   disponivel: boolean;
   /**
    * Combo: lista de componentes liga/atualiza o combo; lista vazia desmarca; `undefined` não mexe.
@@ -300,6 +302,7 @@ export async function salvarProduto(
     preco_venda_centavos: dados.precoVendaCentavos,
     preco_custo_centavos: dados.precoCustoCentavos,
     inativar_ao_zerar_estoque: dados.inativarAoZerarEstoque,
+    usos_por_unidade: dados.usosPorUnidade ?? 1,
     disponivel: dados.disponivel,
   };
   if (!base.nome || !dados.categoriaId) throw new ErroCatalogo("dados_invalidos");

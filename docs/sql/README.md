@@ -22,6 +22,7 @@ Este diretório é o registro do que existe no banco; ao criar uma mudança nova
 | `15_combo.sql`                               | Combo: produto composto por outros produtos (sem estoque próprio; baixa dos componentes na entrega)                                          |
 | `16_comandas_por_mesa.sql`                   | Limite de comandas abertas por mesa (1 a 20, padrão 10), editável no cadastro da mesa                                                        |
 | `17_opcoes_de_escolha.sql`                   | Produto com opções de escolha (ex.: narguilé com essências): o cliente escolhe 1 opção; a entrega baixa a opção                              |
+| `18_rendimento_das_opcoes.sql`               | Opção some do cardápio avulso; rendimento (`usos_por_unidade`): 1 unidade rende N escolhas, baixa ao abrir a unidade                        |
 
 ## Testes
 
